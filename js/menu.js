@@ -3,6 +3,12 @@
   const LANG = "ar"; // نربطها بزر اللغة لاحقاً
   const $ = (sel, root = document) => root.querySelector(sel);
 
+  const STR = {
+    ar: { featured: "الأكثر طلباً", spicy: "حار", vegetarian: "نباتي" },
+    en: { featured: "Best seller", spicy: "Spicy", vegetarian: "Vegetarian" },
+  }[LANG];
+  const TAG_ICONS = { spicy: "🌶️", vegetarian: "🌱" };
+
   const pick = (obj, key) => (LANG === "en" && obj[key + "_en"]) || obj[key];
   const esc = (v) =>
     String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
@@ -25,30 +31,67 @@
       data.items.some((i) => i.category === c.id && i.available !== false)
     );
 
-    $("#menu").innerHTML = cats
-      .map((c) => {
-        const dishes = data.items
-          .filter((i) => i.category === c.id && i.available !== false)
-          .map(
-            (i) => `
-        <article class="dish">
-          <div class="dish__text">
+    const card = (i, c, cur) => {
+      const tagsHtml = (i.tags || [])
+        .filter((t) => TAG_ICONS[t])
+        .map((t) => `<span class="tag" title="${esc(STR[t])}" aria-label="${esc(STR[t])}">${TAG_ICONS[t]}</span>`)
+        .join("");
+      return `
+        <article class="dish${i.featured ? " dish--featured" : ""}">
+          <div class="dish__media">
+            <div class="dish__ph" aria-hidden="true"><span class="dish__ph-icon">${esc(c.icon)}</span></div>
+            ${i.image ? `<img src="${esc(i.image)}" alt="${esc(pick(i, "name"))}" loading="lazy">` : ""}
+            ${i.featured ? `<span class="dish__flag">🔥 ${esc(STR.featured)}</span>` : ""}
+            ${tagsHtml ? `<span class="dish__tags">${tagsHtml}</span>` : ""}
+            <span class="dish__price">${esc(price(i.price, cur))}</span>
+          </div>
+          <div class="dish__body">
             <h3 class="dish__name">${esc(pick(i, "name"))}</h3>
             <p class="dish__desc">${esc(pick(i, "description"))}</p>
           </div>
-          <span class="dish__price">${esc(price(i.price, cur))}</span>
-        </article>`
-          )
-          .join("");
+        </article>`;
+    };
+
+    $("#menu").innerHTML = cats
+      .map((c) => {
+        // الأطباق المميزة أول القسم (عشان البطاقات العريضة ما تخلي فراغات في الشبكة)
+        const items = data.items
+          .filter((i) => i.category === c.id && i.available !== false)
+          .sort((x, y) => Number(!!y.featured) - Number(!!x.featured));
         return `
       <section class="menu-section" id="cat-${esc(c.id)}">
         <h2 class="menu-section__title"><span aria-hidden="true">${esc(c.icon)}</span>${esc(pick(c, "name"))}</h2>
-        ${dishes}
+        <div class="dishes">${items.map((i) => card(i, c, cur)).join("")}</div>
       </section>`;
       })
       .join("");
 
+    // لو صورة طبق ما انحملت نخفيها ويبقى البديل (التدرج + الإيموجي)
+    $("#menu").querySelectorAll(".dish__media img").forEach((img) =>
+      img.addEventListener("error", () => img.remove())
+    );
+
     return cats;
+  }
+
+  /* ---------- ظهور البطاقات وقت السكرول (مرة وحدة لكل بطاقة) ---------- */
+  function revealOnScroll() {
+    if (!("IntersectionObserver" in window)) return; // بدونها تبقى البطاقات ظاهرة عادي
+    const menu = $("#menu");
+    menu.classList.add("js-reveal");
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries
+          .filter((e) => e.isIntersecting)
+          .forEach((e, i) => {
+            e.target.style.setProperty("--d", Math.min(i, 5) * 70 + "ms");
+            e.target.classList.add("is-in");
+            io.unobserve(e.target);
+          });
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
+    );
+    menu.querySelectorAll(".dish").forEach((d) => io.observe(d));
   }
 
   /* ---------- شريط الأقسام ---------- */
@@ -185,7 +228,9 @@
         '<p class="menu-error">تعذّر تحميل المنيو.<br>إذا فتحت الملف مباشرة، شغّل الموقع عبر Live Server (أو أي سيرفر محلي).</p>';
       return;
     }
-    initCatBar(renderMenu(data));
+    const cats = renderMenu(data);
+    revealOnScroll();
+    initCatBar(cats);
   }
 
   init();
