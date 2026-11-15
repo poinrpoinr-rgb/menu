@@ -76,7 +76,10 @@
       "price": 15000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": [
+        "vegetarian"
+      ]
     },
     {
       "id": 2,
@@ -88,7 +91,10 @@
       "price": 28000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": [
+        "vegetarian"
+      ]
     },
     {
       "id": 3,
@@ -100,7 +106,10 @@
       "price": 32000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": true,
+      "tags": [
+        "spicy"
+      ]
     },
     {
       "id": 4,
@@ -112,7 +121,8 @@
       "price": 38000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": []
     },
     {
       "id": 5,
@@ -124,7 +134,8 @@
       "price": 34000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": []
     },
     {
       "id": 6,
@@ -136,7 +147,8 @@
       "price": 52000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": true,
+      "tags": []
     },
     {
       "id": 7,
@@ -148,7 +160,8 @@
       "price": 22000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": []
     },
     {
       "id": 8,
@@ -160,7 +173,10 @@
       "price": 30000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": true,
+      "tags": [
+        "spicy"
+      ]
     },
     {
       "id": 9,
@@ -172,7 +188,8 @@
       "price": 36000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": []
     },
     {
       "id": 10,
@@ -184,7 +201,10 @@
       "price": 12000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": [
+        "vegetarian"
+      ]
     },
     {
       "id": 11,
@@ -196,7 +216,8 @@
       "price": 8000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": []
     },
     {
       "id": 12,
@@ -208,7 +229,10 @@
       "price": 25000,
       "image": "",
       "available": true,
-      "featured": false
+      "featured": false,
+      "tags": [
+        "vegetarian"
+      ]
     }
   ]
 }
