@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TAZA 041 | المنيو</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="is-loading">
+
+  <!-- ========== شاشة التحميل (Loader) ========== -->
+  <div class="loader" id="loader" role="status" aria-live="polite" aria-label="جاري تحميل المنيو">
+    <div class="loader__inner">
+
+      <svg class="cloche" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true">
+        <!-- الصحن -->
+        <g id="plate">
+          <ellipse cx="128" cy="200" rx="96" ry="18" fill="#FFF7E6" stroke="#1A1A1A" stroke-width="12" />
+        </g>
+
+        <!-- الغطاء والمقبض -->
+        <g id="dome">
+          <circle cx="128" cy="58" r="14" fill="#1A1A1A" />
+          <path d="M 44 194 A 84 120 0 0 1 212 194 A 84 14 0 0 1 44 194 Z" fill="#FFF7E6" stroke="#1A1A1A" stroke-width="12" stroke-linejoin="round" />
+          <path d="M 78 150 A 70 70 0 0 1 100 100" fill="none" stroke="#F29D38" stroke-width="12" stroke-linecap="round" />
+        </g>
+      </svg>
+
+      <h1 class="loader__name">TAZA 041</h1>
+      <p class="loader__tagline" dir="ltr">Love At First Bite!</p>
+
+      <div class="loader__progress">
+        <div class="loader__bar"><span class="loader__fill" id="loaderFill"></span></div>
+        <span class="loader__percent" id="loaderPercent">0%</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== محتوى الصفحة (مؤقت، نبنيه في المهام الجاية) ========== -->
+  <main class="app" id="app">
+
+    <!-- ========== الهيدر: الغلاف + اللوقو ========== -->
+    <header class="header">
+      <div class="cover" aria-hidden="true">
+        <div class="cover__pattern"></div>
+      </div>
+
+      <div class="brand">
+        <div class="brand__shadow"></div>
+        <img class="brand__logo" src="assets/images/logo.svg" alt="شعار مطعم TAZA 041">
+
+        <!-- الشعار حول اللوقو (قوس علوي) -->
+        <svg class="brand__ring" viewBox="0 0 300 300" role="img" aria-label="Love At First Bite!">
+          <defs>
+            <path id="tagline-arc" d="M 34 150 A 116 116 0 0 1 266 150" />
+          </defs>
+          <text class="brand__tagline" dir="ltr">
+            <textPath href="#tagline-arc" startOffset="50%" text-anchor="middle">Love At First Bite!</textPath>
+          </text>
+        </svg>
+      </div>
+    </header>
+
+    <!-- ========== شريط الأقسام المثبت ========== -->
+    <div id="catSentinel" aria-hidden="true"></div>
+    <nav class="catbar" id="catbar" aria-label="أقسام المنيو" hidden>
+      <button class="catbar__logo" id="catLogo" type="button" aria-label="الرجوع للأعلى">
+        <img src="assets/images/logo.svg" alt="">
+      </button>
+      <div class="catbar__track" id="catTrack">
+        <div class="catbar__inner" id="catInner">
+          <span class="catbar__pill" id="catPill" aria-hidden="true"></span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ========== الأقسام والأطباق (تتعبى من menu.json) ========== -->
+    <div class="menu" id="menu"></div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script src="js/menu.js"></script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+/* ========== المتغيرات (Design Tokens) ========== */
+:root {
+  --cheddar: #f5a21d;   /* برتقالي الشيدر */
+  --cheddar-light: #ffbd3f;
+  --cheddar-deep: #ee7a1a;
+  --ink: #151210;       /* الأسود: الخطوط والنصوص */
+  --cream: #fff7e6;     /* لون الصحن والغطاء */
+  
+  --font-display: "Lalezar", "Tajawal", sans-serif;
+  --font-body: "Tajawal", system-ui, sans-serif;
+
+  --catbar-h: 64px;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--cream);
+}
+
+body.is-loading { overflow: hidden; }
+
+/* ========== شاشة التحميل ========== */
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, var(--cheddar-light), var(--cheddar-deep));
+  transition: opacity 0.45s ease;
+}
+
+.loader.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+/* ---- غطاء الطبق ---- */
+.cloche {
+  width: min(56vw, 250px);
+  height: auto;
+  overflow: visible;
+}
+
+/* ينزل ويغطي الصحن، يوقف لحظة، ثم يرتفع ويميل (مرة وحدة) */
+#dome {
+  transform-box: view-box;
+  transform-origin: 212px 194px; /* نقطة الارتكاز: طرف الغطاء اليمين */
+  animation: dome-cover-lift 1.3s forwards;
+}
+
+@keyframes dome-cover-lift {
+  0%   { transform: translate(0, -60px) rotate(0deg);     animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.5); }
+  30%  { transform: translate(0, 0) rotate(0deg);         animation-timing-function: ease-out; }
+  36%  { transform: translate(0, -5px) rotate(0deg);      animation-timing-function: ease-in; }
+  42%  { transform: translate(0, 0) rotate(0deg); }
+  52%  { transform: translate(0, 0) rotate(0deg);         animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+  100% { transform: translate(-5px, -15px) rotate(10deg); }
+}
+
+/* ---- الاسم والشعار ---- */
+.loader__name {
+  margin: 1.4rem 0 0.2rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.2rem, 8vw, 3.2rem);
+  line-height: 1.1;
+}
+
+.loader__tagline {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+/* ---- شريط التقدم ---- */
+.loader__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.8rem;
+}
+
+.loader__bar {
+  width: min(52vw, 180px);
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(21, 18, 16, 0.18);
+  overflow: hidden;
+}
+
+.loader__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: right center; /* يتعبى من اليمين للشمال (RTL) */
+}
+
+.loader__percent {
+  min-width: 3ch;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========== محتوى مؤقت ========== */
+.app { min-height: 100%; }
+
+.placeholder {
+  margin: 0;
+  padding: 2rem 1rem 4rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 2rem;
+}
+
+/* ========== الدخول للموقع ========== */
+.cloche { will-change: transform; }
+
+.loader__name,
+.loader__tagline,
+.loader__progress { transition: opacity 0.25s ease; }
+
+.loader.leaving .loader__name,
+.loader.leaving .loader__tagline,
+.loader.leaving .loader__progress { opacity: 0; }
+
+/* الموقع يفتح بعد ما الزوم يدخل في الصحن */
+body.is-ready .app { animation: app-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes app-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ========== الهيدر ========== */
+.header { --brand: clamp(250px, 74vw, 380px); }
+
+/* الغلاف: تدرج شيدر مع حبات جبن، وبعدين نبدله بصورة حقيقية */
+.cover {
+  position: relative;
+  height: clamp(190px, 34vh, 340px);
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--cheddar-light), var(--cheddar-deep));
+  border-radius: 0 0 50% 50% / 0 0 36px 36px;
+}
+
+.cover__pattern {
+  position: absolute;
+  inset: -12%;
+  background-image:
+    radial-gradient(circle at 18% 28%, rgba(168, 76, 0, 0.17) 0 26px, transparent 27px),
+    radial-gradient(circle at 62% 16%, rgba(168, 76, 0, 0.14) 0 14px, transparent 15px),
+    radial-gradient(circle at 84% 62%, rgba(168, 76, 0, 0.17) 0 34px, transparent 35px),
+    radial-gradient(circle at 38% 74%, rgba(168, 76, 0, 0.13) 0 19px, transparent 20px),
+    radial-gradient(circle at 8% 82%, rgba(168, 76, 0, 0.14) 0 11px, transparent 12px);
+  background-size: 420px 300px;
+  animation: cover-drift 22s ease-in-out infinite alternate;
+}
+
+@keyframes cover-drift {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.14) translate(-2.5%, -3%); }
+}
+
+/* اللوقو: نصه على الغلاف ونصه على الصفحة */
+.brand {
+  position: relative;
+  z-index: 2;
+  width: var(--brand);
+  height: var(--brand);
+  margin: calc(var(--brand) / -2) auto 0;
+}
+
+.brand__shadow {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 62%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(21, 18, 16, 0.4);
+  filter: blur(16px);
+}
+
+.brand__logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 80%;
+  height: auto;
+  transform: translate(-50%, -50%);
+}
+
+.brand__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.brand__tagline {
+  font-family: var(--font-display);
+  font-size: 21px;
+  letter-spacing: 1.5px;
+  fill: var(--ink);
+  direction: ltr;               /* عشان علامة التعجب تجي بعد الكلمة مو قبلها */
+  unicode-bidi: bidi-override;
+}
+
+/* دخول اللوقو بعد ما الموقع يفتح: ارتداد خفيف، وبعده الشعار يظهر */
+body.is-ready .brand__logo {
+  animation: logo-pop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s both;
+}
+
+body.is-ready .brand__tagline {
+  animation: tagline-in 0.6s ease 0.8s both;
+}
+
+@keyframes logo-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes tagline-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ========== شريط الأقسام المثبت ========== */
+.catbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  height: var(--catbar-h);
+  margin-top: 0.5rem;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.catbar[hidden] { display: none; }
+
+.catbar.is-stuck {
+  background: rgba(255, 247, 230, 0.97);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 18px rgba(21, 18, 16, 0.12);
+}
+
+/* اللوقو المصغر: يطلع لما الشريط يثبت */
+.catbar__logo {
+  flex: none;
+  width: 0;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.5);
+  cursor: pointer;
+  transition: width 0.35s ease, margin 0.35s ease, opacity 0.25s ease,
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.catbar__logo img { display: block; width: 100%; height: auto; }
+
+.catbar.is-stuck .catbar__logo {
+  width: 50px;
+  margin-inline: 0.75rem 0.25rem;
+  opacity: 1;
+  transform: none;
+}
+
+.catbar__track {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.catbar__track::-webkit-scrollbar { display: none; }
+
+.catbar__inner {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+  width: max-content;
+  min-width: 100%;
+  padding: 0 0.75rem;
+}
+
+/* الحبة المنزلقة */
+.catbar__pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  border-radius: 99px;
+  background: var(--cheddar);
+  box-shadow: 0 3px 10px rgba(238, 122, 26, 0.35);
+  transition: transform 0.5s cubic-bezier(0.34, 1.3, 0.64, 1),
+    width 0.5s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.cat {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 42px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+  font: 700 1rem var(--font-body);
+  color: rgba(21, 18, 16, 0.6);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.cat.is-active { color: var(--ink); }
+
+.cat:focus-visible,
+.catbar__logo:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.cat__icon { display: inline-block; font-size: 1.15rem; line-height: 1; }
+.cat__icon.pulse { animation: icon-pulse 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@keyframes icon-pulse {
+  0%   { transform: scale(1) rotate(0); }
+  40%  { transform: scale(1.5) rotate(-10deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ========== الأقسام (تصميم مؤقت، بطاقات الأطباق بمهمة لاحقة) ========== */
+.menu {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0.5rem 1rem 6rem;
+}
+
+.menu-section { padding-top: 1.5rem; scroll-margin-top: calc(var(--catbar-h) + 8px); }
+.menu-section:last-child { min-height: 55vh; }
+
+.menu-section__title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.9rem;
+}
+
+.dish {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px dashed rgba(21, 18, 16, 0.18);
+}
+.dish__name { margin: 0 0 0.15rem; font-size: 1.1rem; }
+.dish__desc { margin: 0; font-size: 0.95rem; color: rgba(21, 18, 16, 0.65); }
+.dish__price { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.menu-error { padding: 2rem 1rem; text-align: center; line-height: 1.8; }

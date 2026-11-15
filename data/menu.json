@@ -1,0 +1,214 @@
+{
+  "restaurant": {
+    "name": "تازة 041",
+    "name_en": "TAZA 041",
+    "tagline": "حب من أول لقمة!",
+    "tagline_en": "Love At First Bite!",
+    "logo": "assets/images/logo.png",
+    "currency": "ل.س",
+    "currency_en": "SYP",
+    "contact": {
+      "phones": [
+        {
+          "label": "توصيل",
+          "label_en": "Delivery",
+          "number": "0981452222",
+          "display": "098 145 2222"
+        },
+        {
+          "label": "توصيل",
+          "label_en": "Delivery",
+          "number": "0938195555",
+          "display": "093 819 5555"
+        },
+        {
+          "label": "أرضي",
+          "label_en": "Landline",
+          "number": "0172446041",
+          "display": "017 244 6041"
+        }
+      ],
+      "address": "اللاذقية - الزراعة - مقابل باب السكن الجامعي",
+      "address_en": "Latakia - Al-Zira'a - opposite the university dorms gate",
+      "hours": "",
+      "hours_en": ""
+    },
+    "social": {
+      "instagram": "https://www.instagram.com/taza_041",
+      "facebook": "https://www.facebook.com/449879551534788",
+      "map": "https://maps.app.goo.gl/UuJTxVyHwAn22Jhr8"
+    }
+  },
+  "categories": [
+    {
+      "id": "starters",
+      "name": "المقبلات",
+      "name_en": "Starters",
+      "icon": "🍟"
+    },
+    {
+      "id": "burgers",
+      "name": "البرجر",
+      "name_en": "Burgers",
+      "icon": "🍔"
+    },
+    {
+      "id": "sandwiches",
+      "name": "الساندويتشات",
+      "name_en": "Sandwiches",
+      "icon": "🌯"
+    },
+    {
+      "id": "drinks",
+      "name": "المشروبات",
+      "name_en": "Drinks",
+      "icon": "🥤"
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "category": "starters",
+      "name": "بطاطا مقلية",
+      "name_en": "French Fries",
+      "description": "بطاطا ذهبية مقرمشة مع الكاتشب",
+      "description_en": "Golden crispy fries with ketchup",
+      "price": 15000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 2,
+      "category": "starters",
+      "name": "أصابع موزاريلا",
+      "name_en": "Mozzarella Sticks",
+      "description": "6 قطع مقرمشة بقلب الجبن الذائب",
+      "description_en": "6 crispy sticks with melted cheese",
+      "price": 28000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 3,
+      "category": "starters",
+      "name": "أجنحة دجاج",
+      "name_en": "Chicken Wings",
+      "description": "أجنحة متبلة مع صوص حار",
+      "description_en": "Seasoned wings with hot sauce",
+      "price": 32000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 4,
+      "category": "burgers",
+      "name": "برجر كلاسيك",
+      "name_en": "Classic Burger",
+      "description": "لحم مشوي مع جبن شيدر وخس وطماطم",
+      "description_en": "Grilled beef with cheddar, lettuce and tomato",
+      "price": 38000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 5,
+      "category": "burgers",
+      "name": "برجر دجاج مقرمش",
+      "name_en": "Crispy Chicken Burger",
+      "description": "صدر دجاج مقرمش مع مايونيز",
+      "description_en": "Crispy chicken breast with mayo",
+      "price": 34000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 6,
+      "category": "burgers",
+      "name": "برجر دبل شيدر",
+      "name_en": "Double Cheddar Burger",
+      "description": "قطعتين لحم مع جبن شيدر مضاعف",
+      "description_en": "Two patties with double cheddar",
+      "price": 52000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 7,
+      "category": "sandwiches",
+      "name": "شاورما دجاج",
+      "name_en": "Chicken Shawarma",
+      "description": "شاورما دجاج مع ثوم ومخلل",
+      "description_en": "Chicken shawarma with garlic and pickles",
+      "price": 22000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 8,
+      "category": "sandwiches",
+      "name": "زنجر",
+      "name_en": "Zinger",
+      "description": "دجاج مقرمش حار مع صوص الرانش",
+      "description_en": "Spicy crispy chicken with ranch",
+      "price": 30000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 9,
+      "category": "sandwiches",
+      "name": "كريسبي",
+      "name_en": "Crispy Sandwich",
+      "description": "قطع دجاج مقرمشة مع بطاطا",
+      "description_en": "Crispy chicken strips with fries",
+      "price": 36000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 10,
+      "category": "drinks",
+      "name": "ليمون بالنعناع",
+      "name_en": "Lemon Mint",
+      "description": "عصير ليمون طازج مع نعناع",
+      "description_en": "Fresh lemon juice with mint",
+      "price": 12000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 11,
+      "category": "drinks",
+      "name": "كولا",
+      "name_en": "Cola",
+      "description": "علبة باردة",
+      "description_en": "Cold can",
+      "price": 8000,
+      "image": "",
+      "available": true,
+      "featured": false
+    },
+    {
+      "id": 12,
+      "category": "drinks",
+      "name": "ميلك شيك",
+      "name_en": "Milkshake",
+      "description": "فانيلا أو شوكولا أو فراولة",
+      "description_en": "Vanilla, chocolate or strawberry",
+      "price": 25000,
+      "image": "",
+      "available": true,
+      "featured": false
+    }
+  ]
+}
