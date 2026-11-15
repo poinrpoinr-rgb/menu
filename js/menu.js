@@ -1,47 +1,61 @@
-/* ========== المنيو: تحميل البيانات + عرض الأقسام + الشريط المثبت ========== */
+/* ========== المنيو: البيانات + العرض + شريط الأقسام + اللغة + الوضع ========== */
 (() => {
-  const LANG = "ar"; // نربطها بزر اللغة لاحقاً
   const $ = (sel, root = document) => root.querySelector(sel);
+  const html = document.documentElement;
 
-  const STR = {
-    ar: { featured: "الأكثر طلباً", spicy: "حار", vegetarian: "نباتي" },
-    en: { featured: "Best seller", spicy: "Spicy", vegetarian: "Vegetarian" },
-  }[LANG];
+  const store = {
+    get: (k, d = "") => { try { return localStorage.getItem(k) || d; } catch (e) { return d; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
+  };
+
+  /* ---------- النصوص الثابتة بالغتين ---------- */
+  const UI = {
+    ar: {
+      featured: "الأكثر طلباً", spicy: "حار", vegetarian: "نباتي",
+      nav: "أقسام المنيو", top: "الرجوع للأعلى", logoAlt: "شعار مطعم TAZA 041",
+      title: "TAZA 041 | المنيو", langBtn: "EN", langAria: "Switch to English",
+      toDark: "تفعيل الوضع الليلي", toLight: "تفعيل الوضع الصباحي",
+      error: "تعذّر تحميل المنيو.<br>إذا فتحت الملف مباشرة، شغّل الموقع عبر Live Server (أو أي سيرفر محلي).",
+    },
+    en: {
+      featured: "Best seller", spicy: "Spicy", vegetarian: "Vegetarian",
+      nav: "Menu categories", top: "Back to top", logoAlt: "TAZA 041 logo",
+      title: "TAZA 041 | Menu", langBtn: "ع", langAria: "التبديل إلى العربية",
+      toDark: "Switch to dark mode", toLight: "Switch to light mode",
+      error: "Couldn't load the menu.<br>If you opened the file directly, run the site with Live Server (or any local server).",
+    },
+  };
   const TAG_ICONS = { spicy: "🌶️", vegetarian: "🌱" };
 
-  const pick = (obj, key) => (LANG === "en" && obj[key + "_en"]) || obj[key];
+  let lang = html.lang === "en" ? "en" : "ar";
+  const T = () => UI[lang];
+  const pick = (obj, key) => (lang === "en" && obj[key + "_en"]) || obj[key];
   const esc = (v) =>
     String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const price = (n, cur) => `${Number(n).toLocaleString("en-US")} ${cur}`;
 
-  async function loadData() {
-    try {
-      const res = await fetch("data/menu.json");
-      if (!res.ok) throw new Error(res.status);
-      return await res.json();
-    } catch (err) {
-      return null;
-    }
-  }
+  let data = null;
+  let cats = [];
+  let cards = [];
 
-  /* ---------- عرض الأقسام ---------- */
-  function renderMenu(data) {
+  /* ======================================================
+     عرض الأقسام والبطاقات
+  ====================================================== */
+  function renderMenu() {
     const cur = pick(data.restaurant, "currency");
-    const cats = data.categories.filter((c) =>
-      data.items.some((i) => i.category === c.id && i.available !== false)
-    );
+    cats = data.categories.filter((c) => data.items.some((i) => i.category === c.id && i.available !== false));
 
-    const card = (i, c, cur) => {
+    const card = (i, c) => {
       const tagsHtml = (i.tags || [])
-        .filter((t) => TAG_ICONS[t])
-        .map((t) => `<span class="tag" title="${esc(STR[t])}" aria-label="${esc(STR[t])}">${TAG_ICONS[t]}</span>`)
+        .filter((tg) => TAG_ICONS[tg])
+        .map((tg) => `<span class="tag" title="${esc(T()[tg])}" aria-label="${esc(T()[tg])}">${TAG_ICONS[tg]}</span>`)
         .join("");
       return `
         <article class="dish${i.featured ? " dish--featured" : ""}">
           <div class="dish__media">
             <div class="dish__ph" aria-hidden="true"><span class="dish__ph-icon">${esc(c.icon)}</span></div>
             ${i.image ? `<img src="${esc(i.image)}" alt="${esc(pick(i, "name"))}" loading="lazy">` : ""}
-            ${i.featured ? `<span class="dish__flag">🔥 ${esc(STR.featured)}</span>` : ""}
+            ${i.featured ? `<span class="dish__flag">🔥 ${esc(T().featured)}</span>` : ""}
             ${tagsHtml ? `<span class="dish__tags">${tagsHtml}</span>` : ""}
             <span class="dish__price">${esc(price(i.price, cur))}</span>
           </div>
@@ -54,14 +68,14 @@
 
     $("#menu").innerHTML = cats
       .map((c) => {
-        // الأطباق المميزة أول القسم (عشان البطاقات العريضة ما تخلي فراغات في الشبكة)
+        // المميزة أول القسم عشان البطاقات العريضة ما تخلي فراغات في الشبكة
         const items = data.items
           .filter((i) => i.category === c.id && i.available !== false)
           .sort((x, y) => Number(!!y.featured) - Number(!!x.featured));
         return `
       <section class="menu-section" id="cat-${esc(c.id)}">
-        <h2 class="menu-section__title"><span aria-hidden="true">${esc(c.icon)}</span>${esc(pick(c, "name"))}</h2>
-        <div class="dishes">${items.map((i) => card(i, c, cur)).join("")}</div>
+        <h2 class="menu-section__title"><span class="menu-section__icon" aria-hidden="true">${esc(c.icon)}</span>${esc(pick(c, "name"))}</h2>
+        <div class="dishes">${items.map((i) => card(i, c)).join("")}</div>
       </section>`;
       })
       .join("");
@@ -70,37 +84,191 @@
     $("#menu").querySelectorAll(".dish__media img").forEach((img) =>
       img.addEventListener("error", () => img.remove())
     );
-
-    return cats;
   }
 
-  /* ---------- ظهور البطاقات وقت السكرول (مرة وحدة لكل بطاقة) ---------- */
-  function revealOnScroll() {
-    if (!("IntersectionObserver" in window)) return; // بدونها تبقى البطاقات ظاهرة عادي
-    const menu = $("#menu");
-    menu.classList.add("js-reveal");
-    const io = new IntersectionObserver(
+  /* ======================================================
+     الأطباق تروح وتجي: تظهر وهي داخلة وتنمسح وهي طالعة
+  ====================================================== */
+  let scrollDir = "down";
+  let locked = false; // أثناء الانتقال لقسم نوقف حركة الأقسام الي نمر عليها
+
+  function reveal(card, i = 0) {
+    if (card.classList.contains("is-in")) return;
+    card.dataset.from = scrollDir === "up" ? "up" : "down";
+    card.style.setProperty("--d", Math.min(i, 5) * 70 + "ms");
+    card.classList.add("is-in");
+  }
+
+  function revealVisible() {
+    cards
+      .filter((c) => {
+        const r = c.getBoundingClientRect();
+        return r.top < innerHeight * 0.92 && r.bottom > 0;
+      })
+      .forEach((c, i) => reveal(c, i));
+  }
+
+  const hasIO = "IntersectionObserver" in window;
+  const enterIO =
+    hasIO &&
+    new IntersectionObserver(
       (entries) => {
-        entries
-          .filter((e) => e.isIntersecting)
-          .forEach((e, i) => {
-            e.target.style.setProperty("--d", Math.min(i, 5) * 70 + "ms");
-            e.target.classList.add("is-in");
-            io.unobserve(e.target);
-          });
+        if (locked) return;
+        entries.filter((e) => e.isIntersecting).forEach((e, i) => reveal(e.target, i));
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
     );
-    menu.querySelectorAll(".dish").forEach((d) => io.observe(d));
+  const leaveIO =
+    hasIO &&
+    new IntersectionObserver(
+      (entries) => entries.forEach((e) => !e.isIntersecting && e.target.classList.remove("is-in")),
+      { threshold: 0 }
+    );
+
+  function observeCards() {
+    cards = [...document.querySelectorAll(".dish")];
+    if (!hasIO) return;
+    enterIO.disconnect();
+    leaveIO.disconnect();
+    $("#menu").classList.add("js-reveal");
+    cards.forEach((c) => {
+      enterIO.observe(c);
+      leaveIO.observe(c);
+    });
   }
 
-  /* ---------- شريط الأقسام ---------- */
-  function initCatBar(cats) {
-    const bar = $("#catbar");
-    const track = $("#catTrack");
-    const inner = $("#catInner");
-    const pill = $("#catPill");
+  /* ======================================================
+     شريط الأقسام المثبت
+  ====================================================== */
+  const bar = $("#catbar");
+  const track = $("#catTrack");
+  const inner = $("#catInner");
+  const pill = $("#catPill");
 
+  let buttons = [];
+  let sections = [];
+  let active = -1;
+  let lockTimer;
+  let arrive = null; // شغل ينفذ لما يوصل السكرول للقسم
+  let flight = {};
+
+  function movePill(btn, animate) {
+    if (!animate) pill.style.transition = "none";
+    pill.style.width = btn.offsetWidth + "px";
+    pill.style.transform = `translateX(${btn.offsetLeft}px)`;
+    if (!animate) {
+      void pill.offsetWidth;
+      pill.style.transition = "";
+    }
+  }
+
+  function centerButton(btn) {
+    const b = btn.getBoundingClientRect();
+    const t = track.getBoundingClientRect();
+    const delta = b.left + b.width / 2 - (t.left + t.width / 2);
+    if (Math.abs(delta) > 2) track.scrollBy({ left: delta, behavior: "smooth" });
+  }
+
+  function pulseIcon(btn) {
+    const icon = $(".cat__icon", btn);
+    icon.classList.remove("pulse");
+    void icon.offsetWidth;
+    icon.classList.add("pulse");
+    icon.addEventListener("animationend", () => icon.classList.remove("pulse"), { once: true });
+  }
+
+  function setActive(i, { instant = false } = {}) {
+    if (i === active || !buttons[i]) return;
+    active = i;
+    buttons.forEach((b, j) => {
+      b.classList.toggle("is-active", j === i);
+      b.setAttribute("aria-current", j === i ? "true" : "false");
+    });
+    movePill(buttons[i], !instant);
+    centerButton(buttons[i]);
+  }
+
+  /* ---- الإيموجي الطائر: يطير من زر القسم ويهبط على عنوانه ---- */
+  function cancelFlight() {
+    if (flight.anim) flight.anim.cancel();
+    if (flight.el) flight.el.remove();
+    if (flight.icon) flight.icon.style.visibility = "";
+    flight = {};
+  }
+
+  function fly(btn, titleIcon) {
+    const from = $(".cat__icon", btn);
+    const a = from.getBoundingClientRect();
+    const b = titleIcon.getBoundingClientRect();
+    const fromSize = parseFloat(getComputedStyle(from).fontSize);
+    const scale = parseFloat(getComputedStyle(titleIcon).fontSize) / fromSize;
+    const dx = b.left - a.left;
+    const dy = b.top - a.top;
+
+    const el = document.createElement("span");
+    el.className = "fly";
+    el.setAttribute("aria-hidden", "true");
+    el.textContent = from.textContent;
+    el.style.cssText = `left:${a.left}px;top:${a.top}px;font-size:${fromSize}px`;
+    document.body.append(el);
+
+    const anim = el.animate(
+      [
+        { transform: "translate(0,0) scale(1) rotate(0deg)" },
+        {
+          transform: `translate(${dx * 0.55}px, ${dy * 0.55 - 46}px) scale(${1 + (scale - 1) * 0.7}) rotate(-14deg)`,
+          offset: 0.5,
+        },
+        { transform: `translate(${dx}px, ${dy}px) scale(${scale}) rotate(0deg)` },
+      ],
+      { duration: 700, easing: "cubic-bezier(0.3, 0.1, 0.3, 1)", fill: "forwards" }
+    );
+    flight = { el, icon: titleIcon, anim };
+    anim.onfinish = () => {
+      el.remove();
+      titleIcon.style.visibility = "";
+      titleIcon.classList.remove("pop");
+      void titleIcon.offsetWidth;
+      titleIcon.classList.add("pop");
+      flight = {};
+    };
+  }
+
+  // لو السكرول وقف مو بالمكان بالضبط (بسبب الأقسام الي ما انرسمت)، نصححه
+  function realign(sec) {
+    const diff = sec.getBoundingClientRect().top - (bar.offsetHeight + 8);
+    if (Math.abs(diff) > 4) scrollTo({ top: scrollY + diff, behavior: "instant" });
+  }
+
+  function unlock() {
+    locked = false;
+    const fn = arrive;
+    arrive = null;
+    if (fn) fn();
+  }
+
+  function goTo(i) {
+    cancelFlight();
+    locked = true;
+    clearTimeout(lockTimer);
+    lockTimer = setTimeout(unlock, 500);
+    setActive(i);
+    pulseIcon(buttons[i]);
+
+    const sec = sections[i];
+    const icon = $(".menu-section__icon", sec);
+    icon.style.visibility = "hidden";
+    flight = { icon };
+    arrive = () => {
+      realign(sec);
+      revealVisible();
+      fly(buttons[i], icon);
+    };
+    sec.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function buildNav(keepId) {
+    inner.querySelectorAll(".cat").forEach((b) => b.remove());
     inner.insertAdjacentHTML(
       "beforeend",
       cats
@@ -113,124 +281,159 @@
         )
         .join("")
     );
+    buttons = [...inner.querySelectorAll(".cat")];
+    sections = buttons.map((b) => document.getElementById("cat-" + b.dataset.cat));
+    buttons.forEach((btn, i) => btn.addEventListener("click", () => goTo(i)));
+    active = -1;
+    setActive(Math.max(0, cats.findIndex((c) => c.id === keepId)), { instant: true });
     bar.hidden = false;
-
-    const buttons = [...inner.querySelectorAll(".cat")];
-    const sections = buttons.map((b) => document.getElementById("cat-" + b.dataset.cat));
-    let active = -1;
-    let locked = false; // نوقف التتبع أثناء السكرول الي سببه ضغطة على قسم
-    let lockTimer;
-
-    // الحبة تنزلق لزر القسم النشط
-    function movePill(btn, animate) {
-      if (!animate) pill.style.transition = "none";
-      pill.style.width = btn.offsetWidth + "px";
-      pill.style.transform = `translateX(${btn.offsetLeft}px)`;
-      if (!animate) {
-        void pill.offsetWidth;
-        pill.style.transition = "";
-      }
-    }
-
-    // الشريط يحرك نفسه عشان القسم النشط يبقى بالنص
-    function centerButton(btn) {
-      const b = btn.getBoundingClientRect();
-      const t = track.getBoundingClientRect();
-      const delta = b.left + b.width / 2 - (t.left + t.width / 2);
-      if (Math.abs(delta) > 2) track.scrollBy({ left: delta, behavior: "smooth" });
-    }
-
-    function pulseIcon(btn) {
-      const icon = $(".cat__icon", btn);
-      icon.classList.remove("pulse");
-      void icon.offsetWidth;
-      icon.classList.add("pulse");
-      icon.addEventListener("animationend", () => icon.classList.remove("pulse"), { once: true });
-    }
-
-    function setActive(i, { instant = false } = {}) {
-      if (i === active) return;
-      active = i;
-      buttons.forEach((b, j) => {
-        b.classList.toggle("is-active", j === i);
-        b.setAttribute("aria-current", j === i ? "true" : "false");
-      });
-      movePill(buttons[i], !instant);
-      centerButton(buttons[i]);
-    }
-
-    // ضغطة على قسم: النبضة + سكرول ناعم
-    buttons.forEach((btn, i) => {
-      btn.addEventListener("click", () => {
-        locked = true;
-        clearTimeout(lockTimer);
-        lockTimer = setTimeout(() => (locked = false), 500);
-        setActive(i);
-        pulseIcon(btn);
-        sections[i].scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    });
-
-    // تتبع السكرول: القسم الي قدامك هو النشط
-    let ticking = false;
-    function spy() {
-      ticking = false;
-      if (locked) return;
-      const line = bar.offsetHeight + 24;
-      let idx = 0;
-      sections.forEach((s, i) => {
-        if (s.getBoundingClientRect().top <= line) idx = i;
-      });
-      const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
-      if (atBottom) idx = sections.length - 1;
-      setActive(idx);
-    }
-
-    addEventListener(
-      "scroll",
-      () => {
-        if (locked) {
-          clearTimeout(lockTimer);
-          lockTimer = setTimeout(() => (locked = false), 140);
-          return;
-        }
-        if (!ticking) {
-          ticking = true;
-          requestAnimationFrame(spy);
-        }
-      },
-      { passive: true }
-    );
-
-    // الشريط يثبت: يطلع اللوقو المصغر والظل
-    new IntersectionObserver(
-      ([e]) => bar.classList.toggle("is-stuck", !e.isIntersecting && e.boundingClientRect.top < 0),
-      { threshold: 0 }
-    ).observe($("#catSentinel"));
-
-    $("#catLogo").addEventListener("click", () => scrollTo({ top: 0, behavior: "smooth" }));
-
-    // إعادة ضبط الحبة لو تغير الحجم أو نزل الخط
-    const replace = () => active >= 0 && movePill(buttons[active], false);
-    new ResizeObserver(replace).observe(inner);
-    new ResizeObserver(replace).observe(track);
-    document.fonts && document.fonts.ready.then(replace);
-
-    setActive(0, { instant: true });
-    spy();
   }
 
-  /* ---------- تشغيل ---------- */
+  /* ---- تتبع السكرول ---- */
+  let ticking = false;
+  let lastY = scrollY;
+
+  function spy() {
+    ticking = false;
+    if (locked || !sections.length) return;
+    const line = bar.offsetHeight + 24;
+    let idx = 0;
+    sections.forEach((s, i) => {
+      if (s.getBoundingClientRect().top <= line) idx = i;
+    });
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) idx = sections.length - 1;
+    setActive(idx);
+  }
+
+  addEventListener(
+    "scroll",
+    () => {
+      const y = scrollY;
+      if (Math.abs(y - lastY) > 1) {
+        scrollDir = y > lastY ? "down" : "up";
+        lastY = y;
+      }
+      if (locked) {
+        clearTimeout(lockTimer);
+        lockTimer = setTimeout(unlock, 140);
+        return;
+      }
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(spy);
+      }
+    },
+    { passive: true }
+  );
+
+  // الشريط يثبت: اللوقو المصغر والظل
+  new IntersectionObserver(
+    ([e]) => bar.classList.toggle("is-stuck", !e.isIntersecting && e.boundingClientRect.top < 0),
+    { threshold: 0 }
+  ).observe($("#catSentinel"));
+
+  $("#catLogo").addEventListener("click", () => scrollTo({ top: 0, behavior: "smooth" }));
+
+  const replacePill = () => active >= 0 && movePill(buttons[active], false);
+  new ResizeObserver(replacePill).observe(inner);
+  new ResizeObserver(replacePill).observe(track);
+  document.fonts && document.fonts.ready.then(replacePill);
+
+  /* ======================================================
+     اللغة
+  ====================================================== */
+  function updateStatic() {
+    const s = T();
+    document.title = s.title;
+    bar.setAttribute("aria-label", s.nav);
+    $("#catLogo").setAttribute("aria-label", s.top);
+    $(".brand__logo").alt = s.logoAlt;
+    $("#langLabel").textContent = s.langBtn;
+    $("#langBtn").setAttribute("aria-label", s.langAria);
+    updateThemeBtn();
+  }
+
+  function applyLang(next) {
+    cancelFlight();
+    lang = next;
+    store.set("taza-lang", next);
+    html.lang = next;
+    html.dir = next === "ar" ? "rtl" : "ltr";
+    const keep = cats[active] && cats[active].id;
+    updateStatic();
+    if (!data) return;
+    renderMenu();
+    buildNav(keep);
+    observeCards();
+  }
+
+  function switchLang() {
+    const next = lang === "ar" ? "en" : "ar";
+    if (document.startViewTransition) document.startViewTransition(() => applyLang(next));
+    else applyLang(next);
+  }
+
+  /* ======================================================
+     الوضع الصباحي / الليلي
+  ====================================================== */
+  function updateThemeBtn() {
+    const dark = html.dataset.theme === "dark";
+    $("#themeBtn").setAttribute("aria-label", dark ? T().toLight : T().toDark);
+  }
+
+  function setTheme(next, cx, cy) {
+    const apply = () => {
+      html.dataset.theme = next;
+      store.set("taza-theme", next);
+      updateThemeBtn();
+    };
+    if (!document.startViewTransition) return apply();
+
+    html.classList.add("vt-theme");
+    const vt = document.startViewTransition(apply);
+    vt.ready
+      .then(() => {
+        const r = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy));
+        html.animate(
+          { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${r}px at ${cx}px ${cy}px)`] },
+          { duration: 650, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" }
+        );
+      })
+      .catch(() => {});
+    vt.finished.finally(() => html.classList.remove("vt-theme"));
+  }
+
+  $("#themeBtn").addEventListener("click", (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setTheme(html.dataset.theme === "dark" ? "light" : "dark", r.left + r.width / 2, r.top + r.height / 2);
+  });
+  $("#langBtn").addEventListener("click", switchLang);
+
+  // لو الزائر ما اختار وضع بنفسه، نتبع إعداد جهازه
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+    if (!store.get("taza-theme")) {
+      html.dataset.theme = e.matches ? "dark" : "light";
+      updateThemeBtn();
+    }
+  });
+
+  /* ======================================================
+     تشغيل
+  ====================================================== */
   async function init() {
-    const data = await loadData();
-    if (!data) {
-      $("#menu").innerHTML =
-        '<p class="menu-error">تعذّر تحميل المنيو.<br>إذا فتحت الملف مباشرة، شغّل الموقع عبر Live Server (أو أي سيرفر محلي).</p>';
+    updateStatic();
+    try {
+      const res = await fetch("data/menu.json");
+      if (!res.ok) throw new Error(res.status);
+      data = await res.json();
+    } catch (err) {
+      $("#menu").innerHTML = `<p class="menu-error">${T().error}</p>`;
       return;
     }
-    const cats = renderMenu(data);
-    revealOnScroll();
-    initCatBar(cats);
+    renderMenu();
+    buildNav();
+    observeCards();
+    spy();
   }
 
   init();
