@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- نضبط اللغة والوضع قبل أول رسم عشان ما يحصل وميض -->
+  <script>
+    (function () {
+      try {
+        var l = localStorage.getItem("taza-lang") || "ar";
+        var t = localStorage.getItem("taza-theme") ||
+          (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        var d = document.documentElement;
+        d.lang = l; d.dir = l === "ar" ? "rtl" : "ltr"; d.dataset.theme = t;
+      } catch (e) { document.documentElement.dataset.theme = "light"; }
+    })();
+  </script>
+
   <title>TAZA 041 | المنيو</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,6 +60,15 @@
 
     <!-- ========== الهيدر: الغلاف + اللوقو ========== -->
     <header class="header">
+      <!-- أزرار الوضع واللغة (زاويتي الغلاف) -->
+      <button class="ctl ctl--theme" id="themeBtn" type="button" aria-label="تفعيل الوضع الليلي">
+        <span class="ctl__icon ctl__icon--moon" aria-hidden="true">🌙</span>
+        <span class="ctl__icon ctl__icon--sun" aria-hidden="true">☀️</span>
+      </button>
+      <button class="ctl ctl--lang" id="langBtn" type="button" aria-label="Switch to English">
+        <span id="langLabel">EN</span>
+      </button>
+
       <div class="cover" aria-hidden="true">
         <div class="cover__pattern"></div>
       </div>
