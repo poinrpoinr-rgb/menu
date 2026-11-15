@@ -21,8 +21,8 @@ html, body { height: 100%; }
 body {
   margin: 0;
   font-family: var(--font-body);
-  color: var(--ink);
-  background: var(--cream);
+  color: var(--text);
+  background: var(--bg);
 }
 
 body.is-loading { overflow: hidden; }
@@ -34,6 +34,7 @@ body.is-loading { overflow: hidden; }
   z-index: 100;
   display: grid;
   place-items: center;
+  color: var(--ink);
   background: linear-gradient(160deg, var(--cheddar-light), var(--cheddar-deep));
   transition: opacity 0.45s ease;
 }
@@ -262,10 +263,10 @@ body.is-ready .brand__tagline {
 .catbar[hidden] { display: none; }
 
 .catbar.is-stuck {
-  background: rgba(255, 247, 230, 0.97);
+  background: var(--bar-bg);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  box-shadow: 0 6px 18px rgba(21, 18, 16, 0.12);
+  box-shadow: var(--bar-shadow);
 }
 
 /* اللوقو المصغر: يطلع لما الشريط يثبت */
@@ -338,7 +339,7 @@ body.is-ready .brand__tagline {
   border-radius: 99px;
   background: none;
   font: 700 1rem var(--font-body);
-  color: rgba(21, 18, 16, 0.6);
+  color: var(--muted);
   white-space: nowrap;
   cursor: pointer;
   transition: color 0.3s ease;
@@ -398,9 +399,9 @@ body.is-ready .brand__tagline {
   flex-direction: column;
   overflow: hidden;
   border-radius: 22px;
-  background: #fffdf8;
-  border: 1px solid rgba(21, 18, 16, 0.08);
-  box-shadow: 0 10px 22px -16px rgba(21, 18, 16, 0.45);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  box-shadow: var(--card-shadow);
   transition: transform 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -460,6 +461,7 @@ body.is-ready .brand__tagline {
   padding: 0.25rem 0.65rem;
   border-radius: 99px;
   background: var(--cream);
+  color: var(--ink);
   font-weight: 700;
   font-size: 0.8rem;
 }
@@ -494,7 +496,7 @@ body.is-ready .brand__tagline {
   margin: 0;
   font-size: 0.88rem;
   line-height: 1.55;
-  color: rgba(21, 18, 16, 0.62);
+  color: var(--muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -546,4 +548,104 @@ body.is-ready .brand__tagline {
 
 @keyframes price-pop {
   from { opacity: 0; transform: scale(0.4); }
+}
+
+/* ========== الوضع الصباحي / الليلي ========== */
+:root {
+  --bg: #fff7e6;
+  --surface: #fffdf8;
+  --text: #151210;
+  --muted: rgba(21, 18, 16, 0.62);
+  --line-soft: rgba(21, 18, 16, 0.08);
+  --bar-bg: rgba(255, 247, 230, 0.97);
+  --bar-shadow: 0 6px 18px rgba(21, 18, 16, 0.12);
+  --card-shadow: 0 10px 22px -16px rgba(21, 18, 16, 0.45);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #16120f;
+  --surface: #211c18;
+  --text: #f6ecd9;
+  --muted: rgba(246, 236, 217, 0.66);
+  --line-soft: rgba(246, 236, 217, 0.1);
+  --bar-bg: rgba(22, 18, 15, 0.96);
+  --bar-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --card-shadow: 0 10px 22px -16px rgba(0, 0, 0, 0.8);
+  color-scheme: dark;
+}
+
+/* دائرة تتوسع من الزر وقت تبديل الوضع */
+html.vt-theme::view-transition-old(root),
+html.vt-theme::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html.vt-theme::view-transition-old(root) { z-index: 1; }
+html.vt-theme::view-transition-new(root) { z-index: 2; }
+
+/* ========== أزرار اللغة والوضع ========== */
+.header { position: relative; }
+
+.ctl {
+  position: absolute;
+  top: 0.75rem;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 247, 230, 0.92);
+  color: var(--ink);
+  font: 700 0.95rem var(--font-body);
+  box-shadow: 0 4px 12px rgba(21, 18, 16, 0.22);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.ctl:active { transform: scale(0.9); }
+.ctl:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* مكانهم ثابت حتى لو انقلب اتجاه الصفحة */
+.ctl--lang { right: 0.75rem; }
+.ctl--theme { left: 0.75rem; }
+
+.ctl__icon {
+  grid-area: 1 / 1;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+.ctl__icon--sun { opacity: 0; transform: rotate(-90deg) scale(0.4); }
+:root[data-theme="dark"] .ctl__icon--moon { opacity: 0; transform: rotate(90deg) scale(0.4); }
+:root[data-theme="dark"] .ctl__icon--sun { opacity: 1; transform: none; }
+
+/* شريط التحميل يتعبى من جهة اللغة */
+[dir="ltr"] .loader__fill { transform-origin: left center; }
+
+/* ========== حركة الانتقال للقسم (الإيموجي الطائر) ========== */
+.fly {
+  position: fixed;
+  z-index: 200;
+  line-height: 1;
+  pointer-events: none;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.menu-section__icon { display: inline-block; line-height: 1; }
+.menu-section__icon.pop { animation: icon-pulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* ========== الأطباق تروح وتجي (حسب اتجاه السكرول) ========== */
+.dish.is-in[data-from="up"] { animation-name: dish-in-up; }
+
+@keyframes dish-in-up {
+  from { opacity: 0; transform: translateY(-22px) scale(0.97); }
+}
+
+/* ========== أداء: الأقسام البعيدة ما تنرسم لين تقرب ========== */
+.menu-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 700px;
+  padding-bottom: 0.5rem;
 }
