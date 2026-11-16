@@ -73,13 +73,14 @@
       "name_en": "French Fries",
       "description": "بطاطا ذهبية مقرمشة مع الكاتشب",
       "description_en": "Golden crispy fries with ketchup",
-      "price": 15000,
+      "price": 150,
       "image": "",
       "available": true,
       "featured": false,
       "tags": [
         "vegetarian"
-      ]
+      ],
+      "allergens": []
     },
     {
       "id": 2,
@@ -88,12 +89,17 @@
       "name_en": "Mozzarella Sticks",
       "description": "6 قطع مقرمشة بقلب الجبن الذائب",
       "description_en": "6 crispy sticks with melted cheese",
-      "price": 28000,
+      "price": 280,
       "image": "",
       "available": true,
       "featured": false,
       "tags": [
         "vegetarian"
+      ],
+      "allergens": [
+        "dairy",
+        "gluten",
+        "eggs"
       ]
     },
     {
@@ -103,12 +109,16 @@
       "name_en": "Chicken Wings",
       "description": "أجنحة متبلة مع صوص حار",
       "description_en": "Seasoned wings with hot sauce",
-      "price": 32000,
+      "price": 320,
       "image": "",
       "available": true,
       "featured": true,
       "tags": [
         "spicy"
+      ],
+      "allergens": [
+        "soy",
+        "sesame"
       ]
     },
     {
@@ -118,11 +128,17 @@
       "name_en": "Classic Burger",
       "description": "لحم مشوي مع جبن شيدر وخس وطماطم",
       "description_en": "Grilled beef with cheddar, lettuce and tomato",
-      "price": 38000,
+      "price": 380,
       "image": "",
       "available": true,
       "featured": false,
-      "tags": []
+      "tags": [],
+      "allergens": [
+        "gluten",
+        "dairy",
+        "sesame",
+        "eggs"
+      ]
     },
     {
       "id": 5,
@@ -131,11 +147,16 @@
       "name_en": "Crispy Chicken Burger",
       "description": "صدر دجاج مقرمش مع مايونيز",
       "description_en": "Crispy chicken breast with mayo",
-      "price": 34000,
+      "price": 340,
       "image": "",
       "available": true,
       "featured": false,
-      "tags": []
+      "tags": [],
+      "allergens": [
+        "gluten",
+        "eggs",
+        "sesame"
+      ]
     },
     {
       "id": 6,
@@ -144,11 +165,17 @@
       "name_en": "Double Cheddar Burger",
       "description": "قطعتين لحم مع جبن شيدر مضاعف",
       "description_en": "Two patties with double cheddar",
-      "price": 52000,
+      "price": 520,
       "image": "",
       "available": true,
       "featured": true,
-      "tags": []
+      "tags": [],
+      "allergens": [
+        "gluten",
+        "dairy",
+        "sesame",
+        "eggs"
+      ]
     },
     {
       "id": 7,
@@ -157,11 +184,15 @@
       "name_en": "Chicken Shawarma",
       "description": "شاورما دجاج مع ثوم ومخلل",
       "description_en": "Chicken shawarma with garlic and pickles",
-      "price": 22000,
+      "price": 220,
       "image": "",
       "available": true,
       "featured": false,
-      "tags": []
+      "tags": [],
+      "allergens": [
+        "gluten",
+        "eggs"
+      ]
     },
     {
       "id": 8,
@@ -170,12 +201,17 @@
       "name_en": "Zinger",
       "description": "دجاج مقرمش حار مع صوص الرانش",
       "description_en": "Spicy crispy chicken with ranch",
-      "price": 30000,
+      "price": 300,
       "image": "",
       "available": true,
       "featured": true,
       "tags": [
         "spicy"
+      ],
+      "allergens": [
+        "gluten",
+        "dairy",
+        "eggs"
       ]
     },
     {
@@ -185,11 +221,15 @@
       "name_en": "Crispy Sandwich",
       "description": "قطع دجاج مقرمشة مع بطاطا",
       "description_en": "Crispy chicken strips with fries",
-      "price": 36000,
+      "price": 360,
       "image": "",
       "available": true,
       "featured": false,
-      "tags": []
+      "tags": [],
+      "allergens": [
+        "gluten",
+        "eggs"
+      ]
     },
     {
       "id": 10,
@@ -198,13 +238,14 @@
       "name_en": "Lemon Mint",
       "description": "عصير ليمون طازج مع نعناع",
       "description_en": "Fresh lemon juice with mint",
-      "price": 12000,
+      "price": 120,
       "image": "",
       "available": true,
       "featured": false,
       "tags": [
         "vegetarian"
-      ]
+      ],
+      "allergens": []
     },
     {
       "id": 11,
@@ -213,11 +254,12 @@
       "name_en": "Cola",
       "description": "علبة باردة",
       "description_en": "Cold can",
-      "price": 8000,
+      "price": 80,
       "image": "",
       "available": true,
       "featured": false,
-      "tags": []
+      "tags": [],
+      "allergens": []
     },
     {
       "id": 12,
@@ -226,12 +268,15 @@
       "name_en": "Milkshake",
       "description": "فانيلا أو شوكولا أو فراولة",
       "description_en": "Vanilla, chocolate or strawberry",
-      "price": 25000,
+      "price": 250,
       "image": "",
       "available": true,
       "featured": false,
       "tags": [
         "vegetarian"
+      ],
+      "allergens": [
+        "dairy"
       ]
     }
   ]
