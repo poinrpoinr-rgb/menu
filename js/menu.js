@@ -1,4 +1,4 @@
-/* ========== المنيو: البيانات + العرض + شريط الأقسام + النافذة + اللغة + الوضع ========== */
+/* ========== المنيو: البيانات + العرض + شريط الأقسام + البحث الهلامي + النافذة + اللغة + الوضع ========== */
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const html = document.documentElement;
@@ -17,6 +17,8 @@
       toDark: "تفعيل الوضع الليلي", toLight: "تفعيل الوضع الصباحي",
       close: "إغلاق", priceLabel: "السعر", prevDish: "الطبق السابق", nextDish: "الطبق التالي",
       ingTitle: "المكونات", allergensTitle: "مسببات الحساسية",
+      searchBtnAria: "بحث في المنيو", searchPlaceholder: "ابحث عن وجبتك، مكون، أو قسم...",
+      searchClearAria: "مسح البحث", noResults: "ما لقينا طبق بهذا الاسم! جرب كلمة ثانية 🍔",
       error: "تعذّر تحميل المنيو.<br>إذا فتحت الملف مباشرة، شغّل الموقع عبر Live Server (أو أي سيرفر محلي).",
     },
     en: {
@@ -26,6 +28,8 @@
       toDark: "Switch to dark mode", toLight: "Switch to light mode",
       close: "Close", priceLabel: "Price", prevDish: "Previous dish", nextDish: "Next dish",
       ingTitle: "Ingredients", allergensTitle: "Allergens",
+      searchBtnAria: "Search menu", searchPlaceholder: "Search for a dish, ingredient...",
+      searchClearAria: "Clear search", noResults: "No matching dishes found! Try another word 🍔",
       error: "Couldn't load the menu.<br>If you opened the file directly, run the site with Live Server (or any local server).",
     },
   };
@@ -65,7 +69,7 @@
     },
   };
 
-  // مسببات حساسية افتراضية لكل وجبة عشان تشتغل فوراً حتى لو المتصفح مسوي كاش لملف menu.json القديم
+  // مسببات حساسية افتراضية لكل وجبة
   const DEFAULT_ALLERGENS_BY_ID = {
     1: [],
     2: ["dairy", "gluten", "eggs"],
@@ -91,7 +95,7 @@
   let data = null;
   let cats = [];
   let cards = [];
-  let orderedItems = []; // قائمة الأطباق المرتبة حسب ظهورها في المنيو للتقليب داخل النافذة
+  let orderedItems = [];
 
   /* ======================================================
      عرض الأقسام والبطاقات
@@ -124,7 +128,6 @@
 
     $("#menu").innerHTML = cats
       .map((c) => {
-        // المميزة أول القسم عشان البطاقات العريضة ما تخلي فراغات في الشبكة
         const items = data.items
           .filter((i) => i.category === c.id && i.available !== false)
           .sort((x, y) => Number(!!y.featured) - Number(!!x.featured));
@@ -145,11 +148,238 @@
       })
       .join("");
 
-    // لو صورة طبق ما انحملت نخفيها ويبقى البديل (التدرج + الإيموجي)
     $("#menu").querySelectorAll(".dish__media img").forEach((img) =>
       img.addEventListener("error", () => img.remove())
     );
   }
+
+  /* ======================================================
+     شريط البحث والاقتراحات (Jelly Pop Search)
+  ====================================================== */
+  const searchToggle = $("#searchToggle");
+  const searchWrap = $("#searchWrap");
+  const searchInput = $("#searchInput");
+  const searchClear = $("#searchClear");
+  const searchChips = $("#searchChips");
+  const searchSuggestions = $("#searchSuggestions");
+
+  let isSearchOpen = false;
+  let activeChipFilter = "";
+
+  // توحيد الحروف العربية للبحث الذكي (أ، إ، آ -> ا / ة -> ه)
+  function normText(str) {
+    return String(str || "")
+      .toLowerCase()
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .trim();
+  }
+
+  // تظليل النص المطابق داخل اسم الاقتراح
+  function highlightText(text, query) {
+    const cleanText = String(text || "");
+    if (!query || query.startsWith("#")) return esc(cleanText);
+    const q = query.trim();
+    if (!q) return esc(cleanText);
+    const idx = normText(cleanText).indexOf(normText(q));
+    if (idx === -1) return esc(cleanText);
+    const before = cleanText.slice(0, idx);
+    const match = cleanText.slice(idx, idx + q.length);
+    const after = cleanText.slice(idx + q.length);
+    return `${esc(before)}<mark class="suggestion-item__hl">${esc(match)}</mark>${esc(after)}`;
+  }
+
+  // بناء كبسولات الاقتراحات السريعة بحركة Jelly Pop
+  function renderQuickChips() {
+    const chips = [
+      { id: "#featured", label: `🔥 ${T().featured}` },
+      { id: "#spicy", label: `🌶️ ${T().spicy}` },
+      { id: "#vegetarian", label: `🌱 ${T().vegetarian}` },
+      ...cats.map((c) => ({ id: pick(c, "name"), label: `${c.icon} ${pick(c, "name")}` })),
+    ];
+
+    searchChips.innerHTML = chips
+      .map(
+        (ch, i) => `
+      <button class="search-chip${activeChipFilter === ch.id ? " is-active" : ""}" type="button" data-q="${esc(ch.id)}" style="--jd:${i * 55}ms">
+        ${esc(ch.label)}
+      </button>`
+      )
+      .join("");
+  }
+
+  // فلترة الأطباق وإظهار الاقتراحات الفورية بحركة Jelly Wobble
+  function runSearch(rawQuery) {
+    const q = normText(rawQuery);
+    searchClear.hidden = !rawQuery && !activeChipFilter;
+
+    if (!q && !activeChipFilter) {
+      searchSuggestions.hidden = true;
+      searchSuggestions.innerHTML = "";
+      // إرجاع كل البطاقات والأقسام للوضع الطبيعي
+      cards.forEach((c) => (c.hidden = false));
+      sections.forEach((s) => s && (s.hidden = false));
+      revealVisible();
+      return;
+    }
+
+    const cur = pick(data.restaurant, "currency");
+    const matchedIndices = [];
+
+    orderedItems.forEach((entry, idx) => {
+      const { item, cat } = entry;
+      let match = false;
+
+      if (activeChipFilter === "#featured") {
+        match = !!item.featured;
+      } else if (activeChipFilter === "#spicy") {
+        match = (item.tags || []).includes("spicy");
+      } else if (activeChipFilter === "#vegetarian") {
+        match = (item.tags || []).includes("vegetarian");
+      } else {
+        const haystack = normText(
+          `${item.name} ${item.name_en} ${item.description} ${item.description_en} ${cat.name} ${cat.name_en}`
+        );
+        match = haystack.includes(q);
+      }
+
+      if (match) matchedIndices.push(idx);
+      if (cards[idx]) cards[idx].hidden = !match;
+    });
+
+    // إخفاء الأقسام الفارغة أثناء البحث
+    sections.forEach((sec) => {
+      if (!sec) return;
+      const hasVisible = sec.querySelector(".dish:not([hidden])");
+      sec.hidden = !hasVisible;
+    });
+
+    revealVisible();
+
+    // رسم قائمة الاقتراحات الفورية (كل اقتراح يأخذ تأخير --jd عشان يدخل بـ Jelly Wobble متتابع)
+    searchSuggestions.hidden = false;
+    if (matchedIndices.length === 0) {
+      searchSuggestions.innerHTML = `<div class="search-empty">${esc(T().noResults)}</div>`;
+      return;
+    }
+
+    searchSuggestions.innerHTML = matchedIndices
+      .slice(0, 6)
+      .map((idx, i) => {
+        const { item, cat } = orderedItems[idx];
+        const badges = [
+          item.featured ? "🔥" : "",
+          ...(item.tags || []).map((t) => TAG_ICONS[t] || ""),
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        return `
+        <button class="suggestion-item" type="button" role="option" data-idx="${idx}" style="--jd:${i * 60}ms">
+          <span class="suggestion-item__icon" aria-hidden="true">${esc(cat.icon)}</span>
+          <div class="suggestion-item__info">
+            <h4 class="suggestion-item__name">${highlightText(pick(item, "name"), rawQuery)} ${badges}</h4>
+            <div class="suggestion-item__meta">
+              <span>${esc(pick(cat, "name"))}</span>
+              <span>•</span>
+              <span>${esc(pick(item, "description"))}</span>
+            </div>
+          </div>
+          <span class="suggestion-item__price">${esc(price(item.price, cur))}</span>
+        </button>`;
+      })
+      .join("");
+  }
+
+  function openSearch() {
+    if (isSearchOpen) return;
+    isSearchOpen = true;
+    searchToggle.classList.add("is-active");
+    searchToggle.setAttribute("aria-expanded", "true");
+    renderQuickChips();
+    searchWrap.hidden = false;
+    searchWrap.classList.remove("is-closing");
+    void searchWrap.offsetWidth;
+    searchWrap.classList.add("is-open");
+    setTimeout(() => searchInput.focus(), 120);
+  }
+
+  function closeSearch() {
+    if (!isSearchOpen) return;
+    isSearchOpen = false;
+    searchToggle.classList.remove("is-active");
+    searchToggle.setAttribute("aria-expanded", "false");
+    searchWrap.classList.remove("is-open");
+    searchWrap.classList.add("is-closing");
+
+    // تصفير البحث وإظهار كل الأطباق
+    searchInput.value = "";
+    activeChipFilter = "";
+    runSearch("");
+
+    setTimeout(() => {
+      if (!isSearchOpen) {
+        searchWrap.hidden = true;
+        searchWrap.classList.remove("is-closing");
+      }
+    }, 260);
+  }
+
+  searchToggle.addEventListener("click", () => {
+    if (isSearchOpen) closeSearch();
+    else openSearch();
+  });
+
+  searchInput.addEventListener("input", () => {
+    activeChipFilter = "";
+    searchChips.querySelectorAll(".search-chip").forEach((b) => b.classList.remove("is-active"));
+    runSearch(searchInput.value);
+  });
+
+  searchClear.addEventListener("click", () => {
+    searchInput.value = "";
+    activeChipFilter = "";
+    searchChips.querySelectorAll(".search-chip").forEach((b) => b.classList.remove("is-active"));
+    runSearch("");
+    searchInput.focus();
+  });
+
+  // الضغط على إحدى الكبسولات السريعة
+  searchChips.addEventListener("click", (e) => {
+    const chip = e.target.closest(".search-chip");
+    if (!chip) return;
+    const q = chip.dataset.q;
+
+    if (activeChipFilter === q) {
+      activeChipFilter = "";
+      searchInput.value = "";
+      chip.classList.remove("is-active");
+      runSearch("");
+      return;
+    }
+
+    searchChips.querySelectorAll(".search-chip").forEach((b) => b.classList.remove("is-active"));
+    chip.classList.add("is-active");
+
+    if (q.startsWith("#")) {
+      activeChipFilter = q;
+      searchInput.value = "";
+      runSearch(q);
+    } else {
+      activeChipFilter = "";
+      searchInput.value = q;
+      runSearch(q);
+    }
+  });
+
+  // الضغط على اقتراح يفتح نافذة الطبق مباشرة
+  searchSuggestions.addEventListener("click", (e) => {
+    const itemBtn = e.target.closest(".suggestion-item");
+    if (!itemBtn) return;
+    const idx = Number(itemBtn.dataset.idx);
+    openModal(idx, itemBtn);
+  });
 
   /* ======================================================
      نافذة تفاصيل الطبق (Dish Modal)
@@ -207,14 +437,12 @@
     const { item, cat } = entry;
     const cur = pick(data.restaurant, "currency");
 
-    // أنيميشن التقليب يمين/يسار
     if (slideDir) {
       modalContent.classList.remove("slide-next", "slide-prev");
       void modalContent.offsetWidth;
       modalContent.classList.add(slideDir === "next" ? "slide-next" : "slide-prev");
     }
 
-    // الأيقونة والصورة
     modalIcon.textContent = cat.icon;
     if (item.image) {
       modalImg.src = item.image;
@@ -226,7 +454,6 @@
       modalImg.removeAttribute("src");
     }
 
-    // هل الطبق حار؟ نشغل توهج الخلفية وأنيميشن نفث النار من الفلفل مرة وحدة
     const isSpicy = (item.tags || []).includes("spicy");
     modalMedia.classList.remove("is-spicy-burst");
     if (isSpicy) {
@@ -234,7 +461,6 @@
       modalMedia.classList.add("is-spicy-burst");
     }
 
-    // الشارات (الأكثر طلباً + الحار مع نفث النار / النباتي)
     const badges = [];
     if (item.featured) {
       badges.push(`<span class="modal__badge modal__badge--featured" style="--bd:0.12s">🔥 ${esc(T().featured)}</span>`);
@@ -251,13 +477,11 @@
     });
     modalBadges.innerHTML = badges.join("");
 
-    // النصوص والمكونات
     modalCat.textContent = `${cat.icon} ${pick(cat, "name")}`;
     modalTitle.textContent = pick(item, "name");
     modalIngTitle.textContent = T().ingTitle;
     modalDesc.textContent = pick(item, "description");
 
-    // مسببات الحساسية (يقرأها من JSON أو من القائمة الافتراضية لو الكاش قديم)
     const rawAllergens = Array.isArray(item.allergens)
       ? item.allergens
       : (DEFAULT_ALLERGENS_BY_ID[item.id] || []);
@@ -281,7 +505,6 @@
       modalAllergensList.innerHTML = "";
     }
 
-    // السعر وعداد الأطباق
     modalPriceLabel.textContent = T().priceLabel;
     modalPrice.textContent = price(item.price, cur);
     modalCounter.textContent = `${idx + 1} / ${orderedItems.length}`;
@@ -291,7 +514,6 @@
     if (!orderedItems[idx]) return;
     lastFocusedCard = cardEl || null;
 
-    // تحديد نقطة انطلاق الأنيميشن من مكان البطاقة اللي انضغطت
     if (cardEl) {
       const r = cardEl.getBoundingClientRect();
       const ox = ((r.left + r.width / 2) / window.innerWidth) * 100;
@@ -330,7 +552,6 @@
     populateModal(nextIdx, delta > 0 ? "next" : "prev");
   }
 
-  // فتح النافذة عند النقر على أي بطاقة طبق
   $("#menu").addEventListener("click", (e) => {
     const cardEl = e.target.closest(".dish");
     if (!cardEl) return;
@@ -350,15 +571,18 @@
   modalPrev.addEventListener("click", () => stepModal(-1));
   modalNext.addEventListener("click", () => stepModal(1));
 
-  // اختصارات الكيبورد للنافذة (Escape للإغلاق + الأسهم للتقليب)
   window.addEventListener("keydown", (e) => {
-    if (modal.hidden) return;
-    if (e.key === "Escape") closeModal();
-    else if (e.key === "ArrowLeft") stepModal(lang === "ar" ? 1 : -1);
-    else if (e.key === "ArrowRight") stepModal(lang === "ar" ? -1 : 1);
+    if (!modal.hidden) {
+      if (e.key === "Escape") closeModal();
+      else if (e.key === "ArrowLeft") stepModal(lang === "ar" ? 1 : -1);
+      else if (e.key === "ArrowRight") stepModal(lang === "ar" ? -1 : 1);
+      return;
+    }
+    if (isSearchOpen && e.key === "Escape") {
+      closeSearch();
+    }
   });
 
-  // السحب بالإصبع على الجوال: لتحت (إغلاق) أو يمين/يسار (تقليب الأطباق)
   let touchStartX = 0;
   let touchStartY = 0;
   let touchDeltaX = 0;
@@ -380,7 +604,6 @@
     touchDeltaX = e.touches[0].clientX - touchStartX;
     touchDeltaY = e.touches[0].clientY - touchStartY;
 
-    // إذا السحب لتحت أقوى من السحب الجانبي، نحرك النافذة مع الإصبع
     if (touchDeltaY > 0 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX) && modalSheet.scrollTop <= 0) {
       const resist = Math.pow(touchDeltaY, 0.88);
       modalSheet.style.transform = `translateY(${resist}px)`;
@@ -392,13 +615,11 @@
     isDraggingSheet = false;
     modalSheet.style.transition = "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)";
 
-    // إذا سحب لتحت مسافة كافية نقفل النافذة
     if (touchDeltaY > 95 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX) && modalSheet.scrollTop <= 0) {
       closeModal();
       return;
     }
 
-    // إذا سحب يمين أو يسار نقلب للطابق التالي/السابق
     if (Math.abs(touchDeltaX) > 65 && Math.abs(touchDeltaX) > Math.abs(touchDeltaY) * 1.3) {
       const dir = touchDeltaX < 0 ? 1 : -1;
       stepModal(lang === "ar" ? -dir : dir);
@@ -411,7 +632,7 @@
      الأطباق تروح وتجي: تظهر وهي داخلة وتنمسح وهي طالعة
   ====================================================== */
   let scrollDir = "down";
-  let locked = false; // أثناء الانتقال لقسم نوقف حركة الأقسام الي نمر عليها
+  let locked = false;
 
   function reveal(card, i = 0) {
     if (card.classList.contains("is-in")) return;
@@ -423,6 +644,7 @@
   function revealVisible() {
     cards
       .filter((c) => {
+        if (c.hidden) return false;
         const r = c.getBoundingClientRect();
         return r.top < innerHeight * 0.92 && r.bottom > 0;
       })
@@ -527,7 +749,6 @@
     const a = from.getBoundingClientRect();
     const b = titleIcon.getBoundingClientRect();
 
-    // نحسب وين بيكون مكان العنوان على الشاشة لما يخلص السكرول
     const scrollDelta = targetScrollY - window.scrollY;
     const finalTop = b.top - scrollDelta;
     const finalLeft = b.left;
@@ -570,6 +791,7 @@
   }
 
   function goTo(i) {
+    if (isSearchOpen) closeSearch();
     if (!sections[i]) return;
     cancelFlight();
 
@@ -629,7 +851,6 @@
     scrollAnimId = requestAnimationFrame(step);
   }
 
-  // لو المستخدم لمس الشاشة أو حرك الماوس بنفسه أثناء الطيران، نوقف الطيران فوراً ونعطيه التحكم
   ["wheel", "touchmove"].forEach((evt) =>
     window.addEventListener(evt, () => { if (locked) cancelFlight(); }, { passive: true })
   );
@@ -666,7 +887,7 @@
     const line = bar.offsetHeight + 24;
     let idx = 0;
     sections.forEach((s, i) => {
-      if (s.getBoundingClientRect().top <= line) idx = i;
+      if (!s.hidden && s.getBoundingClientRect().top <= line) idx = i;
     });
     if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) idx = sections.length - 1;
     setActive(idx);
@@ -689,7 +910,6 @@
     { passive: true }
   );
 
-  // الشريط يثبت: اللوقو المصغر والظل
   new IntersectionObserver(
     ([e]) => bar.classList.toggle("is-stuck", !e.isIntersecting && e.boundingClientRect.top < 0),
     { threshold: 0 }
@@ -708,101 +928,4 @@
   function updateStatic() {
     const s = T();
     document.title = s.title;
-    bar.setAttribute("aria-label", s.nav);
-    $("#catLogo").setAttribute("aria-label", s.top);
-    $(".brand__logo").alt = s.logoAlt;
-    $("#langLabel").textContent = s.langBtn;
-    $("#langBtn").setAttribute("aria-label", s.langAria);
-    modalClose.setAttribute("aria-label", s.close);
-    modalPrev.setAttribute("aria-label", s.prevDish);
-    modalNext.setAttribute("aria-label", s.nextDish);
-    updateThemeBtn();
-  }
-
-  function applyLang(next) {
-    cancelFlight();
-    lang = next;
-    store.set("taza-lang", next);
-    html.lang = next;
-    html.dir = next === "ar" ? "rtl" : "ltr";
-    const keep = cats[active] && cats[active].id;
-    updateStatic();
-    if (!data) return;
-    renderMenu();
-    buildNav(keep);
-    observeCards();
-    if (!modal.hidden && currentModalIdx >= 0) populateModal(currentModalIdx);
-  }
-
-  function switchLang() {
-    const next = lang === "ar" ? "en" : "ar";
-    if (document.startViewTransition) document.startViewTransition(() => applyLang(next));
-    else applyLang(next);
-  }
-
-  /* ======================================================
-     الوضع الصباحي / الليلي
-  ====================================================== */
-  function updateThemeBtn() {
-    const dark = html.dataset.theme === "dark";
-    $("#themeBtn").setAttribute("aria-label", dark ? T().toLight : T().toDark);
-  }
-
-  function setTheme(next, cx, cy) {
-    const apply = () => {
-      html.dataset.theme = next;
-      store.set("taza-theme", next);
-      updateThemeBtn();
-    };
-    if (!document.startViewTransition) return apply();
-
-    html.classList.add("vt-theme");
-    const vt = document.startViewTransition(apply);
-    vt.ready
-      .then(() => {
-        const r = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy));
-        html.animate(
-          { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${r}px at ${cx}px ${cy}px)`] },
-          { duration: 650, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" }
-        );
-      })
-      .catch(() => {});
-    vt.finished.finally(() => html.classList.remove("vt-theme"));
-  }
-
-  $("#themeBtn").addEventListener("click", (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    setTheme(html.dataset.theme === "dark" ? "light" : "dark", r.left + r.width / 2, r.top + r.height / 2);
-  });
-  $("#langBtn").addEventListener("click", switchLang);
-
-  // لو الزائر ما اختار وضع بنفسه، نتبع إعداد جهازه
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-    if (!store.get("taza-theme")) {
-      html.dataset.theme = e.matches ? "dark" : "light";
-      updateThemeBtn();
-    }
-  });
-
-  /* ======================================================
-     تشغيل
-  ====================================================== */
-  async function init() {
-    updateStatic();
-    try {
-      // أضفنا cache: "no-store" عشان المتصفح دايماً يجيب أحدث نسخة من menu.json
-      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) throw new Error(res.status);
-      data = await res.json();
-    } catch (err) {
-      $("#menu").innerHTML = `<p class="menu-error">${T().error}</p>`;
-      return;
-    }
-    renderMenu();
-    buildNav();
-    observeCards();
-    spy();
-  }
-
-  init();
-})();
+    bar.setAttribute("aria-label
