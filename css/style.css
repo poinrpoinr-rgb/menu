@@ -25,7 +25,8 @@ body {
   background: var(--bg);
 }
 
-body.is-loading { overflow: hidden; }
+body.is-loading,
+body.modal-open { overflow: hidden; }
 
 /* ========== شاشة التحميل ========== */
 .loader {
@@ -418,8 +419,14 @@ body.is-ready .brand__tagline {
   background: var(--surface);
   border: 1px solid var(--line-soft);
   box-shadow: var(--card-shadow);
-  transition: transform 0.2s ease;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.dish:focus-visible {
+  outline: 2px solid var(--cheddar);
+  outline-offset: 3px;
 }
 
 .dish__media {
@@ -658,4 +665,377 @@ html.vt-theme::view-transition-new(root) { z-index: 2; }
 
 @keyframes dish-in-up {
   from { opacity: 0; transform: translateY(-22px) scale(0.97); }
+}
+
+/* ========== نافذة تفاصيل الطبق (Dish Modal) ========== */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.modal[hidden] { display: none; }
+
+@media (min-width: 640px) {
+  .modal {
+    align-items: center;
+    padding: 1.25rem;
+  }
+}
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 10, 8, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.modal.is-open .modal__backdrop { opacity: 1; }
+.modal.is-closing .modal__backdrop { opacity: 0; }
+
+.modal__sheet {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 500px;
+  max-height: 92dvh;
+  overflow: hidden;
+  border-radius: 30px 30px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  transform-origin: var(--origin-x, 50%) var(--origin-y, 100%);
+  will-change: transform, opacity;
+  touch-action: pan-y;
+}
+
+@media (min-width: 640px) {
+  .modal__sheet {
+    border-radius: 28px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* أنيميشن الفتح والغلق للنافذة */
+.modal.is-open .modal__sheet {
+  animation: modal-sheet-in 0.48s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+}
+
+.modal.is-closing .modal__sheet {
+  animation: modal-sheet-out 0.28s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes modal-sheet-in {
+  from { opacity: 0; transform: translateY(60px) scale(0.88); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes modal-sheet-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(70px) scale(0.92); }
+}
+
+/* مقبض السحب للجوال */
+.modal__handle {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 14px;
+  cursor: grab;
+}
+
+.modal__handle span {
+  width: 44px;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(21, 18, 16, 0.28);
+  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
+}
+
+@media (min-width: 640px) {
+  .modal__handle { display: none; }
+}
+
+/* زر الإغلاق */
+.modal__close {
+  position: absolute;
+  top: 0.9rem;
+  inset-inline-end: 0.9rem;
+  z-index: 11;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(21, 18, 16, 0.65);
+  color: var(--cream);
+  font-size: 1.05rem;
+  font-weight: 700;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal__close:hover { background: var(--ink); transform: scale(1.08) rotate(90deg); }
+.modal__close:active { transform: scale(0.9); }
+
+/* منطقة الصورة والإيموجي في النافذة */
+.modal__media {
+  position: relative;
+  aspect-ratio: 16 / 11;
+  overflow: hidden;
+  background: var(--cheddar);
+}
+
+.modal__ph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 25%, rgba(168, 76, 0, 0.18) 0 24px, transparent 25px),
+    radial-gradient(circle at 82% 70%, rgba(168, 76, 0, 0.18) 0 32px, transparent 33px),
+    radial-gradient(circle at 65% 20%, rgba(168, 76, 0, 0.13) 0 14px, transparent 15px),
+    radial-gradient(circle at 30% 78%, rgba(168, 76, 0, 0.13) 0 18px, transparent 19px),
+    linear-gradient(155deg, var(--cheddar-light), var(--cheddar-deep));
+}
+
+/* هالة خلف الإيموجي في النافذة */
+.modal__ph-ring {
+  position: absolute;
+  width: 135px;
+  height: 135px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 247, 230, 0.38) 0%, transparent 70%);
+  animation: modal-ring-pulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes modal-ring-pulse {
+  from { transform: scale(0.92); opacity: 0.7; }
+  to   { transform: scale(1.18); opacity: 1; }
+}
+
+.modal__ph-icon {
+  position: relative;
+  font-size: clamp(4.2rem, 16vw, 5.4rem);
+  filter: drop-shadow(0 12px 16px rgba(21, 18, 16, 0.3));
+  animation: modal-icon-float 3.2s ease-in-out infinite;
+}
+
+@keyframes modal-icon-float {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50%      { transform: translateY(-8px) rotate(-4deg) scale(1.05); }
+}
+
+.modal__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: modal-img-zoom 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.modal__img[hidden] { display: none; }
+
+@keyframes modal-img-zoom {
+  from { transform: scale(1.12); }
+  to   { transform: scale(1); }
+}
+
+/* شارات الطبق داخل النافذة (الأكثر طلباً / حار / نباتي) */
+.modal__badges {
+  position: absolute;
+  bottom: 0.85rem;
+  inset-inline: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  pointer-events: none;
+}
+
+.modal__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.8rem;
+  border-radius: 99px;
+  background: rgba(255, 247, 230, 0.96);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.84rem;
+  box-shadow: 0 4px 12px rgba(21, 18, 16, 0.2);
+  animation: badge-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: var(--bd, 0.15s);
+}
+
+.modal__badge--featured {
+  background: var(--ink);
+  color: var(--cheddar-light);
+}
+
+@keyframes badge-pop {
+  from { opacity: 0; transform: translateY(12px) scale(0.7); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* تفاصيل الطبق النصية */
+.modal__body {
+  padding: 1.25rem 1.35rem 1.4rem;
+}
+
+.modal__cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 99px;
+  background: rgba(245, 162, 29, 0.16);
+  color: var(--cheddar-deep);
+  font-weight: 700;
+  font-size: 0.82rem;
+  animation: item-up 0.4s ease 0.1s backwards;
+}
+
+:root[data-theme="dark"] .modal__cat {
+  color: var(--cheddar-light);
+}
+
+.modal__title {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.65rem, 6vw, 2.1rem);
+  line-height: 1.15;
+  color: var(--text);
+  animation: item-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.16s backwards;
+}
+
+.modal__desc {
+  margin: 0 0 1.35rem;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--muted);
+  animation: item-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.22s backwards;
+}
+
+@keyframes item-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* الشريط السفلي: السعر + التقليب بين الأطباق */
+.modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-soft);
+  animation: item-up 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.28s backwards;
+}
+
+.modal__price-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.modal__price-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.modal__price {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  line-height: 1.1;
+  color: var(--cheddar-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme="dark"] .modal__price {
+  color: var(--cheddar-light);
+}
+
+/* أزرار التقليب (السابق / التالي) */
+.modal__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg);
+  padding: 0.3rem 0.4rem;
+  border-radius: 99px;
+  border: 1px solid var(--line-soft);
+}
+
+.modal__step {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal__step:hover {
+  background: var(--cheddar);
+  color: var(--ink);
+}
+
+.modal__step:active { transform: scale(0.88); }
+
+/* قلب اتجاه الأسهم في الإنجليزي */
+[dir="ltr"] .modal__step svg { transform: scaleX(-1); }
+
+.modal__counter {
+  min-width: 3.6ch;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* حركة التقليب يمين ويسار داخل النافذة */
+.modal__content.slide-next {
+  animation: modal-slide-next 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.modal__content.slide-prev {
+  animation: modal-slide-prev 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes modal-slide-next {
+  from { opacity: 0; transform: translateX(-28px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes modal-slide-prev {
+  from { opacity: 0; transform: translateX(28px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
 }
