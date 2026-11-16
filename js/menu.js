@@ -65,6 +65,22 @@
     },
   };
 
+  // مسببات حساسية افتراضية لكل وجبة عشان تشتغل فوراً حتى لو المتصفح مسوي كاش لملف menu.json القديم
+  const DEFAULT_ALLERGENS_BY_ID = {
+    1: [],
+    2: ["dairy", "gluten", "eggs"],
+    3: ["soy", "sesame"],
+    4: ["gluten", "dairy", "sesame", "eggs"],
+    5: ["gluten", "eggs", "sesame"],
+    6: ["gluten", "dairy", "sesame", "eggs"],
+    7: ["gluten", "eggs"],
+    8: ["gluten", "dairy", "eggs"],
+    9: ["gluten", "eggs"],
+    10: [],
+    11: [],
+    12: ["dairy"],
+  };
+
   let lang = html.lang === "en" ? "en" : "ar";
   const T = () => UI[lang];
   const pick = (obj, key) => (lang === "en" && obj[key + "_en"]) || obj[key];
@@ -141,6 +157,7 @@
   const modal = $("#dishModal");
   const modalSheet = $("#modalSheet");
   const modalContent = $("#modalContent");
+  const modalMedia = $("#modalMedia");
   const modalBackdrop = $("#modalBackdrop");
   const modalClose = $("#modalClose");
   const modalImg = $("#modalImg");
@@ -161,6 +178,26 @@
 
   let currentModalIdx = -1;
   let lastFocusedCard = null;
+
+  // بناء شارة الفلفل الحار اللي ينفث نار وشرارات مرة واحدة عند فتح الطبق
+  function buildSpicyBadgeHtml(delaySec) {
+    const dirSign = lang === "ar" ? -1 : 1;
+    return `
+      <span class="modal__badge modal__badge--spicy" style="--bd:${delaySec}s">
+        <span class="chili-stage" aria-hidden="true">
+          <span class="chili-stage__pepper">🌶️</span>
+          <svg class="chili-stage__flame" viewBox="0 0 64 36">
+            <path d="M2 18 Q 18 3, 40 9 T 62 18 Q 42 33, 20 27 Z" fill="#ff3b00" opacity="0.92"/>
+            <path d="M4 18 Q 18 9, 34 13 T 50 18 Q 34 27, 18 23 Z" fill="#ff9e00"/>
+            <path d="M5 18 Q 14 13, 25 16 T 35 18 Q 25 23, 14 20 Z" fill="#fff394"/>
+          </svg>
+          <span class="chili-stage__spark" style="--sd:0.52s;--sx1:${14 * dirSign}px;--sy1:-6px;--sx2:${44 * dirSign}px;--sy2:-18px"></span>
+          <span class="chili-stage__spark" style="--sd:0.64s;--sx1:${18 * dirSign}px;--sy1:5px;--sx2:${52 * dirSign}px;--sy2:12px"></span>
+          <span class="chili-stage__spark" style="--sd:0.76s;--sx1:${12 * dirSign}px;--sy1:-2px;--sx2:${38 * dirSign}px;--sy2:4px"></span>
+        </span>
+        <span>${esc(T().spicy)}</span>
+      </span>`;
+  }
 
   function populateModal(idx, slideDir = "") {
     const entry = orderedItems[idx];
@@ -189,15 +226,26 @@
       modalImg.removeAttribute("src");
     }
 
-    // الشارات (الأكثر طلباً + الحار / النباتي)
+    // هل الطبق حار؟ نشغل توهج الخلفية وأنيميشن نفث النار من الفلفل مرة وحدة
+    const isSpicy = (item.tags || []).includes("spicy");
+    modalMedia.classList.remove("is-spicy-burst");
+    if (isSpicy) {
+      void modalMedia.offsetWidth;
+      modalMedia.classList.add("is-spicy-burst");
+    }
+
+    // الشارات (الأكثر طلباً + الحار مع نفث النار / النباتي)
     const badges = [];
     if (item.featured) {
       badges.push(`<span class="modal__badge modal__badge--featured" style="--bd:0.12s">🔥 ${esc(T().featured)}</span>`);
     }
     (item.tags || []).forEach((tg, i) => {
-      if (TAG_ICONS[tg]) {
+      const delay = (0.18 + i * 0.06).toFixed(2);
+      if (tg === "spicy") {
+        badges.push(buildSpicyBadgeHtml(delay));
+      } else if (TAG_ICONS[tg]) {
         badges.push(
-          `<span class="modal__badge" style="--bd:${0.18 + i * 0.06}s">${TAG_ICONS[tg]} ${esc(T()[tg])}</span>`
+          `<span class="modal__badge" style="--bd:${delay}s">${TAG_ICONS[tg]} ${esc(T()[tg])}</span>`
         );
       }
     });
@@ -209,8 +257,12 @@
     modalIngTitle.textContent = T().ingTitle;
     modalDesc.textContent = pick(item, "description");
 
-    // مسببات الحساسية (تظهر فقط لو المنتج فيه مسببات محددة)
-    const itemAllergens = (item.allergens || []).filter((key) => ALLERGENS[key]);
+    // مسببات الحساسية (يقرأها من JSON أو من القائمة الافتراضية لو الكاش قديم)
+    const rawAllergens = Array.isArray(item.allergens)
+      ? item.allergens
+      : (DEFAULT_ALLERGENS_BY_ID[item.id] || []);
+    const itemAllergens = rawAllergens.filter((key) => ALLERGENS[key]);
+
     if (itemAllergens.length > 0) {
       modalAllergensTitle.textContent = T().allergensTitle;
       modalAllergensList.innerHTML = itemAllergens
@@ -738,7 +790,8 @@
   async function init() {
     updateStatic();
     try {
-      const res = await fetch("data/menu.json");
+      // أضفنا cache: "no-store" عشان المتصفح دايماً يجيب أحدث نسخة من menu.json
+      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
       if (!res.ok) throw new Error(res.status);
       data = await res.json();
     } catch (err) {
