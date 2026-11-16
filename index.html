@@ -55,7 +55,7 @@
     </div>
   </div>
 
-  <!-- ========== محتوى الصفحة (مؤقت، نبنيه في المهام الجاية) ========== -->
+  <!-- ========== محتوى الصفحة ========== -->
   <main class="app" id="app">
 
     <!-- ========== الهيدر: الغلاف + اللوقو ========== -->
@@ -105,6 +105,54 @@
     <!-- ========== الأقسام والأطباق (تتعبى من menu.json) ========== -->
     <div class="menu" id="menu"></div>
   </main>
+
+  <!-- ========== نافذة تفاصيل الطبق (Modal) ========== -->
+  <div class="modal" id="dishModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+    <div class="modal__backdrop" id="modalBackdrop"></div>
+
+    <div class="modal__sheet" id="modalSheet">
+      <!-- مقبض السحب للجوال -->
+      <div class="modal__handle" id="modalHandle" aria-hidden="true"><span></span></div>
+
+      <!-- زر الإغلاق -->
+      <button class="modal__close" id="modalClose" type="button" aria-label="إغلاق">✕</button>
+
+      <!-- محتوى الطبق (يتحرك عند التقليب يمين/يسار) -->
+      <div class="modal__content" id="modalContent">
+        <div class="modal__media" id="modalMedia">
+          <div class="modal__ph" aria-hidden="true">
+            <span class="modal__ph-ring"></span>
+            <span class="modal__ph-icon" id="modalIcon"></span>
+          </div>
+          <img class="modal__img" id="modalImg" alt="" hidden>
+          <div class="modal__badges" id="modalBadges"></div>
+        </div>
+
+        <div class="modal__body">
+          <div class="modal__cat" id="modalCat"></div>
+          <h3 class="modal__title" id="modalTitle"></h3>
+          <p class="modal__desc" id="modalDesc"></p>
+
+          <div class="modal__footer">
+            <div class="modal__price-box">
+              <span class="modal__price-label" id="modalPriceLabel">السعر</span>
+              <span class="modal__price" id="modalPrice"></span>
+            </div>
+
+            <div class="modal__nav">
+              <button class="modal__step" id="modalPrev" type="button" aria-label="الطبق السابق">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+              <span class="modal__counter" id="modalCounter"></span>
+              <button class="modal__step" id="modalNext" type="button" aria-label="الطبق التالي">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="js/app.js"></script>
   <script src="js/menu.js"></script>
