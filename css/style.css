@@ -359,14 +359,31 @@ body.is-ready .brand__tagline {
   100% { transform: scale(1) rotate(0); }
 }
 
-/* ========== الأقسام (تصميم مؤقت، بطاقات الأطباق بمهمة لاحقة) ========== */
+/* ========== الأقسام ========== */
 .menu {
   max-width: 1080px;
   margin: 0 auto;
   padding: 0.5rem 1rem 6rem;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.28s ease;
+  will-change: transform;
 }
 
-.menu-section { padding-top: 1.5rem; scroll-margin-top: calc(var(--catbar-h) + 8px); }
+/* تأثير الطيران السريع على المنيو أثناء التنقل بين الأقسام */
+.menu.is-warping-down {
+  transform: scaleY(0.985) translateY(-8px);
+  filter: blur(1.2px);
+}
+
+.menu.is-warping-up {
+  transform: scaleY(0.985) translateY(8px);
+  filter: blur(1.2px);
+}
+
+.menu-section {
+  padding-top: 1.5rem;
+  padding-bottom: 0.5rem;
+  scroll-margin-top: calc(var(--catbar-h) + 8px);
+}
 .menu-section:last-child { min-height: 55vh; }
 
 .menu-section__title {
@@ -378,7 +395,6 @@ body.is-ready .brand__tagline {
   font-weight: 400;
   font-size: 1.9rem;
 }
-
 
 .menu-error { padding: 2rem 1rem; text-align: center; line-height: 1.8; }
 
@@ -629,8 +645,9 @@ html.vt-theme::view-transition-new(root) { z-index: 2; }
   z-index: 200;
   line-height: 1;
   pointer-events: none;
-  transform-origin: 0 0;
+  transform-origin: center center;
   will-change: transform;
+  filter: drop-shadow(0 10px 14px rgba(21, 18, 16, 0.28));
 }
 
 .menu-section__icon { display: inline-block; line-height: 1; }
@@ -641,11 +658,4 @@ html.vt-theme::view-transition-new(root) { z-index: 2; }
 
 @keyframes dish-in-up {
   from { opacity: 0; transform: translateY(-22px) scale(0.97); }
-}
-
-/* ========== أداء: الأقسام البعيدة ما تنرسم لين تقرب ========== */
-.menu-section {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 700px;
-  padding-bottom: 0.5rem;
 }
