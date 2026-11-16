@@ -1,4 +1,4 @@
-/* ========== المنيو: البيانات + العرض + شريط الأقسام + اللغة + الوضع ========== */
+/* ========== المنيو: البيانات + العرض + شريط الأقسام + النافذة + اللغة + الوضع ========== */
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const html = document.documentElement;
@@ -8,13 +8,14 @@
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
   };
 
-  /* ---------- النصوص الثابتة بالغتين ---------- */
+  /* ---------- النصوص الثابتة باللغتين ---------- */
   const UI = {
     ar: {
       featured: "الأكثر طلباً", spicy: "حار", vegetarian: "نباتي",
       nav: "أقسام المنيو", top: "الرجوع للأعلى", logoAlt: "شعار مطعم TAZA 041",
       title: "TAZA 041 | المنيو", langBtn: "EN", langAria: "Switch to English",
       toDark: "تفعيل الوضع الليلي", toLight: "تفعيل الوضع الصباحي",
+      close: "إغلاق", priceLabel: "السعر", prevDish: "الطبق السابق", nextDish: "الطبق التالي",
       error: "تعذّر تحميل المنيو.<br>إذا فتحت الملف مباشرة، شغّل الموقع عبر Live Server (أو أي سيرفر محلي).",
     },
     en: {
@@ -22,6 +23,7 @@
       nav: "Menu categories", top: "Back to top", logoAlt: "TAZA 041 logo",
       title: "TAZA 041 | Menu", langBtn: "ع", langAria: "التبديل إلى العربية",
       toDark: "Switch to dark mode", toLight: "Switch to light mode",
+      close: "Close", priceLabel: "Price", prevDish: "Previous dish", nextDish: "Next dish",
       error: "Couldn't load the menu.<br>If you opened the file directly, run the site with Live Server (or any local server).",
     },
   };
@@ -37,6 +39,7 @@
   let data = null;
   let cats = [];
   let cards = [];
+  let orderedItems = []; // قائمة الأطباق المرتبة حسب ظهورها في المنيو للتقليب داخل النافذة
 
   /* ======================================================
      عرض الأقسام والبطاقات
@@ -44,14 +47,15 @@
   function renderMenu() {
     const cur = pick(data.restaurant, "currency");
     cats = data.categories.filter((c) => data.items.some((i) => i.category === c.id && i.available !== false));
+    orderedItems = [];
 
-    const card = (i, c) => {
+    const card = (i, c, idx) => {
       const tagsHtml = (i.tags || [])
         .filter((tg) => TAG_ICONS[tg])
         .map((tg) => `<span class="tag" title="${esc(T()[tg])}" aria-label="${esc(T()[tg])}">${TAG_ICONS[tg]}</span>`)
         .join("");
       return `
-        <article class="dish${i.featured ? " dish--featured" : ""}">
+        <article class="dish${i.featured ? " dish--featured" : ""}" data-idx="${idx}" tabindex="0" role="button" aria-label="${esc(pick(i, "name"))}">
           <div class="dish__media">
             <div class="dish__ph" aria-hidden="true"><span class="dish__ph-icon">${esc(c.icon)}</span></div>
             ${i.image ? `<img src="${esc(i.image)}" alt="${esc(pick(i, "name"))}" loading="lazy">` : ""}
@@ -72,10 +76,19 @@
         const items = data.items
           .filter((i) => i.category === c.id && i.available !== false)
           .sort((x, y) => Number(!!y.featured) - Number(!!x.featured));
+
+        const cardsHtml = items
+          .map((i) => {
+            const idx = orderedItems.length;
+            orderedItems.push({ item: i, cat: c });
+            return card(i, c, idx);
+          })
+          .join("");
+
         return `
       <section class="menu-section" id="cat-${esc(c.id)}">
         <h2 class="menu-section__title"><span class="menu-section__icon" aria-hidden="true">${esc(c.icon)}</span>${esc(pick(c, "name"))}</h2>
-        <div class="dishes">${items.map((i) => card(i, c)).join("")}</div>
+        <div class="dishes">${cardsHtml}</div>
       </section>`;
       })
       .join("");
@@ -85,6 +98,201 @@
       img.addEventListener("error", () => img.remove())
     );
   }
+
+  /* ======================================================
+     نافذة تفاصيل الطبق (Dish Modal)
+  ====================================================== */
+  const modal = $("#dishModal");
+  const modalSheet = $("#modalSheet");
+  const modalContent = $("#modalContent");
+  const modalBackdrop = $("#modalBackdrop");
+  const modalClose = $("#modalClose");
+  const modalImg = $("#modalImg");
+  const modalIcon = $("#modalIcon");
+  const modalBadges = $("#modalBadges");
+  const modalCat = $("#modalCat");
+  const modalTitle = $("#modalTitle");
+  const modalDesc = $("#modalDesc");
+  const modalPrice = $("#modalPrice");
+  const modalPriceLabel = $("#modalPriceLabel");
+  const modalPrev = $("#modalPrev");
+  const modalNext = $("#modalNext");
+  const modalCounter = $("#modalCounter");
+
+  let currentModalIdx = -1;
+  let lastFocusedCard = null;
+
+  function populateModal(idx, slideDir = "") {
+    const entry = orderedItems[idx];
+    if (!entry) return;
+    currentModalIdx = idx;
+
+    const { item, cat } = entry;
+    const cur = pick(data.restaurant, "currency");
+
+    // أنيميشن التقليب يمين/يسار
+    if (slideDir) {
+      modalContent.classList.remove("slide-next", "slide-prev");
+      void modalContent.offsetWidth;
+      modalContent.classList.add(slideDir === "next" ? "slide-next" : "slide-prev");
+    }
+
+    // الأيقونة والصورة
+    modalIcon.textContent = cat.icon;
+    if (item.image) {
+      modalImg.src = item.image;
+      modalImg.alt = pick(item, "name");
+      modalImg.hidden = false;
+      modalImg.onerror = () => { modalImg.hidden = true; };
+    } else {
+      modalImg.hidden = true;
+      modalImg.removeAttribute("src");
+    }
+
+    // الشارات (الأكثر طلباً + الحار / النباتي)
+    const badges = [];
+    if (item.featured) {
+      badges.push(`<span class="modal__badge modal__badge--featured" style="--bd:0.12s">🔥 ${esc(T().featured)}</span>`);
+    }
+    (item.tags || []).forEach((tg, i) => {
+      if (TAG_ICONS[tg]) {
+        badges.push(
+          `<span class="modal__badge" style="--bd:${0.18 + i * 0.06}s">${TAG_ICONS[tg]} ${esc(T()[tg])}</span>`
+        );
+      }
+    });
+    modalBadges.innerHTML = badges.join("");
+
+    // النصوص والسعر
+    modalCat.textContent = `${cat.icon} ${pick(cat, "name")}`;
+    modalTitle.textContent = pick(item, "name");
+    modalDesc.textContent = pick(item, "description");
+    modalPriceLabel.textContent = T().priceLabel;
+    modalPrice.textContent = price(item.price, cur);
+
+    // عداد الأطباق
+    modalCounter.textContent = `${idx + 1} / ${orderedItems.length}`;
+  }
+
+  function openModal(idx, cardEl) {
+    if (!orderedItems[idx]) return;
+    lastFocusedCard = cardEl || null;
+
+    // تحديد نقطة انطلاق الأنيميشن من مكان البطاقة اللي انضغطت
+    if (cardEl) {
+      const r = cardEl.getBoundingClientRect();
+      const ox = ((r.left + r.width / 2) / window.innerWidth) * 100;
+      const oy = ((r.top + r.height / 2) / window.innerHeight) * 100;
+      modalSheet.style.setProperty("--origin-x", `${ox.toFixed(1)}%`);
+      modalSheet.style.setProperty("--origin-y", `${oy.toFixed(1)}%`);
+    }
+
+    populateModal(idx);
+    modalSheet.style.transform = "";
+    modal.hidden = false;
+    modal.classList.remove("is-closing");
+    void modal.offsetWidth;
+    modal.classList.add("is-open");
+    document.body.classList.add("modal-open");
+    modalClose.focus({ preventScroll: true });
+  }
+
+  function closeModal() {
+    if (modal.hidden || modal.classList.contains("is-closing")) return;
+    modal.classList.remove("is-open");
+    modal.classList.add("is-closing");
+    document.body.classList.remove("modal-open");
+
+    setTimeout(() => {
+      modal.hidden = true;
+      modal.classList.remove("is-closing");
+      modalSheet.style.transform = "";
+      if (lastFocusedCard) lastFocusedCard.focus({ preventScroll: true });
+    }, 280);
+  }
+
+  function stepModal(delta) {
+    if (!orderedItems.length) return;
+    const nextIdx = (currentModalIdx + delta + orderedItems.length) % orderedItems.length;
+    populateModal(nextIdx, delta > 0 ? "next" : "prev");
+  }
+
+  // فتح النافذة عند النقر على أي بطاقة طبق
+  $("#menu").addEventListener("click", (e) => {
+    const cardEl = e.target.closest(".dish");
+    if (!cardEl) return;
+    openModal(Number(cardEl.dataset.idx), cardEl);
+  });
+
+  $("#menu").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const cardEl = e.target.closest(".dish");
+    if (!cardEl) return;
+    e.preventDefault();
+    openModal(Number(cardEl.dataset.idx), cardEl);
+  });
+
+  modalClose.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", closeModal);
+  modalPrev.addEventListener("click", () => stepModal(-1));
+  modalNext.addEventListener("click", () => stepModal(1));
+
+  // اختصارات الكيبورد للنافذة (Escape للإغلاق + الأسهم للتقليب)
+  window.addEventListener("keydown", (e) => {
+    if (modal.hidden) return;
+    if (e.key === "Escape") closeModal();
+    else if (e.key === "ArrowLeft") stepModal(lang === "ar" ? 1 : -1);
+    else if (e.key === "ArrowRight") stepModal(lang === "ar" ? -1 : 1);
+  });
+
+  // السحب بالإصبع على الجوال: لتحت (إغلاق) أو يمين/يسار (تقليب الأطباق)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchDeltaX = 0;
+  let touchDeltaY = 0;
+  let isDraggingSheet = false;
+
+  modalSheet.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchDeltaX = 0;
+    touchDeltaY = 0;
+    isDraggingSheet = true;
+    modalSheet.style.transition = "none";
+  }, { passive: true });
+
+  modalSheet.addEventListener("touchmove", (e) => {
+    if (!isDraggingSheet) return;
+    touchDeltaX = e.touches[0].clientX - touchStartX;
+    touchDeltaY = e.touches[0].clientY - touchStartY;
+
+    // إذا السحب لتحت أقوى من السحب الجانبي، نحرك النافذة مع الإصبع
+    if (touchDeltaY > 0 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX)) {
+      const resist = Math.pow(touchDeltaY, 0.88);
+      modalSheet.style.transform = `translateY(${resist}px)`;
+    }
+  }, { passive: true });
+
+  modalSheet.addEventListener("touchend", () => {
+    if (!isDraggingSheet) return;
+    isDraggingSheet = false;
+    modalSheet.style.transition = "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)";
+
+    // إذا سحب لتحت مسافة كافية نقفل النافذة
+    if (touchDeltaY > 95 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX)) {
+      closeModal();
+      return;
+    }
+
+    // إذا سحب يمين أو يسار نقلب للطابق التالي/السابق
+    if (Math.abs(touchDeltaX) > 65 && Math.abs(touchDeltaX) > Math.abs(touchDeltaY) * 1.3) {
+      const dir = touchDeltaX < 0 ? 1 : -1;
+      stepModal(lang === "ar" ? -dir : dir);
+    }
+
+    modalSheet.style.transform = "";
+  });
 
   /* ======================================================
      الأطباق تروح وتجي: تظهر وهي داخلة وتنمسح وهي طالعة
@@ -392,6 +600,9 @@
     $(".brand__logo").alt = s.logoAlt;
     $("#langLabel").textContent = s.langBtn;
     $("#langBtn").setAttribute("aria-label", s.langAria);
+    modalClose.setAttribute("aria-label", s.close);
+    modalPrev.setAttribute("aria-label", s.prevDish);
+    modalNext.setAttribute("aria-label", s.nextDish);
     updateThemeBtn();
   }
 
@@ -407,6 +618,7 @@
     renderMenu();
     buildNav(keep);
     observeCards();
+    if (!modal.hidden && currentModalIdx >= 0) populateModal(currentModalIdx);
   }
 
   function switchLang() {
