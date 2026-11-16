@@ -89,7 +89,7 @@
       </div>
     </header>
 
-    <!-- ========== شريط الأقسام المثبت ========== -->
+    <!-- ========== شريط الأقسام المثبت + زر البحث ========== -->
     <div id="catSentinel" aria-hidden="true"></div>
     <nav class="catbar" id="catbar" aria-label="أقسام المنيو" hidden>
       <button class="catbar__logo" id="catLogo" type="button" aria-label="الرجوع للأعلى">
@@ -100,7 +100,28 @@
           <span class="catbar__pill" id="catPill" aria-hidden="true"></span>
         </div>
       </div>
+      <button class="catbar__search-btn" id="searchToggle" type="button" aria-expanded="false" aria-controls="searchWrap" aria-label="بحث في المنيو">
+        <svg class="search-btn__icon search-btn__icon--lens" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <svg class="search-btn__icon search-btn__icon--close" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
     </nav>
+
+    <!-- ========== شريط البحث والاقتراحات (Jelly Pop Search) ========== -->
+    <div class="search-wrap" id="searchWrap" hidden>
+      <div class="search-bar" id="searchBar">
+        <span class="search-bar__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+        <input class="search-bar__input" id="searchInput" type="search" autocomplete="off" spellcheck="false" placeholder="ابحث عن وجبتك المفضلة...">
+        <button class="search-bar__clear" id="searchClear" type="button" aria-label="مسح البحث" hidden>✕</button>
+      </div>
+
+      <!-- كبسولات اقتراحات سريعة (تظهر بحركة Jelly Pop) -->
+      <div class="search-chips" id="searchChips"></div>
+
+      <!-- قائمة نتائج واقتراحات الأطباق الفورية (كل عنصر يدخل بـ Jelly Wobble) -->
+      <div class="search-suggestions" id="searchSuggestions" role="listbox" hidden></div>
+    </div>
 
     <!-- ========== الأقسام والأطباق (تتعبى من menu.json) ========== -->
     <div class="menu" id="menu"></div>
