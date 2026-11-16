@@ -148,9 +148,8 @@
   let buttons = [];
   let sections = [];
   let active = -1;
-  let lockTimer;
-  let arrive = null; // شغل ينفذ لما يوصل السكرول للقسم
   let flight = {};
+  let scrollAnimId = null;
 
   function movePill(btn, animate) {
     if (!animate) pill.style.transition = "none";
@@ -188,22 +187,34 @@
     centerButton(buttons[i]);
   }
 
-  /* ---- الإيموجي الطائر: يطير من زر القسم ويهبط على عنوانه ---- */
+  /* ---- الإيموجي الطائر + السكرول الصاروخي ---- */
   function cancelFlight() {
+    if (scrollAnimId) {
+      cancelAnimationFrame(scrollAnimId);
+      scrollAnimId = null;
+    }
     if (flight.anim) flight.anim.cancel();
     if (flight.el) flight.el.remove();
     if (flight.icon) flight.icon.style.visibility = "";
+    $("#menu").classList.remove("is-warping-down", "is-warping-up");
     flight = {};
+    locked = false;
   }
 
-  function fly(btn, titleIcon) {
+  function flyToTarget(btn, titleIcon, duration, targetScrollY) {
     const from = $(".cat__icon", btn);
     const a = from.getBoundingClientRect();
     const b = titleIcon.getBoundingClientRect();
+
+    // نحسب وين بيكون مكان العنوان على الشاشة لما يخلص السكرول
+    const scrollDelta = targetScrollY - window.scrollY;
+    const finalTop = b.top - scrollDelta;
+    const finalLeft = b.left;
+
     const fromSize = parseFloat(getComputedStyle(from).fontSize);
     const scale = parseFloat(getComputedStyle(titleIcon).fontSize) / fromSize;
-    const dx = b.left - a.left;
-    const dy = b.top - a.top;
+    const dx = finalLeft - a.left;
+    const dy = finalTop - a.top;
 
     const el = document.createElement("span");
     el.className = "fly";
@@ -212,17 +223,20 @@
     el.style.cssText = `left:${a.left}px;top:${a.top}px;font-size:${fromSize}px`;
     document.body.append(el);
 
+    const arcY = scrollDelta >= 0 ? -55 : 45;
+
     const anim = el.animate(
       [
-        { transform: "translate(0,0) scale(1) rotate(0deg)" },
+        { transform: "translate(0, 0) scale(1) rotate(0deg)" },
         {
-          transform: `translate(${dx * 0.55}px, ${dy * 0.55 - 46}px) scale(${1 + (scale - 1) * 0.7}) rotate(-14deg)`,
+          transform: `translate(${dx * 0.5}px, ${dy * 0.5 + arcY}px) scale(${scale * 1.35}) rotate(${scrollDelta >= 0 ? -18 : 18}deg)`,
           offset: 0.5,
         },
         { transform: `translate(${dx}px, ${dy}px) scale(${scale}) rotate(0deg)` },
       ],
-      { duration: 700, easing: "cubic-bezier(0.3, 0.1, 0.3, 1)", fill: "forwards" }
+      { duration, easing: "cubic-bezier(0.65, 0, 0.35, 1)", fill: "forwards" }
     );
+
     flight = { el, icon: titleIcon, anim };
     anim.onfinish = () => {
       el.remove();
@@ -234,38 +248,70 @@
     };
   }
 
-  // لو السكرول وقف مو بالمكان بالضبط (بسبب الأقسام الي ما انرسمت)، نصححه
-  function realign(sec) {
-    const diff = sec.getBoundingClientRect().top - (bar.offsetHeight + 8);
-    if (Math.abs(diff) > 4) scrollTo({ top: scrollY + diff, behavior: "instant" });
-  }
-
-  function unlock() {
-    locked = false;
-    const fn = arrive;
-    arrive = null;
-    if (fn) fn();
-  }
-
   function goTo(i) {
+    if (!sections[i]) return;
     cancelFlight();
+
     locked = true;
-    clearTimeout(lockTimer);
-    lockTimer = setTimeout(unlock, 500);
     setActive(i);
     pulseIcon(buttons[i]);
 
     const sec = sections[i];
     const icon = $(".menu-section__icon", sec);
+    const menuEl = $("#menu");
+
+    const startY = window.scrollY;
+    const offset = bar.offsetHeight + 8;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const targetY = Math.max(0, Math.min(startY + sec.getBoundingClientRect().top - offset, maxScroll));
+    const distance = targetY - startY;
+
+    if (Math.abs(distance) < 8) {
+      locked = false;
+      icon.classList.remove("pop");
+      void icon.offsetWidth;
+      icon.classList.add("pop");
+      return;
+    }
+
+    scrollDir = distance > 0 ? "down" : "up";
+    const duration = Math.min(750, Math.max(450, Math.abs(distance) * 0.38));
+
     icon.style.visibility = "hidden";
-    flight = { icon };
-    arrive = () => {
-      realign(sec);
-      revealVisible();
-      fly(buttons[i], icon);
-    };
-    sec.scrollIntoView({ behavior: "smooth", block: "start" });
+    flyToTarget(buttons[i], icon, duration, targetY);
+
+    menuEl.classList.add(distance > 0 ? "is-warping-down" : "is-warping-up");
+    setTimeout(() => {
+      menuEl.classList.remove("is-warping-down", "is-warping-up");
+    }, duration * 0.72);
+
+    const startTime = performance.now();
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeInOutCubic(progress);
+
+      window.scrollTo(0, startY + distance * eased);
+
+      if (progress < 1) {
+        scrollAnimId = requestAnimationFrame(step);
+      } else {
+        scrollAnimId = null;
+        locked = false;
+        lastY = window.scrollY;
+        revealVisible();
+      }
+    }
+
+    scrollAnimId = requestAnimationFrame(step);
   }
+
+  // لو المستخدم لمس الشاشة أو حرك الماوس بنفسه أثناء الطيران، نوقف الطيران فوراً ونعطيه التحكم
+  ["wheel", "touchmove"].forEach((evt) =>
+    window.addEventListener(evt, () => { if (locked) cancelFlight(); }, { passive: true })
+  );
 
   function buildNav(keepId) {
     inner.querySelectorAll(".cat").forEach((b) => b.remove());
@@ -308,15 +354,11 @@
   addEventListener(
     "scroll",
     () => {
+      if (locked) return;
       const y = scrollY;
       if (Math.abs(y - lastY) > 1) {
         scrollDir = y > lastY ? "down" : "up";
         lastY = y;
-      }
-      if (locked) {
-        clearTimeout(lockTimer);
-        lockTimer = setTimeout(unlock, 140);
-        return;
       }
       if (!ticking) {
         ticking = true;
