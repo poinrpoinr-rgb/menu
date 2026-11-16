@@ -35,54 +35,40 @@
   };
   const TAG_ICONS = { spicy: "🌶️", vegetarian: "🌱" };
 
-  /* ---------- قاموس مسببات الحساسية (مع أيقونة SVG خاصة لكل مسبب) ---------- */
+  /* ---------- قاموس مسببات الحساسية ---------- */
   const ALLERGENS = {
     gluten: {
-      ar: "غلوتين (قمح)",
-      en: "Gluten (Wheat)",
+      ar: "غلوتين (قمح)", en: "Gluten (Wheat)",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/></svg>`,
     },
     dairy: {
-      ar: "ألبان",
-      en: "Dairy",
+      ar: "ألبان", en: "Dairy",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><path d="M5 11a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9Z"/><path d="M5 15h14"/></svg>`,
     },
     eggs: {
-      ar: "بيض",
-      en: "Eggs",
+      ar: "بيض", en: "Eggs",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4.97 0 8-3.58 8-8.5C20 7.5 16 2 12 2S4 7.5 4 13.5C4 18.42 7.03 22 12 22Z"/><circle cx="12" cy="14" r="3"/></svg>`,
     },
     sesame: {
-      ar: "سمسم",
-      en: "Sesame",
+      ar: "سمسم", en: "Sesame",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3 3.5-4.5 7-4.5 10.5a4.5 4.5 0 1 0 9 0C16.5 10 15 6.5 12 3Z"/><circle cx="12" cy="14" r="1"/></svg>`,
     },
     soy: {
-      ar: "صويا",
-      en: "Soy",
+      ar: "صويا", en: "Soy",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c4.5 1.5 10-1 13-5.5S20.5 3.5 17 3c-4.5-1.5-10 1-13 5.5S1.5 18.5 5 19Z"/><circle cx="9.5" cy="13.5" r="1.5"/><circle cx="13.5" cy="9.5" r="1.5"/></svg>`,
     },
     nuts: {
-      ar: "مكسرات",
-      en: "Nuts",
+      ar: "مكسرات", en: "Nuts",
       svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7a5 5 0 0 0-7.07 0l-2.93 2.93a5 5 0 0 0 7.07 7.07L17 14.07A5 5 0 0 0 17 7Z"/><path d="m14 4 6 6"/></svg>`,
     },
   };
 
-  // مسببات حساسية افتراضية لكل وجبة
   const DEFAULT_ALLERGENS_BY_ID = {
-    1: [],
-    2: ["dairy", "gluten", "eggs"],
-    3: ["soy", "sesame"],
-    4: ["gluten", "dairy", "sesame", "eggs"],
-    5: ["gluten", "eggs", "sesame"],
-    6: ["gluten", "dairy", "sesame", "eggs"],
-    7: ["gluten", "eggs"],
-    8: ["gluten", "dairy", "eggs"],
-    9: ["gluten", "eggs"],
-    10: [],
-    11: [],
-    12: ["dairy"],
+    1: [], 2: ["dairy", "gluten", "eggs"], 3: ["soy", "sesame"],
+    4: ["gluten", "dairy", "sesame", "eggs"], 5: ["gluten", "eggs", "sesame"],
+    6: ["gluten", "dairy", "sesame", "eggs"], 7: ["gluten", "eggs"],
+    8: ["gluten", "dairy", "eggs"], 9: ["gluten", "eggs"],
+    10: [], 11: [], 12: ["dairy"],
   };
 
   let lang = html.lang === "en" ? "en" : "ar";
@@ -166,7 +152,6 @@
   let isSearchOpen = false;
   let activeChipFilter = "";
 
-  // توحيد الحروف العربية للبحث الذكي (أ، إ، آ -> ا / ة -> ه)
   function normText(str) {
     return String(str || "")
       .toLowerCase()
@@ -176,7 +161,6 @@
       .trim();
   }
 
-  // تظليل النص المطابق داخل اسم الاقتراح
   function highlightText(text, query) {
     const cleanText = String(text || "");
     if (!query || query.startsWith("#")) return esc(cleanText);
@@ -190,7 +174,6 @@
     return `${esc(before)}<mark class="suggestion-item__hl">${esc(match)}</mark>${esc(after)}`;
   }
 
-  // بناء كبسولات الاقتراحات السريعة بحركة Jelly Pop
   function renderQuickChips() {
     const chips = [
       { id: "#featured", label: `🔥 ${T().featured}` },
@@ -209,7 +192,6 @@
       .join("");
   }
 
-  // فلترة الأطباق وإظهار الاقتراحات الفورية بحركة Jelly Wobble
   function runSearch(rawQuery) {
     const q = normText(rawQuery);
     searchClear.hidden = !rawQuery && !activeChipFilter;
@@ -217,7 +199,6 @@
     if (!q && !activeChipFilter) {
       searchSuggestions.hidden = true;
       searchSuggestions.innerHTML = "";
-      // إرجاع كل البطاقات والأقسام للوضع الطبيعي
       cards.forEach((c) => (c.hidden = false));
       sections.forEach((s) => s && (s.hidden = false));
       revealVisible();
@@ -248,7 +229,6 @@
       if (cards[idx]) cards[idx].hidden = !match;
     });
 
-    // إخفاء الأقسام الفارغة أثناء البحث
     sections.forEach((sec) => {
       if (!sec) return;
       const hasVisible = sec.querySelector(".dish:not([hidden])");
@@ -257,7 +237,6 @@
 
     revealVisible();
 
-    // رسم قائمة الاقتراحات الفورية (كل اقتراح يأخذ تأخير --jd عشان يدخل بـ Jelly Wobble متتابع)
     searchSuggestions.hidden = false;
     if (matchedIndices.length === 0) {
       searchSuggestions.innerHTML = `<div class="search-empty">${esc(T().noResults)}</div>`;
@@ -313,7 +292,6 @@
     searchWrap.classList.remove("is-open");
     searchWrap.classList.add("is-closing");
 
-    // تصفير البحث وإظهار كل الأطباق
     searchInput.value = "";
     activeChipFilter = "";
     runSearch("");
@@ -345,7 +323,6 @@
     searchInput.focus();
   });
 
-  // الضغط على إحدى الكبسولات السريعة
   searchChips.addEventListener("click", (e) => {
     const chip = e.target.closest(".search-chip");
     if (!chip) return;
@@ -373,7 +350,6 @@
     }
   });
 
-  // الضغط على اقتراح يفتح نافذة الطبق مباشرة
   searchSuggestions.addEventListener("click", (e) => {
     const itemBtn = e.target.closest(".suggestion-item");
     if (!itemBtn) return;
@@ -409,7 +385,6 @@
   let currentModalIdx = -1;
   let lastFocusedCard = null;
 
-  // بناء شارة الفلفل الحار اللي ينفث نار وشرارات مرة واحدة عند فتح الطبق
   function buildSpicyBadgeHtml(delaySec) {
     const dirSign = lang === "ar" ? -1 : 1;
     return `
@@ -730,7 +705,6 @@
     centerButton(buttons[i]);
   }
 
-  /* ---- الإيموجي الطائر + السكرول الصاروخي ---- */
   function cancelFlight() {
     if (scrollAnimId) {
       cancelAnimationFrame(scrollAnimId);
@@ -928,4 +902,106 @@
   function updateStatic() {
     const s = T();
     document.title = s.title;
-    bar.setAttribute("aria-label
+    bar.setAttribute("aria-label", s.nav);
+    $("#catLogo").setAttribute("aria-label", s.top);
+    $(".brand__logo").alt = s.logoAlt;
+    $("#langLabel").textContent = s.langBtn;
+    $("#langBtn").setAttribute("aria-label", s.langAria);
+    modalClose.setAttribute("aria-label", s.close);
+    modalPrev.setAttribute("aria-label", s.prevDish);
+    modalNext.setAttribute("aria-label", s.nextDish);
+    searchToggle.setAttribute("aria-label", s.searchBtnAria);
+    searchInput.placeholder = s.searchPlaceholder;
+    searchClear.setAttribute("aria-label", s.searchClearAria);
+    updateThemeBtn();
+  }
+
+  function applyLang(next) {
+    cancelFlight();
+    lang = next;
+    store.set("taza-lang", next);
+    html.lang = next;
+    html.dir = next === "ar" ? "rtl" : "ltr";
+    const keep = cats[active] && cats[active].id;
+    updateStatic();
+    if (!data) return;
+    renderMenu();
+    buildNav(keep);
+    observeCards();
+    if (isSearchOpen) {
+      renderQuickChips();
+      runSearch(activeChipFilter || searchInput.value);
+    }
+    if (!modal.hidden && currentModalIdx >= 0) populateModal(currentModalIdx);
+  }
+
+  function switchLang() {
+    const next = lang === "ar" ? "en" : "ar";
+    if (document.startViewTransition) document.startViewTransition(() => applyLang(next));
+    else applyLang(next);
+  }
+
+  /* ======================================================
+     الوضع الصباحي / الليلي
+  ====================================================== */
+  function updateThemeBtn() {
+    const dark = html.dataset.theme === "dark";
+    $("#themeBtn").setAttribute("aria-label", dark ? T().toLight : T().toDark);
+  }
+
+  function setTheme(next, cx, cy) {
+    const apply = () => {
+      html.dataset.theme = next;
+      store.set("taza-theme", next);
+      updateThemeBtn();
+    };
+    if (!document.startViewTransition) return apply();
+
+    html.classList.add("vt-theme");
+    const vt = document.startViewTransition(apply);
+    vt.ready
+      .then(() => {
+        const r = Math.hypot(Math.max(cx, innerWidth - cx), Math.max(cy, innerHeight - cy));
+        html.animate(
+          { clipPath: [`circle(0px at ${cx}px ${cy}px)`, `circle(${r}px at ${cx}px ${cy}px)`] },
+          { duration: 650, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" }
+        );
+      })
+      .catch(() => {});
+    vt.finished.finally(() => html.classList.remove("vt-theme"));
+  }
+
+  $("#themeBtn").addEventListener("click", (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setTheme(html.dataset.theme === "dark" ? "light" : "dark", r.left + r.width / 2, r.top + r.height / 2);
+  });
+  $("#langBtn").addEventListener("click", switchLang);
+
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+    if (!store.get("taza-theme")) {
+      html.dataset.theme = e.matches ? "dark" : "light";
+      updateThemeBtn();
+    }
+  });
+
+  /* ======================================================
+     تشغيل
+  ====================================================== */
+  async function init() {
+    updateStatic();
+    try {
+      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error(res.status);
+      data = await res.json();
+    } catch (err) {
+      $("#menu").innerHTML = `<p class="menu-error">${T().error}</p>`;
+      return;
+    }
+    renderMenu();
+    buildNav();
+    observeCards();
+    spy();
+  }
+
+  init();
+})();
