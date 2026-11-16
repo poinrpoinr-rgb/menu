@@ -16,6 +16,7 @@
       title: "TAZA 041 | المنيو", langBtn: "EN", langAria: "Switch to English",
       toDark: "تفعيل الوضع الليلي", toLight: "تفعيل الوضع الصباحي",
       close: "إغلاق", priceLabel: "السعر", prevDish: "الطبق السابق", nextDish: "الطبق التالي",
+      ingTitle: "المكونات", allergensTitle: "مسببات الحساسية",
       error: "تعذّر تحميل المنيو.<br>إذا فتحت الملف مباشرة، شغّل الموقع عبر Live Server (أو أي سيرفر محلي).",
     },
     en: {
@@ -24,10 +25,45 @@
       title: "TAZA 041 | Menu", langBtn: "ع", langAria: "التبديل إلى العربية",
       toDark: "Switch to dark mode", toLight: "Switch to light mode",
       close: "Close", priceLabel: "Price", prevDish: "Previous dish", nextDish: "Next dish",
+      ingTitle: "Ingredients", allergensTitle: "Allergens",
       error: "Couldn't load the menu.<br>If you opened the file directly, run the site with Live Server (or any local server).",
     },
   };
   const TAG_ICONS = { spicy: "🌶️", vegetarian: "🌱" };
+
+  /* ---------- قاموس مسببات الحساسية (مع أيقونة SVG خاصة لكل مسبب) ---------- */
+  const ALLERGENS = {
+    gluten: {
+      ar: "غلوتين (قمح)",
+      en: "Gluten (Wheat)",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/></svg>`,
+    },
+    dairy: {
+      ar: "ألبان",
+      en: "Dairy",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><path d="M5 11a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9Z"/><path d="M5 15h14"/></svg>`,
+    },
+    eggs: {
+      ar: "بيض",
+      en: "Eggs",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4.97 0 8-3.58 8-8.5C20 7.5 16 2 12 2S4 7.5 4 13.5C4 18.42 7.03 22 12 22Z"/><circle cx="12" cy="14" r="3"/></svg>`,
+    },
+    sesame: {
+      ar: "سمسم",
+      en: "Sesame",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3 3.5-4.5 7-4.5 10.5a4.5 4.5 0 1 0 9 0C16.5 10 15 6.5 12 3Z"/><circle cx="12" cy="14" r="1"/></svg>`,
+    },
+    soy: {
+      ar: "صويا",
+      en: "Soy",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c4.5 1.5 10-1 13-5.5S20.5 3.5 17 3c-4.5-1.5-10 1-13 5.5S1.5 18.5 5 19Z"/><circle cx="9.5" cy="13.5" r="1.5"/><circle cx="13.5" cy="9.5" r="1.5"/></svg>`,
+    },
+    nuts: {
+      ar: "مكسرات",
+      en: "Nuts",
+      svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7a5 5 0 0 0-7.07 0l-2.93 2.93a5 5 0 0 0 7.07 7.07L17 14.07A5 5 0 0 0 17 7Z"/><path d="m14 4 6 6"/></svg>`,
+    },
+  };
 
   let lang = html.lang === "en" ? "en" : "ar";
   const T = () => UI[lang];
@@ -112,7 +148,11 @@
   const modalBadges = $("#modalBadges");
   const modalCat = $("#modalCat");
   const modalTitle = $("#modalTitle");
+  const modalIngTitle = $("#modalIngTitle");
   const modalDesc = $("#modalDesc");
+  const modalAllergensBox = $("#modalAllergensBox");
+  const modalAllergensTitle = $("#modalAllergensTitle");
+  const modalAllergensList = $("#modalAllergensList");
   const modalPrice = $("#modalPrice");
   const modalPriceLabel = $("#modalPriceLabel");
   const modalPrev = $("#modalPrev");
@@ -163,14 +203,35 @@
     });
     modalBadges.innerHTML = badges.join("");
 
-    // النصوص والسعر
+    // النصوص والمكونات
     modalCat.textContent = `${cat.icon} ${pick(cat, "name")}`;
     modalTitle.textContent = pick(item, "name");
+    modalIngTitle.textContent = T().ingTitle;
     modalDesc.textContent = pick(item, "description");
+
+    // مسببات الحساسية (تظهر فقط لو المنتج فيه مسببات محددة)
+    const itemAllergens = (item.allergens || []).filter((key) => ALLERGENS[key]);
+    if (itemAllergens.length > 0) {
+      modalAllergensTitle.textContent = T().allergensTitle;
+      modalAllergensList.innerHTML = itemAllergens
+        .map((key, i) => {
+          const al = ALLERGENS[key];
+          return `
+            <span class="allergen-chip" style="--ad:${0.26 + i * 0.05}s">
+              <span class="allergen-chip__icon" aria-hidden="true">${al.svg}</span>
+              <span>${esc(al[lang])}</span>
+            </span>`;
+        })
+        .join("");
+      modalAllergensBox.hidden = false;
+    } else {
+      modalAllergensBox.hidden = true;
+      modalAllergensList.innerHTML = "";
+    }
+
+    // السعر وعداد الأطباق
     modalPriceLabel.textContent = T().priceLabel;
     modalPrice.textContent = price(item.price, cur);
-
-    // عداد الأطباق
     modalCounter.textContent = `${idx + 1} / ${orderedItems.length}`;
   }
 
@@ -268,7 +329,7 @@
     touchDeltaY = e.touches[0].clientY - touchStartY;
 
     // إذا السحب لتحت أقوى من السحب الجانبي، نحرك النافذة مع الإصبع
-    if (touchDeltaY > 0 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX)) {
+    if (touchDeltaY > 0 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX) && modalSheet.scrollTop <= 0) {
       const resist = Math.pow(touchDeltaY, 0.88);
       modalSheet.style.transform = `translateY(${resist}px)`;
     }
@@ -280,7 +341,7 @@
     modalSheet.style.transition = "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)";
 
     // إذا سحب لتحت مسافة كافية نقفل النافذة
-    if (touchDeltaY > 95 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX)) {
+    if (touchDeltaY > 95 && Math.abs(touchDeltaY) > Math.abs(touchDeltaX) && modalSheet.scrollTop <= 0) {
       closeModal();
       return;
     }
