@@ -9,14 +9,15 @@
   --font-body: "Tajawal", system-ui, sans-serif;
   --catbar-h: 64px;
 
-  --bg: #fff7e6;
-  --surface: #fffdf8;
-  --text: #151210;
-  --muted: rgba(21, 18, 16, 0.62);
-  --line-soft: rgba(21, 18, 16, 0.08);
-  --bar-bg: rgba(255, 247, 230, 0.97);
-  --bar-shadow: 0 6px 18px rgba(21, 18, 16, 0.12);
-  --card-shadow: 0 10px 22px -16px rgba(21, 18, 16, 0.45);
+  /* ألوان الوضع الصباحي الدافئة والمريحة للعين (Warm Creamy Latte) */
+  --bg: #f9efe0;
+  --surface: #fff9f0;
+  --text: #261c14;
+  --muted: rgba(48, 34, 22, 0.68);
+  --line-soft: rgba(180, 115, 35, 0.16);
+  --bar-bg: rgba(249, 239, 224, 0.96);
+  --bar-shadow: 0 6px 20px rgba(80, 45, 10, 0.1);
+  --card-shadow: 0 10px 24px -14px rgba(95, 52, 12, 0.28);
   color-scheme: light;
 }
 
@@ -301,25 +302,25 @@ body.is-ready .brand__tagline { animation: tagline-in 0.6s ease 0.8s both; }
 @keyframes badge-pop { from { opacity: 0; transform: translateY(-10px) scale(0.7); } to { opacity: 1; transform: none; } }
 
 .modal__body { position: relative; z-index: 3; margin-top: -1.1rem; padding: 0 1.35rem 1.4rem; }
-.modal__cat { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem; padding: 0.22rem 0.7rem; border-radius: 99px; background: rgba(245, 162, 29, 0.18); color: var(--cheddar-deep); font-weight: 700; font-size: 0.82rem; }
+.modal__cat { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem; padding: 0.22rem 0.7rem; border-radius: 99px; background: rgba(245, 162, 29, 0.18); color: #b85400; font-weight: 700; font-size: 0.82rem; }
 :root[data-theme="dark"] .modal__cat { color: var(--cheddar-light); }
 .modal__title { margin: 0 0 0.9rem; font-family: var(--font-display); font-weight: 400; font-size: clamp(1.65rem, 6vw, 2.1rem); line-height: 1.15; color: var(--text); }
 .modal__section { margin-bottom: 1rem; }
 .modal__subtitle { display: inline-flex; align-items: center; gap: 0.38rem; margin: 0 0 0.4rem; font-size: 0.84rem; font-weight: 700; color: var(--muted); }
-.modal__subtitle--warn { color: var(--cheddar-deep); }
+.modal__subtitle--warn { color: #b85400; }
 :root[data-theme="dark"] .modal__subtitle--warn { color: var(--cheddar-light); }
 .modal__desc { margin: 0; font-size: 1rem; line-height: 1.6; color: var(--text); }
-.modal__allergens { margin-bottom: 1.15rem; padding: 0.75rem 0.85rem; border-radius: 16px; background: color-mix(in srgb, var(--cheddar) 8%, var(--bg)); border: 1px dashed color-mix(in srgb, var(--cheddar) 35%, transparent); }
+.modal__allergens { margin-bottom: 1.15rem; padding: 0.75rem 0.85rem; border-radius: 16px; background: color-mix(in srgb, var(--cheddar) 10%, var(--bg)); border: 1px dashed rgba(200, 110, 20, 0.4); }
 .modal__allergens[hidden] { display: none; }
 .modal__allergen-list { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.45rem; }
 .allergen-chip { display: inline-flex; align-items: center; gap: 0.38rem; padding: 0.28rem 0.68rem 0.28rem 0.55rem; border-radius: 99px; background: var(--surface); border: 1px solid var(--line-soft); color: var(--text); font-size: 0.82rem; font-weight: 700; }
-.allergen-chip__icon { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(245, 162, 29, 0.2); color: var(--cheddar-deep); }
+.allergen-chip__icon { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(245, 162, 29, 0.2); color: #b85400; }
 :root[data-theme="dark"] .allergen-chip__icon { color: var(--cheddar-light); }
 .allergen-chip__icon svg { width: 14px; height: 14px; }
 .modal__footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--line-soft); }
 .modal__price-box { display: flex; flex-direction: column; gap: 0.1rem; }
 .modal__price-label { font-size: 0.78rem; font-weight: 500; color: var(--muted); }
-.modal__price { font-family: var(--font-display); font-size: 1.65rem; line-height: 1.1; color: var(--cheddar-deep); }
+.modal__price { font-family: var(--font-display); font-size: 1.65rem; line-height: 1.1; color: #c95b00; }
 :root[data-theme="dark"] .modal__price { color: var(--cheddar-light); }
 .modal__nav { display: flex; align-items: center; gap: 0.5rem; background: var(--bg); padding: 0.3rem 0.4rem; border-radius: 99px; border: 1px solid var(--line-soft); }
 .modal__step { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--surface); color: var(--text); cursor: pointer; }
@@ -327,11 +328,55 @@ body.is-ready .brand__tagline { animation: tagline-in 0.6s ease 0.8s both; }
 [dir="ltr"] .modal__step svg { transform: scaleX(-1); }
 .modal__counter { min-width: 3.6ch; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
 
-/* ========== زر المشاركة الدائري ========== */
+/* ========== السعرات الحرارية (على البطاقة + عداد النافذة) ========== */
+.dish__cal {
+  position: absolute;
+  bottom: 0.6rem;
+  inset-inline-end: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.26rem 0.6rem;
+  border-radius: 99px;
+  background: rgba(255, 249, 240, 0.92);
+  color: #4a3319;
+  font-weight: 700;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+:root[data-theme="dark"] .dish__cal {
+  background: rgba(33, 28, 24, 0.9);
+  color: #f6ecd9;
+}
+.dish__cal-icon { font-size: 0.82rem; }
+
+.modal__cal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.35rem;
+  margin-inline-start: 0.45rem;
+  padding: 0.22rem 0.75rem;
+  border-radius: 99px;
+  background: linear-gradient(135deg, rgba(245, 162, 29, 0.22), rgba(238, 122, 26, 0.12));
+  border: 1px solid rgba(238, 122, 26, 0.3);
+  color: #b85400;
+  font-weight: 700;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-theme="dark"] .modal__cal { color: var(--cheddar-light); }
+.modal__cal-num { display: inline-block; min-width: 3ch; text-align: center; font-weight: 700; }
+.modal__cal.is-done .modal__cal-bolt { display: inline-block; animation: icon-pulse 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* ========== زر المشاركة الدائري (نزلناه لتحت + ألوان خاصة للوضع الصباحي) ========== */
 .share-radial {
   position: absolute;
-  bottom: 64px !important;
-  left: 68px !important;
+  bottom: 24px !important;
+  left: 64px !important;
   right: auto !important;
   z-index: 99 !important;
   display: grid;
@@ -341,72 +386,51 @@ body.is-ready .brand__tagline { animation: tagline-in 0.6s ease 0.8s both; }
   border-radius: 50%;
 }
 
-[dir="ltr"] .share-radial {
-  left: auto !important;
-  right: 68px !important;
-}
+[dir="ltr"] .share-radial { left: auto !important; right: 64px !important; }
 
 .share-radial::before {
-  content: "";
-  position: absolute;
-  inset: -60px;
-  border-radius: 50%;
-  pointer-events: none;
+  content: ""; position: absolute; inset: -56px;
+  border-radius: 50%; pointer-events: none;
 }
+.share-radial:hover::before, .share-radial.is-open::before { pointer-events: auto; }
 
-.share-radial:hover::before,
-.share-radial.is-open::before {
-  pointer-events: auto;
-}
-
-/* تنسيق الزر الدائري اللي بالنص */
 .share-radial .main-button {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 2px solid var(--cheddar);
-  background: var(--ink);
-  color: var(--cheddar-light);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.38);
+  position: relative; display: grid; place-items: center;
+  width: 40px; height: 40px; padding: 0;
+  border: 2px solid rgba(238, 122, 26, 0.45);
+  background: #fff9f0; color: #c95b00;
+  box-shadow: 0 6px 16px rgba(95, 52, 12, 0.22);
   border-radius: 50%;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s ease, color 0.25s ease;
-  z-index: 100;
-  cursor: pointer;
+  z-index: 100; cursor: pointer;
+}
+:root[data-theme="dark"] .share-radial .main-button {
+  border-color: var(--cheddar); background: var(--ink);
+  color: var(--cheddar-light); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.42);
 }
 
-.share-radial:hover .main-button,
-.share-radial.is-open .main-button {
-  background: var(--cheddar);
-  color: var(--ink);
-  transform: scale(1.08);
+.share-radial:hover .main-button, .share-radial.is-open .main-button {
+  background: var(--cheddar); color: var(--ink); transform: scale(1.08);
 }
 
 .share-radial .button {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
+  position: absolute; display: grid; place-items: center;
+  width: 34px; height: 34px; padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(25, 21, 18, 0.96);
-  color: #fff;
+  background: rgba(25, 21, 18, 0.96); color: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  border-radius: 50%;
-  cursor: pointer;
-  opacity: 0;
-  scale: 0.4;
-  translate: 0px 0px;
-  pointer-events: none;
+  border-radius: 50%; cursor: pointer;
+  opacity: 0; scale: 0.4; translate: 0px 0px; pointer-events: none;
   transition-property: translate, opacity, scale, background, transform;
   transition-duration: 0.32s;
   transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+:root[data-theme="light"] .share-radial .button {
+  background: rgba(56, 38, 24, 0.92);
+  border-color: rgba(255, 249, 240, 0.35);
+  box-shadow: 0 4px 12px rgba(80, 45, 10, 0.25);
+}
 
-/* ترتيب الرجوع العكسي (يرجعون وحدة ورا وحدة بالعكس لما تقفل) */
 .share-radial .discord-button   { transition-delay: 0.28s !important; }
 .share-radial .twitter-button   { transition-delay: 0.24s !important; }
 .share-radial .reddit-button    { transition-delay: 0.20s !important; }
@@ -416,32 +440,16 @@ body.is-ready .brand__tagline { animation: tagline-in 0.6s ease 0.8s both; }
 .share-radial .snapchat-button  { transition-delay: 0.04s !important; }
 .share-radial .whatsapp-button  { transition-delay: 0.00s !important; }
 
-.share-radial:hover .button,
-.share-radial.is-open .button {
-  opacity: 1;
-  scale: 1;
-  pointer-events: auto;
-}
+.share-radial:hover .button, .share-radial.is-open .button { opacity: 1; scale: 1; pointer-events: auto; }
 
-/* ترتيب الطلوع المتسلسل (يطلعون وحدة ورا وحدة لما تفتح) */
-.share-radial:hover .discord-button,   .share-radial.is-open .discord-button   { transition-delay: 0.00s !important; }
-.share-radial:hover .twitter-button,   .share-radial.is-open .twitter-button   { transition-delay: 0.04s !important; }
-.share-radial:hover .reddit-button,    .share-radial.is-open .reddit-button    { transition-delay: 0.08s !important; }
-.share-radial:hover .messenger-button, .share-radial.is-open .messenger-button { transition-delay: 0.12s !important; }
-.share-radial:hover .pinterest-button, .share-radial.is-open .pinterest-button { transition-delay: 0.16s !important; }
-.share-radial:hover .instagram-button, .share-radial.is-open .instagram-button { transition-delay: 0.20s !important; }
-.share-radial:hover .snapchat-button,  .share-radial.is-open .snapchat-button  { transition-delay: 0.24s !important; }
-.share-radial:hover .whatsapp-button,  .share-radial.is-open .whatsapp-button  { transition-delay: 0.28s !important; }
-
-/* توزيع الأزرار الـ 8 بشكل دائري متناسق حول المركز (نصف قطر 50px) */
-.share-radial:hover .discord-button,   .share-radial.is-open .discord-button   { translate: 50px 0px; }
-.share-radial:hover .twitter-button,   .share-radial.is-open .twitter-button   { translate: 35px -35px; }
-.share-radial:hover .reddit-button,    .share-radial.is-open .reddit-button    { translate: 0px -50px; }
-.share-radial:hover .messenger-button, .share-radial.is-open .messenger-button { translate: -35px -35px; }
-.share-radial:hover .pinterest-button, .share-radial.is-open .pinterest-button { translate: -50px 0px; }
-.share-radial:hover .instagram-button, .share-radial.is-open .instagram-button { translate: -35px 35px; }
-.share-radial:hover .snapchat-button,  .share-radial.is-open .snapchat-button  { translate: 0px 50px; }
-.share-radial:hover .whatsapp-button,  .share-radial.is-open .whatsapp-button  { translate: 35px 35px; }
+.share-radial:hover .discord-button,   .share-radial.is-open .discord-button   { transition-delay: 0.00s !important; translate: 50px 0px; }
+.share-radial:hover .twitter-button,   .share-radial.is-open .twitter-button   { transition-delay: 0.04s !important; translate: 35px -35px; }
+.share-radial:hover .reddit-button,    .share-radial.is-open .reddit-button    { transition-delay: 0.08s !important; translate: 0px -50px; }
+.share-radial:hover .messenger-button, .share-radial.is-open .messenger-button { transition-delay: 0.12s !important; translate: -35px -35px; }
+.share-radial:hover .pinterest-button, .share-radial.is-open .pinterest-button { transition-delay: 0.16s !important; translate: -50px 0px; }
+.share-radial:hover .instagram-button, .share-radial.is-open .instagram-button { transition-delay: 0.20s !important; translate: -35px 35px; }
+.share-radial:hover .snapchat-button,  .share-radial.is-open .snapchat-button  { transition-delay: 0.24s !important; translate: 0px 50px; }
+.share-radial:hover .whatsapp-button,  .share-radial.is-open .whatsapp-button  { transition-delay: 0.28s !important; translate: 35px 35px; }
 
 .share-radial .discord-button:hover   { background: #5865F2 !important; color: #fff; transform: scale(1.15); }
 .share-radial .twitter-button:hover   { background: #000000 !important; color: #fff; transform: scale(1.15); }
