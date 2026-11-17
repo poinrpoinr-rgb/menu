@@ -327,26 +327,37 @@ body.is-ready .brand__tagline { animation: tagline-in 0.6s ease 0.8s both; }
 [dir="ltr"] .modal__step svg { transform: scaleX(-1); }
 .modal__counter { min-width: 3.6ch; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
 
-/* ========== زر المشاركة الدائري (مضبوط المكان والمساحة 100% عشان ما ينقص من الحافة) ========== */
+/* ========== زر المشاركة الدائري ========== */
 .share-radial {
   position: absolute;
-  bottom: 52px;
-  inset-inline-end: 62px; /* مسافة آمنة عن الحافة عشان الأزرار الـ 8 تطلع كاملة وما تنقص */
-  z-index: 30;
+  bottom: 64px !important;
+  left: 68px !important;     /* يبعده 68 بكسل عن حافة النافذة اليسار عشان الدائرة تفتح كاملة جوا */
+  right: auto !important;
+  z-index: 99 !important;    /* فوق كل عناصر النافذة */
   display: grid;
   place-items: center;
-  width: fit-content;
-  height: fit-content;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  transition: padding 0.3s ease;
 }
 
-/* توسيع منطقة الماوس عند الفتح عشان تقدر توصل للأزرار الـ 8 براحتك */
-.share-radial:hover,
-.share-radial.is-open {
-  padding: 54px;
-  margin-bottom: -54px;
-  margin-inline-end: -54px;
+[dir="ltr"] .share-radial {
+  left: auto !important;
+  right: 68px !important;
+}
+
+/* منطقة أمان شفافة حول الزر عشان الماوس يمشي للأزرار الـ 8 بدون ما تقفل */
+.share-radial::before {
+  content: "";
+  position: absolute;
+  inset: -60px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.share-radial:hover::before,
+.share-radial.is-open::before {
+  pointer-events: auto;
 }
 
 .share-radial .main-button {
