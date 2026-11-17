@@ -355,28 +355,6 @@ body.is-ready .brand__tagline { animation: tagline-in 0.6s ease 0.8s both; }
   pointer-events: none;
 }
 
-.share-radial:hover::before,
-.share-radial.is-open::before {
-  pointer-events: auto;
-}
-
-.share-radial .main-button {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 2px solid var(--cheddar);
-  background: var(--ink);
-  color: var(--cheddar-light);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.38);
-  border-radius: 50%;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s ease, color 0.25s ease;
-  z-index: 100;
-  cursor: pointer;
-}
-
 .share-radial .button {
   position: absolute;
   display: grid;
@@ -391,19 +369,40 @@ body.is-ready .brand__tagline { animation: tagline-in 0.6s ease 0.8s both; }
   border-radius: 50%;
   cursor: pointer;
   opacity: 0;
+  scale: 0.4;
   translate: 0px 0px;
   pointer-events: none;
-  /* عند الإغلاق تقفل فوراً بدون تأخير عشان ما تعلق نص فتحة */
-  transition: translate 0.25s ease, opacity 0.18s ease, background 0.2s ease, transform 0.2s ease !important;
-  transition-delay: 0s !important;
+  transition-property: translate, opacity, scale, background, transform;
+  transition-duration: 0.32s;
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* ترتيب الرجوع العكسي (يرجعون وحدة ورا وحدة بالعكس لما تقفل) */
+.share-radial .discord-button   { transition-delay: 0.28s !important; }
+.share-radial .twitter-button   { transition-delay: 0.24s !important; }
+.share-radial .reddit-button    { transition-delay: 0.20s !important; }
+.share-radial .messenger-button { transition-delay: 0.16s !important; }
+.share-radial .pinterest-button { transition-delay: 0.12s !important; }
+.share-radial .instagram-button { transition-delay: 0.08s !important; }
+.share-radial .snapchat-button  { transition-delay: 0.04s !important; }
+.share-radial .whatsapp-button  { transition-delay: 0.00s !important; }
 
 .share-radial:hover .button,
 .share-radial.is-open .button {
   opacity: 1;
+  scale: 1;
   pointer-events: auto;
-  transition: translate 0.36s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, background 0.2s ease, transform 0.2s ease !important;
 }
+
+/* ترتيب الطلوع المتسلسل (يطلعون وحدة ورا وحدة لما تفتح) */
+.share-radial:hover .discord-button,   .share-radial.is-open .discord-button   { transition-delay: 0.00s !important; }
+.share-radial:hover .twitter-button,   .share-radial.is-open .twitter-button   { transition-delay: 0.04s !important; }
+.share-radial:hover .reddit-button,    .share-radial.is-open .reddit-button    { transition-delay: 0.08s !important; }
+.share-radial:hover .messenger-button, .share-radial.is-open .messenger-button { transition-delay: 0.12s !important; }
+.share-radial:hover .pinterest-button, .share-radial.is-open .pinterest-button { transition-delay: 0.16s !important; }
+.share-radial:hover .instagram-button, .share-radial.is-open .instagram-button { transition-delay: 0.20s !important; }
+.share-radial:hover .snapchat-button,  .share-radial.is-open .snapchat-button  { transition-delay: 0.24s !important; }
+.share-radial:hover .whatsapp-button,  .share-radial.is-open .whatsapp-button  { transition-delay: 0.28s !important; }
 
 /* توزيع الأزرار الـ 8 بشكل دائري متناسق حول المركز (نصف قطر 50px) */
 .share-radial:hover .discord-button,   .share-radial.is-open .discord-button   { translate: 50px 0px; }
