@@ -21,8 +21,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <!-- ربط ملف الستايل الخارجي + تضمين الستايل مباشرة لضمان عمله 100% دائماً -->
-  <link rel="stylesheet" href="css/style.css">
   <style>
     :root {
       --cheddar: #f5a21d; --cheddar-light: #ffbd3f; --cheddar-deep: #ee7a1a;
@@ -232,10 +230,10 @@
     .modal__handle span { width: 44px; height: 5px; border-radius: 99px; background: rgba(21, 18, 16, 0.28); }
     @media (min-width: 640px) { .modal__handle { display: none; } }
     .modal__close { position: absolute; top: 0.9rem; inset-inline-end: 0.9rem; z-index: 11; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: rgba(21, 18, 16, 0.65); color: var(--cream); font-size: 1.05rem; font-weight: 700; cursor: pointer; }
-    .modal__media { position: relative; aspect-ratio: 16 / 11; overflow: hidden; background: var(--cheddar); }
+    .modal__media { position: relative; aspect-ratio: 16 / 11; overflow: visible; background: var(--cheddar); }
     .modal__media.is-spicy-burst::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(circle at 50% 45%, rgba(255, 42, 0, 0.42), rgba(255, 94, 0, 0.18) 55%, transparent 75%); animation: spicy-bg-flash 1.8s ease-out forwards; }
     @keyframes spicy-bg-flash { 0% { opacity: 0; transform: scale(0.7); } 25% { opacity: 1; transform: scale(1.08); } 65% { opacity: 0.85; transform: scale(1); } 100% { opacity: 0; transform: scale(1.15); } }
-    .modal__ph { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 1.2rem; background: radial-gradient(circle at 20% 25%, rgba(168, 76, 0, 0.18) 0 24px, transparent 25px), radial-gradient(circle at 82% 62%, rgba(168, 76, 0, 0.18) 0 32px, transparent 33px), linear-gradient(155deg, var(--cheddar-light), var(--cheddar-deep)); }
+    .modal__ph { position: absolute; inset: 0; overflow: hidden; display: grid; place-items: center; padding-bottom: 1.2rem; background: radial-gradient(circle at 20% 25%, rgba(168, 76, 0, 0.18) 0 24px, transparent 25px), radial-gradient(circle at 82% 62%, rgba(168, 76, 0, 0.18) 0 32px, transparent 33px), linear-gradient(155deg, var(--cheddar-light), var(--cheddar-deep)); }
     .modal__fade { position: absolute; inset-inline: 0; bottom: -2px; height: 75px; z-index: 2; pointer-events: none; background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--surface) 35%, transparent) 40%, color-mix(in srgb, var(--surface) 82%, transparent) 75%, var(--surface) 100%); }
     .modal__ph-ring { position: absolute; width: 135px; height: 135px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 247, 230, 0.38) 0%, transparent 70%); animation: modal-ring-pulse 3s ease-in-out infinite alternate; }
     @keyframes modal-ring-pulse { from { transform: scale(0.92); opacity: 0.7; } to { transform: scale(1.18); opacity: 1; } }
@@ -258,7 +256,8 @@
     @keyframes spark-fly { 0% { opacity: 0; transform: translate(0, 0) scale(0.4); } 25% { opacity: 1; transform: translate(var(--sx1, -14px), var(--sy1, -6px)) scale(1.2); } 100% { opacity: 0; transform: translate(var(--sx2, -46px), var(--sy2, -20px)) scale(0.1); } }
     @keyframes badge-pop { from { opacity: 0; transform: translateY(-10px) scale(0.7); } to { opacity: 1; transform: none; } }
     .modal__body { position: relative; z-index: 3; margin-top: -1.1rem; padding: 0 1.35rem 1.4rem; }
-    .modal__cat { display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem; padding: 0.22rem 0.7rem; border-radius: 99px; background: rgba(245, 162, 29, 0.18); color: var(--cheddar-deep); font-weight: 700; font-size: 0.82rem; }
+    .modal__head-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.35rem; }
+    .modal__cat { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.22rem 0.7rem; border-radius: 99px; background: rgba(245, 162, 29, 0.18); color: var(--cheddar-deep); font-weight: 700; font-size: 0.82rem; }
     :root[data-theme="dark"] .modal__cat { color: var(--cheddar-light); }
     .modal__title { margin: 0 0 0.9rem; font-family: var(--font-display); font-weight: 400; font-size: clamp(1.65rem, 6vw, 2.1rem); line-height: 1.15; color: var(--text); }
     .modal__section { margin-bottom: 1rem; }
@@ -284,16 +283,147 @@
     [dir="ltr"] .modal__step svg { transform: scaleX(-1); }
     .modal__counter { min-width: 3.6ch; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--muted); }
 
-    /* Footer & Poinr Signature */
-    .footer { position: relative; margin-top: 2.5rem; background: var(--surface); border-top: 1px solid var(--line-soft); color: var(--text); overflow: hidden; }
-    .footer__curve { height: 36px; background: linear-gradient(160deg, var(--cheddar-light), var(--cheddar-deep)); border-radius: 0 0 50% 50% / 0 0 28px 28px; opacity: 0.9; }
+    /* ========== زر المشاركة الدائري (Radial Share Button لكل منتج) ========== */
+    .share-radial {
+      position: absolute;
+      bottom: 16px;
+      inset-inline-end: 18px;
+      z-index: 25;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .share-radial .main-button {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border: 2px solid var(--cheddar);
+      background: var(--ink);
+      color: var(--cheddar-light);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.38);
+      border-radius: 50%;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s ease, color 0.25s ease;
+      z-index: 100;
+      cursor: pointer;
+    }
+
+    .share-radial:hover .main-button,
+    .share-radial.is-open .main-button {
+      background: var(--cheddar);
+      color: var(--ink);
+      transform: scale(1.08) rotate(-12deg);
+    }
+
+    .share-radial .button {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(25, 21, 18, 0.94);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      transition: translate 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, background 0.2s ease, transform 0.2s ease;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      backdrop-filter: blur(5px);
+    }
+
+    .share-radial:hover .button,
+    .share-radial.is-open .button {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* توزيع الأزرار الـ 8 بشكل دائري متناسق حول المركز (نصف قطر 56px ليناسب النافذة والجوال) */
+    .share-radial:hover .discord-button,   .share-radial.is-open .discord-button   { translate: 56px 0px; }
+    .share-radial:hover .twitter-button,   .share-radial.is-open .twitter-button   { translate: 40px -40px; }
+    .share-radial:hover .reddit-button,    .share-radial.is-open .reddit-button    { translate: 0px -56px; }
+    .share-radial:hover .messenger-button, .share-radial.is-open .messenger-button { translate: -40px -40px; }
+    .share-radial:hover .pinterest-button, .share-radial.is-open .pinterest-button { translate: -56px 0px; }
+    .share-radial:hover .instagram-button, .share-radial.is-open .instagram-button { translate: -40px 40px; }
+    .share-radial:hover .snapchat-button,  .share-radial.is-open .snapchat-button  { translate: 0px 56px; }
+    .share-radial:hover .whatsapp-button,  .share-radial.is-open .whatsapp-button  { translate: 40px 40px; }
+
+    .share-radial .discord-button:hover   { background: #5865F2 !important; color: #fff; transform: scale(1.15); }
+    .share-radial .twitter-button:hover   { background: #000000 !important; color: #fff; transform: scale(1.15); }
+    .share-radial .reddit-button:hover    { background: #FF4500 !important; color: #fff; transform: scale(1.15); }
+    .share-radial .messenger-button:hover { background: #0093FF !important; color: #fff; transform: scale(1.15); }
+    .share-radial .pinterest-button:hover { background: #F0002A !important; color: #fff; transform: scale(1.15); }
+    .share-radial .instagram-button:hover { background: #F914AF !important; color: #fff; transform: scale(1.15); }
+    .share-radial .snapchat-button:hover  { background: #FFFC00 !important; color: #000; transform: scale(1.15); }
+    .share-radial .whatsapp-button:hover  { background: #25D366 !important; color: #fff; transform: scale(1.15); }
+
+    /* إشعار نسخ الرابط السريع */
+    .share-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 300;
+      padding: 0.55rem 1.2rem;
+      border-radius: 99px;
+      background: var(--ink);
+      color: var(--cheddar-light);
+      border: 1.5px solid var(--cheddar);
+      font-weight: 700;
+      font-size: 0.88rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .share-toast.is-shown {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ========== الفوتر (بعد إصلاح اللوقو والخط البرتقالي) ========== */
+    .footer {
+      position: relative;
+      margin-top: 4.5rem;
+      background: var(--surface);
+      border-top: 3px solid var(--cheddar);
+      border-radius: 38px 38px 0 0;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.12);
+      color: var(--text);
+      overflow: visible; /* مهم جداً عشان اللوقو يطلع براحته بدون ما ينقص أو يقطعه خط */
+    }
     .footer__inner { max-width: 920px; margin: 0 auto; padding: 0 1.25rem 2.5rem; text-align: center; }
-    .footer__brand { margin-top: -26px; margin-bottom: 1.8rem; }
-    .footer__logo-btn { display: inline-grid; place-items: center; width: 82px; height: 82px; padding: 6px; border-radius: 50%; border: 3px solid var(--cheddar); background: var(--bg); box-shadow: 0 8px 22px rgba(21, 18, 16, 0.2); cursor: pointer; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .footer__brand {
+      position: relative;
+      z-index: 5;
+      margin-top: -46px;
+      margin-bottom: 1.6rem;
+    }
+    .footer__logo-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 92px;
+      height: 92px;
+      padding: 8px;
+      border-radius: 50%;
+      border: 3px solid var(--cheddar);
+      background: var(--surface);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+      cursor: pointer;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
     .footer__logo-btn:hover { transform: translateY(-4px) scale(1.06); }
-    .footer__logo-btn img { width: 100%; height: auto; }
-    .footer__name { margin: 0.6rem 0 0.15rem; font-family: var(--font-display); font-weight: 400; font-size: 1.85rem; line-height: 1.1; }
-    .footer__tagline { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--cheddar-deep); }
+    .footer__logo-btn img { width: 100%; height: auto; display: block; }
+    .footer__name { margin: 0.65rem 0 0.15rem; font-family: var(--font-display); font-weight: 400; font-size: 1.95rem; line-height: 1.1; }
+    .footer__tagline { margin: 0; font-size: 0.98rem; font-weight: 700; color: var(--cheddar-deep); }
     :root[data-theme="dark"] .footer__tagline { color: var(--cheddar-light); }
     .footer__grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.6rem; }
     @media (min-width: 640px) { .footer__grid { grid-template-columns: 1fr 1fr; } }
