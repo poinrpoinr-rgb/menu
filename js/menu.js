@@ -1,4 +1,4 @@
-/* ========== المنيو: البيانات + العرض + شريط الأقسام + البحث الهلامي + النافذة + اللغة + الوضع ========== */
+/* ========== المنيو: البيانات + العرض + السعرات + البحث الهلامي + النافذة + اللغة + الوضع ========== */
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const html = document.documentElement;
@@ -8,7 +8,6 @@
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} },
   };
 
-  /* ---------- حماية تلقائية: تركيب عناصر البحث والنافذة لو ناقصة في HTML ---------- */
   function ensureDOM() {
     const bar = $("#catbar");
     if (bar && !$("#searchToggle")) {
@@ -32,50 +31,6 @@
           <div class="search-suggestions" id="searchSuggestions" role="listbox" hidden></div>
         </div>`);
     }
-    if (!$("#dishModal")) {
-      document.body.insertAdjacentHTML("beforeend", `
-        <div class="modal" id="dishModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
-          <div class="modal__backdrop" id="modalBackdrop"></div>
-          <div class="modal__sheet" id="modalSheet">
-            <div class="modal__handle" id="modalHandle" aria-hidden="true"><span></span></div>
-            <button class="modal__close" id="modalClose" type="button" aria-label="إغلاق">✕</button>
-            <div class="modal__content" id="modalContent">
-              <div class="modal__media" id="modalMedia">
-                <div class="modal__ph" aria-hidden="true"><span class="modal__ph-ring"></span><span class="modal__ph-icon" id="modalIcon"></span></div>
-                <img class="modal__img" id="modalImg" alt="" hidden>
-                <div class="modal__fade" aria-hidden="true"></div>
-                <div class="modal__badges" id="modalBadges"></div>
-              </div>
-              <div class="modal__body">
-                <div class="modal__cat" id="modalCat"></div>
-                <h3 class="modal__title" id="modalTitle"></h3>
-                <div class="modal__section">
-                  <h4 class="modal__subtitle" id="modalIngTitle">المكونات</h4>
-                  <p class="modal__desc" id="modalDesc"></p>
-                </div>
-                <div class="modal__allergens" id="modalAllergensBox" hidden>
-                  <h4 class="modal__subtitle modal__subtitle--warn">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    <span id="modalAllergensTitle">مسببات الحساسية</span>
-                  </h4>
-                  <div class="modal__allergen-list" id="modalAllergensList"></div>
-                </div>
-                <div class="modal__footer">
-                  <div class="modal__price-box">
-                    <span class="modal__price-label" id="modalPriceLabel">السعر</span>
-                    <span class="modal__price" id="modalPrice"></span>
-                  </div>
-                  <div class="modal__nav">
-                    <button class="modal__step" id="modalPrev" type="button" aria-label="الطبق السابق"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
-                    <span class="modal__counter" id="modalCounter"></span>
-                    <button class="modal__step" id="modalNext" type="button" aria-label="الطبق التالي"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>`);
-    }
   }
   ensureDOM();
 
@@ -86,10 +41,10 @@
       title: "TAZA 041 | المنيو", langBtn: "EN", langAria: "Switch to English",
       toDark: "تفعيل الوضع الليلي", toLight: "تفعيل الوضع الصباحي",
       close: "إغلاق", priceLabel: "السعر", prevDish: "الطبق السابق", nextDish: "الطبق التالي",
-      ingTitle: "المكونات", allergensTitle: "مسببات الحساسية",
+      ingTitle: "المكونات", allergensTitle: "مسببات الحساسية", calUnit: "سعرة",
       searchBtnAria: "بحث في المنيو", searchPlaceholder: "ابحث عن وجبتك، مكون، أو قسم...",
       searchClearAria: "مسح البحث", noResults: "ما لقينا طبق بهذا الاسم! جرب كلمة ثانية 🍔",
-      error: "تعذّر تحميل المنيو.<br>إذا فتحت الملف مباشرة، شغّل الموقع عبر Live Server.",
+      error: "تعذّر تحميل المنيو.<br>شغّل الموقع عبر Live Server.",
     },
     en: {
       featured: "Best seller", spicy: "Spicy", vegetarian: "Vegetarian",
@@ -97,7 +52,7 @@
       title: "TAZA 041 | Menu", langBtn: "ع", langAria: "التبديل إلى العربية",
       toDark: "Switch to dark mode", toLight: "Switch to light mode",
       close: "Close", priceLabel: "Price", prevDish: "Previous dish", nextDish: "Next dish",
-      ingTitle: "Ingredients", allergensTitle: "Allergens",
+      ingTitle: "Ingredients", allergensTitle: "Allergens", calUnit: "kcal",
       searchBtnAria: "Search menu", searchPlaceholder: "Search for a dish, ingredient...",
       searchClearAria: "Clear search", noResults: "No matching dishes found! Try another word 🍔",
       error: "Couldn't load the menu.<br>Run the site with Live Server.",
@@ -122,6 +77,11 @@
     10: [], 11: [], 12: ["dairy"],
   };
 
+  const DEFAULT_CALORIES_BY_ID = {
+    1: 310, 2: 440, 3: 490, 4: 620, 5: 580, 6: 860,
+    7: 470, 8: 640, 9: 690, 10: 110, 11: 140, 12: 520,
+  };
+
   let lang = html.lang === "en" ? "en" : "ar";
   const T = () => UI[lang];
   const pick = (obj, key) => (lang === "en" && obj[key + "_en"]) || obj[key];
@@ -139,6 +99,7 @@
     const card = (i, c, idx) => {
       const tagsHtml = (i.tags || []).filter((tg) => TAG_ICONS[tg])
         .map((tg) => `<span class="tag" title="${esc(T()[tg])}" aria-label="${esc(T()[tg])}">${TAG_ICONS[tg]}</span>`).join("");
+      const calVal = i.calories ?? DEFAULT_CALORIES_BY_ID[i.id] ?? 350;
       return `
         <article class="dish${i.featured ? " dish--featured" : ""}" data-idx="${idx}" tabindex="0" role="button" aria-label="${esc(pick(i, "name"))}">
           <div class="dish__media">
@@ -147,6 +108,7 @@
             ${i.featured ? `<span class="dish__flag">🔥 ${esc(T().featured)}</span>` : ""}
             ${tagsHtml ? `<span class="dish__tags">${tagsHtml}</span>` : ""}
             <span class="dish__price">${esc(price(i.price, cur))}</span>
+            <span class="dish__cal"><span class="dish__cal-icon">⚡</span>${esc(calVal)} ${esc(T().calUnit)}</span>
           </div>
           <div class="dish__body">
             <h3 class="dish__name">${esc(pick(i, "name"))}</h3>
@@ -174,15 +136,11 @@
   }
 
   /* ---------- شريط البحث والاقتراحات (Jelly Pop Search) ---------- */
-  const searchToggle = $("#searchToggle");
-  const searchWrap = $("#searchWrap");
-  const searchInput = $("#searchInput");
-  const searchClear = $("#searchClear");
-  const searchChips = $("#searchChips");
-  const searchSuggestions = $("#searchSuggestions");
+  const searchToggle = $("#searchToggle"), searchWrap = $("#searchWrap"),
+    searchInput = $("#searchInput"), searchClear = $("#searchClear"),
+    searchChips = $("#searchChips"), searchSuggestions = $("#searchSuggestions");
 
-  let isSearchOpen = false;
-  let activeChipFilter = "";
+  let isSearchOpen = false, activeChipFilter = "";
 
   function normText(str) {
     return String(str || "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
@@ -241,11 +199,7 @@
       if (cards[idx]) cards[idx].hidden = !match;
     });
 
-    sections.forEach((sec) => {
-      if (!sec) return;
-      sec.hidden = !sec.querySelector(".dish:not([hidden])");
-    });
-
+    sections.forEach((sec) => { if (sec) sec.hidden = !sec.querySelector(".dish:not([hidden])"); });
     revealVisible();
     searchSuggestions.hidden = false;
 
@@ -293,10 +247,7 @@
     activeChipFilter = "";
     runSearch("");
     setTimeout(() => {
-      if (!isSearchOpen) {
-        searchWrap.hidden = true;
-        searchWrap.classList.remove("is-closing");
-      }
+      if (!isSearchOpen) { searchWrap.hidden = true; searchWrap.classList.remove("is-closing"); }
     }, 260);
   }
 
@@ -318,31 +269,20 @@
     if (!chip) return;
     const q = chip.dataset.q;
     if (activeChipFilter === q) {
-      activeChipFilter = "";
-      searchInput.value = "";
-      chip.classList.remove("is-active");
-      runSearch("");
-      return;
+      activeChipFilter = ""; searchInput.value = "";
+      chip.classList.remove("is-active"); runSearch(""); return;
     }
     searchChips.querySelectorAll(".search-chip").forEach((b) => b.classList.remove("is-active"));
     chip.classList.add("is-active");
-    if (q.startsWith("#")) {
-      activeChipFilter = q;
-      searchInput.value = "";
-      runSearch(q);
-    } else {
-      activeChipFilter = "";
-      searchInput.value = q;
-      runSearch(q);
-    }
+    if (q.startsWith("#")) { activeChipFilter = q; searchInput.value = ""; runSearch(q); }
+    else { activeChipFilter = ""; searchInput.value = q; runSearch(q); }
   });
   searchSuggestions.addEventListener("click", (e) => {
     const itemBtn = e.target.closest(".suggestion-item");
-    if (!itemBtn) return;
-    openModal(Number(itemBtn.dataset.idx), itemBtn);
+    if (itemBtn) openModal(Number(itemBtn.dataset.idx), itemBtn);
   });
 
-  /* ---------- نافذة تفاصيل الطبق (Dish Modal) ---------- */
+  /* ---------- نافذة تفاصيل الطبق + عداد السعرات المتحرك ---------- */
   const modal = $("#dishModal"), modalSheet = $("#modalSheet"), modalContent = $("#modalContent"),
     modalMedia = $("#modalMedia"), modalBackdrop = $("#modalBackdrop"), modalClose = $("#modalClose"),
     modalImg = $("#modalImg"), modalIcon = $("#modalIcon"), modalBadges = $("#modalBadges"),
@@ -352,7 +292,7 @@
     modalPrice = $("#modalPrice"), modalPriceLabel = $("#modalPriceLabel"),
     modalPrev = $("#modalPrev"), modalNext = $("#modalNext"), modalCounter = $("#modalCounter");
 
-  let currentModalIdx = -1, lastFocusedCard = null;
+  let currentModalIdx = -1, lastFocusedCard = null, calAnimId = null;
 
   function buildSpicyBadgeHtml(delaySec) {
     const dirSign = lang === "ar" ? -1 : 1;
@@ -399,10 +339,7 @@
 
     const isSpicy = (item.tags || []).includes("spicy");
     modalMedia.classList.remove("is-spicy-burst");
-    if (isSpicy) {
-      void modalMedia.offsetWidth;
-      modalMedia.classList.add("is-spicy-burst");
-    }
+    if (isSpicy) { void modalMedia.offsetWidth; modalMedia.classList.add("is-spicy-burst"); }
 
     const badges = [];
     if (item.featured) badges.push(`<span class="modal__badge modal__badge--featured" style="--bd:0.12s">🔥 ${esc(T().featured)}</span>`);
@@ -417,6 +354,32 @@
     modalTitle.textContent = pick(item, "name");
     modalIngTitle.textContent = T().ingTitle;
     modalDesc.textContent = pick(item, "description");
+
+    // عداد السعرات الحرارية (Slot / Number Counter Animation)
+    let calBadge = $("#modalCalBadge");
+    if (!calBadge) {
+      modalCat.insertAdjacentHTML("afterend", `
+        <div class="modal__cal" id="modalCalBadge">
+          <span class="modal__cal-bolt" aria-hidden="true">⚡</span>
+          <span class="modal__cal-num" id="modalCalNum">0</span>
+          <span class="modal__cal-unit" id="modalCalUnit"></span>
+        </div>`);
+      calBadge = $("#modalCalBadge");
+    }
+    const targetCal = Number(item.calories ?? DEFAULT_CALORIES_BY_ID[item.id] ?? 350);
+    const calNumEl = $("#modalCalNum");
+    $("#modalCalUnit").textContent = T().calUnit;
+    calBadge.classList.remove("is-done");
+    if (calAnimId) cancelAnimationFrame(calAnimId);
+    const cStart = performance.now(), cDur = 680;
+    function tickCal(now) {
+      const p = Math.min((now - cStart) / cDur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      calNumEl.textContent = Math.round(targetCal * eased);
+      if (p < 1) calAnimId = requestAnimationFrame(tickCal);
+      else calBadge.classList.add("is-done");
+    }
+    calAnimId = requestAnimationFrame(tickCal);
 
     const rawAllergens = Array.isArray(item.allergens) ? item.allergens : (DEFAULT_ALLERGENS_BY_ID[item.id] || []);
     const itemAllergens = rawAllergens.filter((key) => ALLERGENS[key]);
@@ -502,7 +465,7 @@
 
   let touchStartX = 0, touchStartY = 0, touchDeltaX = 0, touchDeltaY = 0, isDraggingSheet = false;
   modalSheet.addEventListener("touchstart", (e) => {
-    if (e.touches.length !== 1) return;
+    if (e.touches.length !== 1 || e.target.closest(".share-radial")) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchDeltaX = 0; touchDeltaY = 0;
