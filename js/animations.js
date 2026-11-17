@@ -49,39 +49,54 @@
       radial.classList.toggle("is-open");
     });
 
-    radial.addEventListener("click", (e) => {
+radial.addEventListener("click", (e) => {
       const btn = e.target.closest(".button[data-plat]");
       if (!btn) return;
       e.stopPropagation();
 
       const plat = btn.dataset.plat;
-      const dishName = $("#modalTitle")?.textContent || "TAZA 041";
-      const dishPrice = $("#modalPrice")?.textContent || "";
-      const url = window.location.href;
       const isAr = html.lang !== "en";
-      const text = isAr
-        ? `شوف هالوجبة الرهيبة من مطعم تازة 041 🍔🔥: ${dishName} (${dishPrice})`
-        : `Check out this dish from TAZA 041 🍔🔥: ${dishName} (${dishPrice})`;
-      const fullText = `${text}\n${url}`;
+
+      // استخراج رقم المنتج المفتوح حالياً من العداد (مثلاً "5 / 12" -> 5) لبناء رابط مباشر خاص فيه
+      const counterText = $("#modalCounter")?.textContent || "1";
+      const currentNum = parseInt(counterText.split("/")[0], 10) || 1;
+      const baseUrl = window.location.href.split("#")[0];
+      const dishUrl = `${baseUrl}#dish-${currentNum}`;
 
       if (plat === "whatsapp") {
-        window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, "_blank");
+        window.open(`https://wa.me/?text=${encodeURIComponent(dishUrl)}`, "_blank");
       } else if (plat === "twitter") {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank");
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(dishUrl)}`, "_blank");
       } else if (plat === "reddit") {
-        window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`, "_blank");
+        window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(dishUrl)}`, "_blank");
       } else if (plat === "pinterest") {
-        window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`, "_blank");
+        window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(dishUrl)}`, "_blank");
       } else {
-        navigator.clipboard?.writeText(fullText).catch(() => {});
-        showToast(isAr ? "تم نسخ تفاصيل الوجبة للمشاركة! ✨" : "Dish details copied to share! ✨");
+        navigator.clipboard?.writeText(dishUrl).catch(() => {});
+        showToast(isAr ? "تم نسخ رابط المنتج! 🔗✨" : "Product link copied! 🔗✨");
       }
       radial.classList.remove("is-open");
     });
 
     document.addEventListener("click", () => radial.classList.remove("is-open"));
-  }
 
+    // إذا أحد دخل الموقع عبر رابط منتج مباشر (مثل #dish-5) يفتح له المنتج تلقائياً!
+    function checkDeepLink() {
+      const m = window.location.hash.match(/^#dish-(\d+)$/);
+      if (!m) return;
+      const targetIdx = parseInt(m[1], 10) - 1;
+      const tryOpen = setInterval(() => {
+        const card = document.querySelector(`.dish[data-idx="${targetIdx}"]`);
+        if (card) {
+          clearInterval(tryOpen);
+          setTimeout(() => card.click(), 400);
+        }
+      }, 150);
+      setTimeout(() => clearInterval(tryOpen), 5000);
+    }
+    checkDeepLink();
+    window.addEventListener("hashchange", checkDeepLink);
+  }
   /* ---------- مسارات شعار المطور Poinr SVG (مضغوطة بدقة عالية) ---------- */
   const POINR_SVG = `
     <svg viewBox="0 0 1024 528" class="poinr-logo" aria-hidden="true">
