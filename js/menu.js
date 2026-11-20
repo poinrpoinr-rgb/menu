@@ -792,7 +792,28 @@
     buildNav();
     observeCards();
     spy();
+    
   }
+  /* ---------- تحديث المنيو عند السحب بالجبن ---------- */
+  window.tazaRefresh = async () => {
+    try {
+      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) return false;
+      data = await res.json();
+      const keep = cats[active] && cats[active].id;
+      renderMenu();
+      buildNav(keep);
+      observeCards();
+      revealVisible();
+      spy();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  init();
+})();
 
   init();
 })();
