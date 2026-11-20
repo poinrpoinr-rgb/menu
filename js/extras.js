@@ -1,4 +1,4 @@
-/* ========== إضافات TAZA 041: زر الصعود بالبرغر + واجهة التقييم والكومنتات المتحركة ========== */
+/* ========== إضافات TAZA 041: زر الصعود الفيزيائي الأنيق + واجهة التقييم والكومنتات المتحركة ========== */
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const html = document.documentElement;
@@ -61,35 +61,40 @@
 
   const st = document.createElement("style");
   st.textContent = `
+    /* ===== 1) زر الصعود للأعلى (أنيق + حلقة التقدم + انطلاق السهم) ===== */
     .btt {
       position: fixed; bottom: 1.25rem; inset-inline-end: 1.15rem; z-index: 65;
-      width: 54px; height: 54px; padding: 0; border: 0; border-radius: 50%;
+      width: 50px; height: 50px; padding: 0; border: 0; border-radius: 50%;
       background: var(--surface); color: var(--text);
-      box-shadow: 0 8px 22px rgba(21, 18, 16, 0.25); cursor: pointer;
-      display: grid; place-items: center; opacity: 0;
+      box-shadow: 0 8px 22px rgba(21, 18, 16, 0.24); cursor: pointer;
+      display: grid; place-items: center; opacity: 0; overflow: hidden;
       transform: translateY(24px) scale(0.6); pointer-events: none;
-      transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.25s ease;
+      -webkit-tap-highlight-color: transparent;
     }
     .btt.is-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-    .btt:hover { transform: translateY(-4px) scale(1.06); }
+    .btt:hover { transform: translateY(-4px) scale(1.07); background: var(--cheddar); }
+    .btt:hover .btt__arrow { color: var(--ink); transform: translateY(-2px); }
     .btt:active { transform: scale(0.92); }
     .btt__ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
     .btt__track { fill: none; stroke: var(--line-soft); stroke-width: 3.5; }
     .btt__prog  { fill: none; stroke: var(--cheddar); stroke-width: 3.5; stroke-linecap: round; transition: stroke-dashoffset 0.1s linear; }
-    .btt__rider { position: relative; display: flex; flex-direction: column; align-items: center; line-height: 1; }
-    .btt__burger { font-size: 1.05rem; margin-bottom: -5px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.22)); animation: btt-bob 2s ease-in-out infinite; }
-    .btt__arrow { color: var(--cheddar-deep); }
+    .btt:hover .btt__prog { stroke: var(--ink); }
+    .btt__arrow {
+      position: relative;
+      color: var(--cheddar-deep);
+      transition: transform 0.25s ease, color 0.25s ease;
+    }
     :root[data-theme="dark"] .btt__arrow { color: var(--cheddar-light); }
-    @keyframes btt-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
-    .btt.is-launching .btt__rider { animation: btt-launch 0.55s cubic-bezier(0.4, 0, 0.2, 1); }
-    @keyframes btt-launch {
-      0% { transform: translateY(0) scale(1); }
-      30% { transform: translateY(5px) scale(0.9); }
-      75% { transform: translateY(-28px) scale(1.1); opacity: 0; }
-      76% { transform: translateY(18px) scale(0.8); opacity: 0; }
-      100% { transform: translateY(0) scale(1); opacity: 1; }
+    .btt.is-launching .btt__arrow { animation: btt-arrow-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes btt-arrow-fly {
+      0%   { transform: translateY(0); opacity: 1; }
+      45%  { transform: translateY(-28px); opacity: 0; }
+      46%  { transform: translateY(28px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
     }
 
+    /* ===== 2) قسم التقييمات + نموذج التقييم السريع ===== */
     .fb-wrap { max-width: 620px; margin: 0.5rem auto 2.5rem; padding: 0 1rem; }
     .fb-shell {
       position: relative; overflow: hidden; padding: 1.35rem 1.25rem 1.45rem;
@@ -174,23 +179,60 @@
   `;
   document.head.appendChild(st);
 
+  /* ---------- محرك الصعود الصاروخي الناعم لأول الصفحة ---------- */
+  let topAnimId = null;
+
+  function smoothFlyToTop() {
+    if (topAnimId) cancelAnimationFrame(topAnimId);
+    const startY = window.scrollY;
+    if (startY <= 2) return;
+
+    const menuEl = $("#menu");
+    const duration = Math.min(850, Math.max(520, startY * 0.32));
+    const startTime = performance.now();
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    if (menuEl) menuEl.classList.add("is-warping-up");
+    setTimeout(() => menuEl && menuEl.classList.remove("is-warping-up"), duration * 0.75);
+
+    const stopFly = () => {
+      if (topAnimId) { cancelAnimationFrame(topAnimId); topAnimId = null; }
+      if (menuEl) menuEl.classList.remove("is-warping-up");
+      window.removeEventListener("wheel", stopFly);
+      window.removeEventListener("touchstart", stopFly);
+    };
+    window.addEventListener("wheel", stopFly, { passive: true, once: true });
+    window.addEventListener("touchstart", stopFly, { passive: true, once: true });
+
+    function step(now) {
+      const progress = Math.min((now - startTime) / duration, 1);
+      window.scrollTo(0, startY * (1 - easeInOutCubic(progress)));
+      if (progress < 1) {
+        topAnimId = requestAnimationFrame(step);
+      } else {
+        stopFly();
+      }
+    }
+    topAnimId = requestAnimationFrame(step);
+  }
+
   function initBackToTop() {
     if ($("#bttBtn")) return;
-    const R = 24, C = 2 * Math.PI * R;
+    const R = 22, C = 2 * Math.PI * R;
     const btn = document.createElement("button");
     btn.id = "bttBtn";
     btn.type = "button";
     btn.className = "btt";
     btn.setAttribute("aria-label", T().topAria);
     btn.innerHTML = `
-      <svg class="btt__ring" viewBox="0 0 54 54" aria-hidden="true">
-        <circle class="btt__track" cx="27" cy="27" r="${R}"/>
-        <circle class="btt__prog" id="bttProg" cx="27" cy="27" r="${R}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"/>
+      <svg class="btt__ring" viewBox="0 0 50 50" aria-hidden="true">
+        <circle class="btt__track" cx="25" cy="25" r="${R}"/>
+        <circle class="btt__prog" id="bttProg" cx="25" cy="25" r="${R}" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}"/>
       </svg>
-      <span class="btt__rider" aria-hidden="true">
-        <span class="btt__burger">🍔</span>
-        <svg class="btt__arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-      </span>`;
+      <svg class="btt__arrow" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="12" y1="19" x2="12" y2="5"></line>
+        <polyline points="5 12 12 5 19 12"></polyline>
+      </svg>`;
     document.body.appendChild(btn);
 
     const prog = $("#bttProg");
@@ -204,13 +246,20 @@
     }
     addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(updateBtt); } }, { passive: true });
     updateBtt();
+
     btn.addEventListener("click", () => {
       btn.classList.remove("is-launching");
       void btn.offsetWidth;
       btn.classList.add("is-launching");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setTimeout(() => btn.classList.remove("is-launching"), 600);
+      smoothFlyToTop();
+      setTimeout(() => btn.classList.remove("is-launching"), 650);
     });
+
+    // نربط لوقو الشريط المثبت ولوقو الفوتر بنفس الصعود الصاروخي الناعم!
+    $("#catLogo")?.addEventListener("click", (e) => { e.stopImmediatePropagation(); smoothFlyToTop(); }, true);
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("#footerTopBtn")) { e.stopImmediatePropagation(); smoothFlyToTop(); }
+    }, true);
   }
 
   function spawnBurgerHearts(stage) {
