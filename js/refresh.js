@@ -237,6 +237,7 @@
 
   function cleanupVisual() {
     S.snapAt = 0; S.armed = false;
+    document.body.classList.remove("is-cheese-active");
     app.style.transform = ""; app.style.willChange = "";
     ov.style.display = "none"; ov.style.height = "0px";
     layer.innerHTML = "";
@@ -245,9 +246,11 @@
   function render(now = performance.now()) {
     const p = Math.max(S.pos, 0);
     if (p > 0.5) {
+      document.body.classList.add("is-cheese-active");
       app.style.willChange = "transform";
       app.style.transform = `translate3d(0, ${p.toFixed(2)}px, 0)`;
     } else {
+      document.body.classList.remove("is-cheese-active");
       app.style.transform = "";
     }
 
