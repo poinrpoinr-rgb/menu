@@ -1,4 +1,4 @@
-/* ========== المنيو: البيانات + العرض + السعرات + البحث الهلامي + النافذة + اللغة + الوضع ========== */
+/* ========== المنيو: البيانات + العرض + السعرات + البحث الهلامي + النافذة + التحديث + اللغة + الوضع ========== */
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const html = document.documentElement;
@@ -135,7 +135,7 @@
     $("#menu").querySelectorAll(".dish__media img").forEach((img) => img.addEventListener("error", () => img.remove()));
   }
 
-  /* ---------- شريط البحث والاقتراحات (Jelly Pop Search) ---------- */
+  /* ---------- شريط البحث الهلامي ---------- */
   const searchToggle = $("#searchToggle"), searchWrap = $("#searchWrap"),
     searchInput = $("#searchInput"), searchClear = $("#searchClear"),
     searchChips = $("#searchChips"), searchSuggestions = $("#searchSuggestions");
@@ -282,7 +282,7 @@
     if (itemBtn) openModal(Number(itemBtn.dataset.idx), itemBtn);
   });
 
-  /* ---------- نافذة تفاصيل الطبق + عداد السعرات المتحرك ---------- */
+  /* ---------- نافذة تفاصيل الطبق + عداد السعرات ---------- */
   const modal = $("#dishModal"), modalSheet = $("#modalSheet"), modalContent = $("#modalContent"),
     modalMedia = $("#modalMedia"), modalBackdrop = $("#modalBackdrop"), modalClose = $("#modalClose"),
     modalImg = $("#modalImg"), modalIcon = $("#modalIcon"), modalBadges = $("#modalBadges"),
@@ -355,7 +355,6 @@
     modalIngTitle.textContent = T().ingTitle;
     modalDesc.textContent = pick(item, "description");
 
-    // عداد السعرات الحرارية (Slot / Number Counter Animation)
     let calBadge = $("#modalCalBadge");
     if (!calBadge) {
       modalCat.insertAdjacentHTML("afterend", `
@@ -777,23 +776,6 @@
     if (!store.get("taza-theme")) { html.dataset.theme = e.matches ? "dark" : "light"; updateThemeBtn(); }
   });
 
-  /* ---------- تشغيل ---------- */
-  async function init() {
-    updateStatic();
-    try {
-      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) throw new Error(res.status);
-      data = await res.json();
-    } catch (err) {
-      $("#menu").innerHTML = `<p class="menu-error">${T().error}</p>`;
-      return;
-    }
-    renderMenu();
-    buildNav();
-    observeCards();
-    spy();
-    
-  }
   /* ---------- تحديث المنيو عند السحب بالجبن ---------- */
   window.tazaRefresh = async () => {
     try {
@@ -812,8 +794,22 @@
     }
   };
 
-  init();
-})();
+  /* ---------- تشغيل ---------- */
+  async function init() {
+    updateStatic();
+    try {
+      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error(res.status);
+      data = await res.json();
+    } catch (err) {
+      $("#menu").innerHTML = `<p class="menu-error">${T().error}</p>`;
+      return;
+    }
+    renderMenu();
+    buildNav();
+    observeCards();
+    spy();
+  }
 
   init();
 })();
