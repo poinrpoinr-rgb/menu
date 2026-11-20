@@ -567,4 +567,66 @@
     const stars = [...wrap.querySelectorAll(".fb-star")];
     const fbMsg = $("#fbMsg", wrap);
     const fbBurger = $("#fbBurger", wrap);
-    const fbStage = $("#fbBurgerS
+    const fbStage = $("#fbBurgerStage", wrap);
+    const sendBtn = $("#fbSend", wrap);
+
+    stars.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        rating = Number(btn.dataset.v);
+        sendBtn.disabled = false;
+        stars.forEach((s, idx) => {
+          s.classList.toggle("is-lit", idx < rating);
+          if (idx === rating - 1) { s.classList.remove("is-pop"); void s.offsetWidth; s.classList.add("is-pop"); }
+        });
+        fbMsg.textContent = T().fbRatingMsg[rating - 1];
+        if (rating === 5) {
+          fbBurger.classList.remove("is-happy");
+          void fbBurger.offsetWidth;
+          fbBurger.classList.add("is-happy");
+          spawnBurgerHearts(fbStage);
+        }
+      });
+    });
+
+    $("#fbTags", wrap).addEventListener("click", (e) => {
+      const tgBtn = e.target.closest(".fb-tag");
+      if (!tgBtn) return;
+      const val = tgBtn.dataset.tg;
+      if (selectedTags.has(val)) { selectedTags.delete(val); tgBtn.classList.remove("is-on"); }
+      else { selectedTags.add(val); tgBtn.classList.add("is-on"); }
+    });
+
+    sendBtn.addEventListener("click", () => {
+      if (!rating) return;
+      const entry = {
+        id: Date.now(),
+        createdAt: new Date().toISOString(),
+        status: "pending", // بانتظار موافقة الأدمن (approved / rejected)
+        name: ($("#fbName", wrap).value || "").trim() || (html.lang === "en" ? "Guest" : "ضيف تازة"),
+        rating,
+        tags: [...selectedTags],
+        note: ($("#fbNote", wrap).value || "").trim(),
+      };
+      try {
+        const list = JSON.parse(localStorage.getItem("taza-feedbacks") || "[]");
+        list.unshift(entry);
+        localStorage.setItem("taza-feedbacks", JSON.stringify(list));
+      } catch (_) {}
+
+      if (rating === 5) spawnBurgerHearts(fbStage);
+      formView.innerHTML = `<div class="fb-done">${T().fbThanks}</div>`;
+    });
+  }
+
+  function boot() {
+    initBackToTop();
+    renderFeedbackSection();
+
+    new MutationObserver(() => {
+      $("#bttBtn")?.setAttribute("aria-label", T().topAria);
+      renderFeedbackSection();
+    }).observe(html, { attributes: true, attributeFilter: ["lang"] });
+  }
+
+  boot();
+})();
