@@ -25,13 +25,14 @@
   const st = document.createElement("style");
   st.textContent = `
     html { overscroll-behavior-y: contain; }
+    body.is-pulling .app,
+    body.is-cheese-active .app {
+      animation: none !important;
+    }
     #cheeseRefresh {
       position: fixed; top: 0; left: 0; right: 0; height: 0; z-index: 70;
+      background: var(--bg, #f9efe0);
       pointer-events: none; display: none; contain: layout style;
-    }
-    #cheeseRefresh svg {
-      position: absolute; top: 0; left: 0; width: 100%; overflow: visible;
-      filter: drop-shadow(0 3px 5px rgba(154, 60, 0, .24));
     }
     #cheeseRefresh .lbl {
       position: absolute; left: 50%; bottom: 11px;
