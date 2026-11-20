@@ -1,12 +1,12 @@
-/* ========== السحب للتحديث: خيوط الجبن الذائب v2 (واقعي + 120Hz + ربط حقيقي بالمنيو) ========== */
+/* ========== السحب للتحديث: خيوط الجبن الذائب v2 (ينزل الغلاف مع السحب 100%) ========== */
 (() => {
   const html = document.documentElement;
   const app = document.getElementById("app");
   if (!app) return;
 
-  const THR = 84;     // مسافة التفعيل عند الإفلات
-  const HOLD = 72;    // مسافة التثبيت أثناء التحديث
-  const MAXP = 155;   // أقصى مسافة سحب
+  const THR = 84;
+  const HOLD = 72;
+  const MAXP = 155;
   const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const ease = (t) => 1 - Math.pow(1 - t, 3);
@@ -21,29 +21,33 @@
   };
   const L = () => TXT[html.lang === "en" ? "en" : "ar"];
 
-  /* ---------- ستايل مضمّن محسّن ---------- */
+  /* ---------- ستايل مضمّن (يفك قفل أنيميشن #app ويظهر الخلفية ورا الجبنة) ---------- */
   const st = document.createElement("style");
   st.textContent = `
     html { overscroll-behavior-y: contain; }
-    body.is-pulling .app,
-    body.is-cheese-active .app {
+    body.is-cheese-active .app,
+    body.is-pulling .app {
       animation: none !important;
     }
     #cheeseRefresh {
-      position: fixed; top: 0; left: 0; right: 0; height: 0; z-index: 70;
-      background: var(--bg, #f9efe0);
+      position: fixed; top: 0; left: 0; right: 0; height: 0; z-index: 80;
+      background: var(--bg, #16120f);
       pointer-events: none; display: none; contain: layout style;
     }
+    #cheeseRefresh svg {
+      position: absolute; top: 0; left: 0; width: 100%; overflow: visible;
+      filter: drop-shadow(0 4px 8px rgba(154, 60, 0, .35));
+    }
     #cheeseRefresh .lbl {
-      position: absolute; left: 50%; bottom: 11px;
+      position: absolute; left: 50%; bottom: 14px;
       display: inline-flex; align-items: center; gap: 7px;
       transform: translate3d(-50%, 0, 0) scale(.94);
       padding: .28rem .92rem; border-radius: 99px; white-space: nowrap;
       background: var(--surface, #fff9f0); color: var(--text, #261c14);
-      border: 1.5px solid rgba(245, 162, 29, .35);
+      border: 1.5px solid rgba(245, 162, 29, .4);
       font: 700 .83rem/1.3 var(--font-body, system-ui, sans-serif);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, .16);
-      transition: opacity .18s ease, transform .2s cubic-bezier(.34,1.56,.64,1), border-color .2s, background-color .2s, color .2s;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
+      transition: opacity .18s ease, transform .2s cubic-bezier(.34,1.56,.64,1), border-color .2s;
     }
     #cheeseRefresh .lbl .spin {
       width: 12px; height: 12px; border-radius: 50%; display: none;
@@ -53,18 +57,12 @@
     #cheeseRefresh .lbl[data-state="ready"] {
       transform: translate3d(-50%, -2px, 0) scale(1.06);
       border-color: #f5a21d;
-      box-shadow: 0 5px 16px rgba(245, 162, 29, .36);
+      box-shadow: 0 5px 16px rgba(245, 162, 29, .4);
     }
     #cheeseRefresh .lbl[data-state="busy"] .spin { display: inline-block; }
-    #cheeseRefresh .lbl[data-state="done"] {
-      border-color: #22c55e; color: #15803d;
-      transform: translate3d(-50%, 0, 0) scale(1.03);
-    }
+    #cheeseRefresh .lbl[data-state="done"] { border-color: #22c55e; color: #15803d; }
     :root[data-theme="dark"] #cheeseRefresh .lbl[data-state="done"] { color: #4ade80; }
-    #cheeseRefresh .lbl[data-state="fail"] {
-      border-color: #ef4444; color: #b91c1c;
-      animation: chShake .35s ease;
-    }
+    #cheeseRefresh .lbl[data-state="fail"] { border-color: #ef4444; color: #b91c1c; animation: chShake .35s ease; }
     @keyframes chSpin { to { transform: rotate(360deg); } }
     @keyframes chShake {
       0%,100% { transform: translate3d(-50%, 0, 0); }
@@ -75,7 +73,6 @@
   `;
   document.head.appendChild(st);
 
-  /* ---------- بناء العناصر + تعريف التدرجات ---------- */
   const ov = document.createElement("div");
   ov.id = "cheeseRefresh";
   ov.innerHTML = `
@@ -112,7 +109,6 @@
     if (lblTxt.textContent !== text) lblTxt.textContent = text;
   }
 
-  /* ---------- بيانات الخيوط (سميكة + شعيرات رفيعة) ---------- */
   const STRANDS = [
     { f: .11, s:  1, b: .34, w: 1.05, d:  40, thick: true },
     { f: .26, s: -1, b: .52, w: 0.95, d: 110, thick: true },
@@ -232,14 +228,15 @@
     layer.innerHTML = o;
   }
 
-  /* ---------- الحالة + حلقة فيزياء موحدة ---------- */
   const S = { pos: 0, vel: 0, target: 0, raf: 0, lastT: 0, busy: false, drag: false, snapAt: 0, armed: false };
 
   function cleanupVisual() {
     S.snapAt = 0; S.armed = false;
     document.body.classList.remove("is-cheese-active");
-    app.style.transform = ""; app.style.willChange = "";
-    ov.style.display = "none"; ov.style.height = "0px";
+    app.style.removeProperty("transform");
+    app.style.willChange = "";
+    ov.style.display = "none";
+    ov.style.height = "0px";
     layer.innerHTML = "";
   }
 
@@ -248,10 +245,10 @@
     if (p > 0.5) {
       document.body.classList.add("is-cheese-active");
       app.style.willChange = "transform";
-      app.style.transform = `translate3d(0, ${p.toFixed(2)}px, 0)`;
+      app.style.setProperty("transform", `translate3d(0, ${p.toFixed(2)}px, 0)`, "important");
     } else {
       document.body.classList.remove("is-cheese-active");
-      app.style.transform = "";
+      app.style.removeProperty("transform");
     }
 
     const show = p > 2;
@@ -304,7 +301,6 @@
       try { return Promise.resolve(window.tazaRefresh()).then(Boolean, () => false); }
       catch (_) { return Promise.resolve(false); }
     }
-    // احتياط: لو لم تُربط tazaRefresh نختبر جلب ملف menu.json مباشرة
     return fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" })
       .then((r) => r.ok)
       .catch(() => false);
@@ -371,7 +367,6 @@
     render();
   }
 
-  /* ---------- 1) الجوال: لمس ---------- */
   let t = null;
   addEventListener("touchstart", (e) => {
     if (e.touches.length !== 1 || !canPull(e.target)) { t = null; return; }
@@ -395,7 +390,6 @@
   addEventListener("touchend", touchEnd);
   addEventListener("touchcancel", touchEnd);
 
-  /* ---------- 2) الكمبيوتر: سحب بالماوس ---------- */
   let m = null;
   addEventListener("mousedown", (e) => {
     if (e.button !== 0 || !canPull(e.target) || e.target.closest("a,button,input,textarea,select,.modal,.search-wrap,.catbar")) {
@@ -420,7 +414,6 @@
   addEventListener("mouseup", mouseEnd);
   document.addEventListener("mouseleave", mouseEnd);
 
-  /* ---------- 3) الكمبيوتر: عجلة الماوس / لوحة اللمس ---------- */
   let wAcc = 0, wTimer = 0;
   const wheelDone = () => { if (S.drag) end(); wAcc = 0; };
 
