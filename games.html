@@ -166,9 +166,9 @@
     .flap-pad { display: flex; justify-content: center; margin-top: 0.95rem; }
     .flap-pad[hidden] { display: none; }
     .flap-btn {
-      width: 100%; max-width: 260px; height: 54px; border: 0; border-radius: 99px;
+      width: 100%; max-width: 240px; height: 52px; border: 0; border-radius: 99px;
       background: linear-gradient(135deg, var(--cheddar-light), var(--cheddar-deep));
-      color: var(--ink); font: 800 1.08rem var(--font-body);
+      color: var(--ink); font: 800 1.08rem var(--font-body); letter-spacing: 0.3px;
       box-shadow: 0 5px 0 #b45309, 0 10px 20px rgba(238, 122, 26, 0.35);
       cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
       transition: transform 0.08s ease, box-shadow 0.08s ease;
@@ -194,7 +194,7 @@
 
     <nav class="game-tabs" id="gameTabs">
       <button class="game-tab is-active" type="button" data-game="snake">🐍 <span id="tabSnake">الثعبان</span></button>
-      <button class="game-tab" type="button" data-game="flappy">🐦 <span id="tabFlappy">الطائر</span></button>
+      <button class="game-tab" type="button" data-game="flappy">🐤 <span id="tabFlappy">الطائر</span></button>
       <button class="game-tab" type="button" disabled>🧱 <span id="tabNext">المكعبات</span> <span class="soon-tag" id="soonLbl">قريباً</span></button>
     </nav>
 
@@ -233,8 +233,9 @@
         <button class="dkey dkey--down"  type="button" data-dir="D">▼</button>
       </div>
 
+      <!-- زر القفز النظيف بدون أيقونات مزعجة -->
       <div class="flap-pad" id="flappyPad" hidden>
-        <button class="flap-btn" id="flapBtn" type="button">اضغط للقفز 🐦⬆️</button>
+        <button class="flap-btn" id="flapBtn" type="button">اضغط للقفز</button>
       </div>
 
       <p class="hint-bar" id="hintBar"></p>
@@ -259,12 +260,12 @@
         play: isEn ? "Start Game ▶" : "ابدأ اللعب ▶",
         again: isEn ? "Play Again ↻" : "العب مرة ثانية ↻",
         over: isEn ? "GAME OVER" : "انتهت اللعبة!",
-        tapReady: isEn ? "TAP OR SPACE TO FLY 👆" : "اضغط أو مسافة للانطلاق 👆",
+        tapReady: isEn ? "TAP OR PRESS SPACE TO FLY" : "اضغط أو مسافة للانطلاق",
         snakeSub: isEn ? "Eat TAZA 041 bites to grow! Golden Chili 🌶️ gives +30 pts!" : "كل وجبات TAZA 041 وكبّر الثعبان! الفلفل الحار 🌶️ يعطيك 30 نقطة!",
-        flappySub: isEn ? "Bird stays ready in mid-air until your first jump!" : "الطائر ينتظرك ثابت بالجو، وأول ما تنط تبدأ المغامرة!",
+        flappySub: isEn ? "Bird waits in mid-air until your first tap!" : "الطائر ينتظرك ثابت بالجو، وأول ما تنط تبدأ المغامرة!",
         snakeHint: isEn ? "Swipe on screen or use Arrow Keys / WASD" : "اسحب على الشاشة أو استخدم الأسهم للتحكم",
         flappyHint: isEn ? "Tap anywhere on screen or press Space to jump" : "اضغط بأي مكان على الشاشة أو زر المسافة للقفز",
-        flapBtn: isEn ? "TAP TO FLY 🐦⬆️" : "اضغط للقفز 🐦⬆️",
+        flapBtn: isEn ? "TAP TO JUMP" : "اضغط للقفز",
       };
 
       $("#backBtn").textContent = TXT.back;
@@ -307,7 +308,7 @@
       const scoreEl = $("#scoreVal"), bestEl = $("#bestVal");
 
       let currentGame = "snake";
-      let rafId = 0, running = false, paused = false;
+      let rafId = 0, running = false, paused = false, lastFrameT = 0;
       let particles = [];
 
       function spawnParticles(x, y, color, count = 10) {
@@ -317,12 +318,12 @@
           particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, r: 2.5 + Math.random() * 3, color });
         }
       }
-      function updateAndDrawParticles() {
+      function updateAndDrawParticles(dtNorm) {
         for (let i = particles.length - 1; i >= 0; i--) {
           const p = particles[i];
-          p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+          p.x += p.vx * dtNorm; p.y += p.vy * dtNorm; p.life -= 0.045 * dtNorm;
           if (p.life <= 0) { particles.splice(i, 1); continue; }
-          ctx.globalAlpha = p.life;
+          ctx.globalAlpha = Math.max(0, p.life);
           ctx.fillStyle = p.color;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2); ctx.fill();
         }
@@ -389,11 +390,9 @@
         if (S.score > S.best) { S.best = S.score; bestEl.textContent = S.best; try { localStorage.setItem("taza-snake-best", S.best); } catch (_) {} }
       }
 
-      function snakeDraw(now) {
+      function snakeDraw(now, dtNorm) {
         const cs = getComputedStyle(html);
         ctx.clearRect(0, 0, W, H);
-
-        // شبكة خفيفة
         ctx.strokeStyle = cs.getPropertyValue("--screen-grid").trim();
         ctx.lineWidth = 1;
         for (let i = 1; i < GRID; i++) {
@@ -401,7 +400,6 @@
           ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(W, i * CELL); ctx.stroke();
         }
 
-        // الطعام واضح وساطع 100% (globalAlpha = 1 و fillStyle = #ffffff)
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
         ctx.font = `${CELL * 0.92}px sans-serif`;
         if (S.food) {
@@ -409,8 +407,7 @@
           const p = 1 + Math.sin(now / 220) * 0.1;
           ctx.fillStyle = "rgba(255, 189, 63, 0.28)";
           ctx.beginPath(); ctx.arc(fx, fy, CELL * 0.62 * p, 0, Math.PI * 2); ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = "#ffffff";
+          ctx.globalAlpha = 1; ctx.fillStyle = "#ffffff";
           ctx.fillText(S.food.emoji, fx, fy + 1);
         }
         if (S.bonus) {
@@ -418,53 +415,41 @@
           const p = 1 + Math.sin(now / 100) * 0.16;
           ctx.fillStyle = "rgba(255, 69, 0, 0.35)";
           ctx.beginPath(); ctx.arc(bx, by, CELL * 0.68 * p, 0, Math.PI * 2); ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = "#ffffff";
+          ctx.globalAlpha = 1; ctx.fillStyle = "#ffffff";
           ctx.save(); ctx.translate(bx, by); ctx.scale(p, p); ctx.fillText(S.bonus.emoji, 0, 1); ctx.restore();
         }
 
-        // جسم الثعبان المتصل (وصلات ناعمة مستمرة بين الفقرات)
         const bodyClr = cs.getPropertyValue("--snake-body").trim();
         const headClr = cs.getPropertyValue("--snake-head").trim();
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
 
-        // 1) رسم وصلات الجسم المتصلة من الذيل نحو الرأس
         for (let idx = S.snake.length - 1; idx > 0; idx--) {
           const a = S.snake[idx], b = S.snake[idx - 1];
-          // إذا عبر من حافة الشاشة للحافة المقابلة لا نرسم خط يعبر الشاشة كلها
           if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1) continue;
           const t = idx / Math.max(1, S.snake.length - 1);
           const w = CELL * (0.86 - t * 0.22);
-          ctx.strokeStyle = bodyClr;
-          ctx.lineWidth = w;
+          ctx.strokeStyle = bodyClr; ctx.lineWidth = w;
           ctx.beginPath();
           ctx.moveTo(a.x * CELL + CELL / 2, a.y * CELL + CELL / 2);
           ctx.lineTo(b.x * CELL + CELL / 2, b.y * CELL + CELL / 2);
           ctx.stroke();
 
-          // خط لمعة داخلي خفيف يعطي مظهر ثلاثي الأبعاد
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
-          ctx.lineWidth = w * 0.35;
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.16)"; ctx.lineWidth = w * 0.35;
           ctx.beginPath();
           ctx.moveTo(a.x * CELL + CELL / 2 - 2, a.y * CELL + CELL / 2 - 2);
           ctx.lineTo(b.x * CELL + CELL / 2 - 2, b.y * CELL + CELL / 2 - 2);
           ctx.stroke();
         }
 
-        // 2) رسم الرأس والعيون واللسان
         const head = S.snake[0];
         if (head) {
           const cx = head.x * CELL + CELL / 2, cy = head.y * CELL + CELL / 2;
           const rad = CELL * 0.5;
           ctx.fillStyle = headClr;
           ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill();
-
-          // لمعة على الرأس
           ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
           ctx.beginPath(); ctx.arc(cx - 3, cy - 3, rad * 0.32, 0, Math.PI * 2); ctx.fill();
 
-          // العيون
           const ex1 = cx + S.dir.x * 4 - S.dir.y * 4.8, ey1 = cy + S.dir.y * 4 + S.dir.x * 4.8;
           const ex2 = cx + S.dir.x * 4 + S.dir.y * 4.8, ey2 = cy + S.dir.y * 4 - S.dir.x * 4.8;
           ctx.fillStyle = "#ffffff";
@@ -472,70 +457,135 @@
           ctx.fillStyle = "#151210";
           ctx.beginPath(); ctx.arc(ex1 + S.dir.x * 1.2, ey1 + S.dir.y * 1.2, 1.8, 0, Math.PI * 2); ctx.arc(ex2 + S.dir.x * 1.2, ey2 + S.dir.y * 1.2, 1.8, 0, Math.PI * 2); ctx.fill();
         }
-
-        updateAndDrawParticles();
+        updateAndDrawParticles(dtNorm);
       }
 
       /* ======================================================
-         اللعبة 2: الطائر (ثابت بالجو لين المستخدم يضغط أول نطة!)
+         اللعبة 2: الطائر الكلاسيكي المرسوم بالـ Canvas + فيزياء مستقرة (dt)
       ====================================================== */
       const F = {
-        y: H * 0.45, vy: 0, pipes: [], frameCount: 0,
-        waiting: true, // يضل ثابت يطفو بالجو لين المستخدم ينط أول نطة!
+        y: H * 0.45, vy: 0, pipes: [], pipeTimer: 0,
+        waiting: true, wingPhase: 0,
         score: 0, best: Number(localStorage.getItem("taza-flappy-best") || 0),
-        gravity: 0.38, lift: -6.8, gap: 128, pipeW: 54,
+        // سرعة مريحة ومتوازنة ومستقلة عن تردد الشاشة (60Hz / 120Hz / 144Hz)
+        gravity: 0.22,
+        lift: -5.3,
+        maxFall: 5.8,
+        pipeSpeed: 1.95,
+        pipeInterval: 1.75, // عمود كل 1.75 ثانية
+        gap: 138,
+        pipeW: 54,
       };
 
       function flappyReset() {
-        F.y = H * 0.45; F.vy = 0; F.pipes = []; F.frameCount = 0; F.score = 0;
-        F.waiting = true; particles = [];
+        F.y = H * 0.45; F.vy = 0; F.pipes = []; F.pipeTimer = 0.6; F.score = 0;
+        F.waiting = true; F.wingPhase = 0; particles = [];
         scoreEl.textContent = "0"; bestEl.textContent = F.best;
       }
 
       function flappyJump() {
         if (currentGame !== "flappy") return;
         if (!running) { startActiveGame(); return; }
-        // أول نطة تفك الثبات وتبدأ اللعبة فوراً!
         if (F.waiting) F.waiting = false;
         F.vy = F.lift;
-        beep(540, 0.05, "triangle");
-        spawnParticles(95, F.y + 8, "#ffbd3f", 5);
+        F.wingPhase = Math.PI; // رفرفة فورية للجناح
+        beep(520, 0.05, "triangle");
+        spawnParticles(90, F.y + 6, "#fff7e6", 5);
       }
 
-      function flappyUpdateAndDraw(now) {
+      // رسم طائر Flappy كرتوني احترافي مع جناح يرفرف
+      function drawFlappyBird(x, y, tilt, wingWave) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(tilt);
+
+        // 1) الجسم البيضاوي بلون الشيدر الذهبي وحدود سوداء حادة
+        const bodyGrad = ctx.createRadialGradient(-4, -5, 2, 0, 0, 18);
+        bodyGrad.addColorStop(0, "#ffe066");
+        bodyGrad.addColorStop(0.55, "#f5a21d");
+        bodyGrad.addColorStop(1, "#e06810");
+        ctx.fillStyle = bodyGrad;
+        ctx.strokeStyle = "#151210";
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 17, 13.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 2) بطن كريمي ناعم
+        ctx.fillStyle = "#fff3d1";
+        ctx.beginPath();
+        ctx.ellipse(2, 6, 10, 5.5, 0, 0, Math.PI);
+        ctx.fill();
+
+        // 3) العين البيضاء الكبيرة + البؤبؤ + لمعة
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(7, -4, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#151210";
+        ctx.beginPath(); ctx.arc(9, -4, 2.6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(10, -5.2, 1, 0, Math.PI * 2); ctx.fill();
+
+        // 4) المنقار البرتقالي/الأحمر الكلاسيكي
+        ctx.fillStyle = "#ff4d2e";
+        ctx.beginPath();
+        ctx.moveTo(13, -1);
+        ctx.lineTo(24, 2.5);
+        ctx.lineTo(13, 6.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // خط فاصل في المنقار
+        ctx.beginPath(); ctx.moveTo(14, 3); ctx.lineTo(22, 3); ctx.stroke();
+
+        // 5) الجناح المتحرك (يرفرف لفوق وتحت)
+        const wingY = Math.sin(wingWave) * 5;
+        ctx.fillStyle = "#fff7e6";
+        ctx.beginPath();
+        ctx.ellipse(-5, 2 + wingY * 0.45, 9, 5.8, wingY * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function flappyUpdateAndDraw(now, dtSec, dtNorm) {
         const sky = ctx.createLinearGradient(0, 0, 0, H);
-        if (html.dataset.theme === "dark") { sky.addColorStop(0, "#1c1713"); sky.addColorStop(1, "#2c2218"); }
+        if (html.dataset.theme === "dark") { sky.addColorStop(0, "#1c1713"); sky.addColorStop(1, "#2f2419"); }
         else { sky.addColorStop(0, "#ffe4b5"); sky.addColorStop(1, "#ffd280"); }
         ctx.fillStyle = sky;
         ctx.fillRect(0, 0, W, H);
 
-        // غيوم خفيفة
-        ctx.fillStyle = html.dataset.theme === "dark" ? "rgba(255,247,230,0.06)" : "rgba(255,255,255,0.48)";
-        const cloudShift = (now * 0.025) % (W + 120);
+        // غيوم ناعمة
+        ctx.fillStyle = html.dataset.theme === "dark" ? "rgba(255,247,230,0.06)" : "rgba(255,255,255,0.52)";
+        const cloudShift = (now * 0.02) % (W + 120);
         for (let c = 0; c < 3; c++) {
           const cx = ((W + 60) - ((cloudShift + c * 170) % (W + 120)));
           const cy = 65 + c * 55;
           ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.arc(cx + 18, cy - 6, 24, 0, Math.PI * 2); ctx.arc(cx + 38, cy, 18, 0, Math.PI * 2); ctx.fill();
         }
 
+        F.wingPhase += dtSec * (F.waiting ? 8 : 14);
+
         if (running && !paused) {
           if (F.waiting) {
-            // الطائر ثابت يطفو بنعومة بنص الهواء بانتظار أول نطة
-            F.y = H * 0.45 + Math.sin(now / 240) * 8;
+            F.y = H * 0.45 + Math.sin(now / 260) * 7;
           } else {
-            F.frameCount++;
-            F.vy += F.gravity;
-            F.y += F.vy;
+            // فيزياء مستقلة عن تردد الشاشة (تعمل بنفس النعومة على 60Hz و 144Hz)
+            F.vy = Math.min(F.maxFall, F.vy + F.gravity * dtNorm);
+            F.y += F.vy * dtNorm;
 
-            if (F.frameCount % 95 === 0) {
-              const topH = 55 + Math.random() * (H - F.gap - 135);
+            F.pipeTimer += dtSec;
+            if (F.pipeTimer >= F.pipeInterval) {
+              F.pipeTimer = 0;
+              const topH = 55 + Math.random() * (H - F.gap - 140);
               F.pipes.push({ x: W + 10, top: topH, passed: false });
             }
 
-            const birdX = 100, birdR = 13;
+            const birdX = 105, birdR = 12;
             for (let i = F.pipes.length - 1; i >= 0; i--) {
               const p = F.pipes[i];
-              p.x -= 2.55;
+              p.x -= F.pipeSpeed * dtNorm;
               if (!p.passed && p.x + F.pipeW < birdX) {
                 p.passed = true; F.score++;
                 scoreEl.textContent = F.score;
@@ -560,8 +610,7 @@
         F.pipes.forEach((p) => {
           const grad = ctx.createLinearGradient(p.x, 0, p.x + F.pipeW, 0);
           grad.addColorStop(0, "#ee7a1a"); grad.addColorStop(0.5, "#ffbd3f"); grad.addColorStop(1, "#c85d0a");
-          ctx.fillStyle = grad;
-          ctx.strokeStyle = "#151210"; ctx.lineWidth = 2.5;
+          ctx.fillStyle = grad; ctx.strokeStyle = "#151210"; ctx.lineWidth = 2.5;
           ctx.fillRect(p.x, -4, F.pipeW, p.top + 4); ctx.strokeRect(p.x, -4, F.pipeW, p.top + 4);
           ctx.fillRect(p.x - 4, p.top - 18, F.pipeW + 8, 18); ctx.strokeRect(p.x - 4, p.top - 18, F.pipeW + 8, 18);
           const botY = p.top + F.gap;
@@ -573,30 +622,21 @@
         ctx.fillStyle = "#2b241d"; ctx.fillRect(0, H - 22, W, 22);
         ctx.fillStyle = "#f5a21d"; ctx.fillRect(0, H - 22, W, 4);
 
-        // رسم الطائر ساطع وواضح
-        ctx.save();
-        ctx.translate(100, F.y);
-        const tilt = F.waiting ? 0 : Math.max(-0.5, Math.min(0.85, F.vy * 0.08));
-        ctx.rotate(tilt);
-        ctx.font = "32px sans-serif";
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillStyle = "#ffffff";
-        ctx.scale(-1, 1);
-        ctx.fillText("🐦", 0, 1);
-        ctx.restore();
+        // رسم الطائر المرسوم بالـ Canvas
+        const tilt = F.waiting ? 0 : Math.max(-0.42, Math.min(0.75, F.vy * 0.085));
+        drawFlappyBird(105, F.y, tilt, F.wingPhase);
 
-        // رسالة "اضغط للانطلاق" طالما الطائر ثابت ينتظر أول نطة
         if (running && F.waiting) {
           ctx.save();
-          ctx.font = '700 17px "Tajawal", sans-serif';
+          ctx.font = '700 16px "Tajawal", sans-serif';
           ctx.textAlign = "center";
           ctx.fillStyle = html.dataset.theme === "dark" ? "#ffbd3f" : "#261c14";
-          ctx.globalAlpha = 0.7 + Math.sin(now / 260) * 0.3;
+          ctx.globalAlpha = 0.72 + Math.sin(now / 260) * 0.28;
           ctx.fillText(TXT.tapReady, W / 2, H * 0.68);
           ctx.restore();
         }
 
-        updateAndDrawParticles();
+        updateAndDrawParticles(dtNorm);
       }
 
       /* ======================================================
@@ -621,7 +661,7 @@
 
       function switchGame(name) {
         currentGame = name;
-        running = false; paused = false;
+        running = false; paused = false; lastFrameT = 0;
         cancelAnimationFrame(rafId);
 
         $("#gameTabs").querySelectorAll(".game-tab").forEach((b) => b.classList.toggle("is-active", b.dataset.game === name));
@@ -638,31 +678,36 @@
           $("#ovSub").textContent = TXT.snakeSub;
         } else {
           flappyReset();
-          $("#ovEmoji").textContent = "🐦✨";
+          $("#ovEmoji").textContent = "🐤✨";
           $("#ovTitle").textContent = "TAZA FLAPPY";
           $("#ovSub").textContent = TXT.flappySub;
         }
         $("#playBtn").textContent = TXT.play;
         overlay.hidden = false;
-        mainLoop(performance.now());
+        rafId = requestAnimationFrame(mainLoop);
       }
 
       function mainLoop(now) {
+        if (!lastFrameT) lastFrameT = now;
+        const dtSec = Math.min(0.05, Math.max(0.004, (now - lastFrameT) / 1000));
+        const dtNorm = dtSec * 60; // معيار 60FPS عشان السرعة تكون متطابقة على كل الشاشات!
+        lastFrameT = now;
+
         if (currentGame === "snake") {
           if (running && !paused && now - S.lastStep >= S.speedMs) {
             S.lastStep = now;
             snakeStep();
           }
-          snakeDraw(now);
+          snakeDraw(now, dtNorm);
         } else {
-          flappyUpdateAndDraw(now);
+          flappyUpdateAndDraw(now, dtSec, dtNorm);
         }
         rafId = requestAnimationFrame(mainLoop);
       }
 
       function startActiveGame() {
         if (currentGame === "snake") { snakeReset(); S.lastStep = performance.now(); }
-        else { flappyReset(); } // الطائر يبدأ في حالة waiting = true (ثابت بالجو)
+        else { flappyReset(); }
         running = true; paused = false;
         $("#pauseBtn").textContent = "⏸";
         overlay.hidden = true;
