@@ -25,105 +25,95 @@
       --ink: #151210; --bg: #f9efe0; --surface: #fff9f0;
       --text: #261c14; --muted: rgba(48, 34, 22, 0.65);
       --line-soft: rgba(180, 115, 35, 0.18);
-      --screen-bg: #c6d6a3; --screen-grid: rgba(24, 42, 16, 0.08);
-      --screen-ink: #1b2e12; --screen-head: #11200a;
+      --screen-bg: #1e261a; --screen-bg2: #151c12;
+      --screen-grid: rgba(170, 220, 110, 0.06);
+      --snake-body: #84cc16; --snake-tail: #4d7c0f; --snake-head: #ffbd3f;
       --font-display: "Lalezar", "Tajawal", sans-serif;
       --font-body: "Tajawal", system-ui, sans-serif;
     }
     :root[data-theme="dark"] {
       --bg: #16120f; --surface: #211c18; --text: #f6ecd9;
       --muted: rgba(246, 236, 217, 0.64); --line-soft: rgba(246, 236, 217, 0.1);
-      --screen-bg: #1a2117; --screen-grid: rgba(154, 205, 50, 0.06);
-      --screen-ink: #a7d96c; --screen-head: #ffbd3f;
+      --screen-bg: #151a13; --screen-bg2: #0f130d;
+      --screen-grid: rgba(167, 217, 108, 0.055);
+      --snake-body: #a3e635; --snake-tail: #65a30d; --snake-head: #ffbd3f;
     }
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); overscroll-behavior: none; }
 
     .arc-wrap {
-      max-width: 520px; margin: 0 auto; padding: 0.9rem 1rem 2rem;
-      display: flex; flex-direction: column; gap: 0.9rem;
+      max-width: 500px; margin: 0 auto; padding: 0.9rem 1rem 2rem;
+      display: flex; flex-direction: column; gap: 0.85rem;
     }
 
-    /* الشريط العلوي */
-    .arc-top {
-      display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
-    }
+    .arc-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
     .back-btn {
-      display: inline-flex; align-items: center; gap: 0.45rem;
-      padding: 0.48rem 1rem; border-radius: 99px;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.46rem 0.95rem; border-radius: 99px;
       background: var(--surface); border: 1.5px solid var(--line-soft);
-      color: var(--text); text-decoration: none; font-weight: 700; font-size: 0.9rem;
+      color: var(--text); text-decoration: none; font-weight: 700; font-size: 0.88rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.12);
       transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s;
     }
     .back-btn:hover { border-color: var(--cheddar); transform: translateY(-2px); }
-    .back-btn:active { transform: scale(0.94); }
-
     .arc-brand { display: flex; align-items: center; gap: 0.45rem; }
-    .arc-brand img { width: 34px; height: 34px; }
-    .arc-brand span { font-family: var(--font-display); font-size: 1.35rem; color: var(--cheddar-deep); }
+    .arc-brand img { width: 32px; height: 32px; }
+    .arc-brand span { font-family: var(--font-display); font-size: 1.3rem; color: var(--cheddar-deep); }
     :root[data-theme="dark"] .arc-brand span { color: var(--cheddar-light); }
-
-    .arc-tools { display: flex; gap: 0.4rem; }
+    .arc-tools { display: flex; gap: 0.38rem; }
     .tool-btn {
-      width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line-soft);
-      background: var(--surface); color: var(--text); font-size: 1.05rem; font-weight: 700;
+      width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--line-soft);
+      background: var(--surface); color: var(--text); font-size: 1rem;
       display: grid; place-items: center; cursor: pointer;
-      transition: transform 0.2s ease, border-color 0.2s;
     }
     .tool-btn:hover { border-color: var(--cheddar); }
-    .tool-btn:active { transform: scale(0.9); }
 
-    /* تبويبات الألعاب (جاهزة لإضافة لعبة الطائر وغيرها) */
+    /* تبويبات الألعاب */
     .game-tabs {
-      display: flex; gap: 0.45rem; padding: 0.3rem;
-      border-radius: 99px; background: var(--surface); border: 1px solid var(--line-soft);
+      display: flex; gap: 0.35rem; padding: 0.3rem;
+      border-radius: 99px; background: var(--surface); border: 1.5px solid var(--line-soft);
     }
     .game-tab {
-      flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-      height: 38px; border: 0; border-radius: 99px; background: transparent;
-      color: var(--muted); font: 700 0.92rem var(--font-body); cursor: pointer;
-      transition: background 0.25s ease, color 0.25s ease;
+      flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+      height: 38px; padding: 0 0.5rem; border: 0; border-radius: 99px; background: transparent;
+      color: var(--muted); font: 700 0.88rem var(--font-body); cursor: pointer;
+      transition: background 0.25s ease, color 0.25s ease, transform 0.2s;
     }
-    .game-tab.is-active { background: var(--cheddar); color: var(--ink); box-shadow: 0 3px 10px rgba(238, 122, 26, 0.3); }
+    .game-tab.is-active { background: var(--cheddar); color: var(--ink); box-shadow: 0 3px 10px rgba(238, 122, 26, 0.32); }
     .game-tab:disabled { opacity: 0.5; cursor: not-allowed; }
-    .soon-tag { font-size: 0.7rem; padding: 0.08rem 0.4rem; border-radius: 99px; background: var(--bg); color: var(--muted); }
+    .soon-tag { font-size: 0.68rem; padding: 0.06rem 0.38rem; border-radius: 99px; background: var(--bg); color: var(--muted); }
 
-    /* جهاز نوكيا / أركيد TAZA 041 */
+    /* جسم جهاز الأركيد */
     .console {
-      padding: 1rem; border-radius: 30px;
+      padding: 0.95rem; border-radius: 30px;
       background: var(--surface); border: 2px solid var(--line-soft);
       box-shadow: 0 18px 40px -14px rgba(0, 0, 0, 0.35);
     }
 
-    /* لوحة النتائج */
     .hud {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 0.75rem; padding: 0.45rem 0.85rem;
+      margin-bottom: 0.7rem; padding: 0.45rem 0.85rem;
       border-radius: 16px; background: var(--bg); border: 1px solid var(--line-soft);
     }
     .hud-stat { display: flex; flex-direction: column; line-height: 1.2; }
-    .hud-label { font-size: 0.72rem; color: var(--muted); font-weight: 700; }
+    .hud-label { font-size: 0.7rem; color: var(--muted); font-weight: 700; }
     .hud-val { font-family: var(--font-display); font-size: 1.4rem; color: var(--cheddar-deep); font-variant-numeric: tabular-nums; }
     :root[data-theme="dark"] .hud-val { color: var(--cheddar-light); }
 
-    .speed-group { display: flex; gap: 0.25rem; background: var(--surface); padding: 0.2rem; border-radius: 99px; border: 1px solid var(--line-soft); }
-    .spd-btn {
-      padding: 0.22rem 0.58rem; border: 0; border-radius: 99px; background: none;
-      color: var(--muted); font: 700 0.75rem var(--font-body); cursor: pointer;
-    }
+    .speed-group { display: flex; gap: 0.2rem; background: var(--surface); padding: 0.2rem; border-radius: 99px; border: 1px solid var(--line-soft); }
+    .speed-group[hidden] { display: none; }
+    .spd-btn { padding: 0.2rem 0.55rem; border: 0; border-radius: 99px; background: none; color: var(--muted); font: 700 0.74rem var(--font-body); cursor: pointer; }
     .spd-btn.is-on { background: var(--cheddar); color: var(--ink); }
 
-    /* شاشة اللعبة LCD الكلاسيكية */
     .screen-frame {
       position: relative; width: 100%; aspect-ratio: 1 / 1;
-      border-radius: 20px; overflow: hidden;
-      background: var(--screen-bg);
+      border-radius: 22px; overflow: hidden;
+      background: radial-gradient(circle at 50% 35%, var(--screen-bg), var(--screen-bg2));
       border: 4px solid #2b241d;
-      box-shadow: inset 0 0 24px rgba(0,0,0,0.28);
-      touch-action: none;
+      box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0,0,0,0.22);
+      touch-action: none; cursor: pointer;
     }
-    .screen-frame.is-shake { animation: scr-shake 0.32s ease; }
+    .screen-frame.is-shake { animation: scr-shake 0.3s ease; }
     @keyframes scr-shake {
       0%, 100% { transform: translate(0, 0); }
       25% { transform: translate(-5px, 3px); }
@@ -132,22 +122,21 @@
     }
     canvas { display: block; width: 100%; height: 100%; }
 
-    /* شاشة البداية / Game Over فوق الكانفاس */
     .overlay {
       position: absolute; inset: 0; z-index: 5;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 1.25rem; text-align: center;
-      background: rgba(18, 15, 12, 0.72);
+      background: rgba(16, 13, 10, 0.74);
       -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
-      color: #fff7e6; transition: opacity 0.25s ease;
+      color: #fff7e6;
     }
     .overlay[hidden] { display: none; }
     .ov-emoji { font-size: 3rem; margin-bottom: 0.25rem; animation: pop-bob 1.8s ease-in-out infinite; }
     @keyframes pop-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.08); } }
     .ov-title { margin: 0 0 0.3rem; font-family: var(--font-display); font-weight: 400; font-size: 2rem; color: var(--cheddar-light); }
-    .ov-sub { margin: 0 0 1.1rem; font-size: 0.92rem; opacity: 0.9; max-width: 28ch; line-height: 1.5; }
+    .ov-sub { margin: 0 0 1.1rem; font-size: 0.92rem; opacity: 0.92; max-width: 28ch; line-height: 1.5; }
     .play-btn {
-      padding: 0.65rem 1.8rem; border: 0; border-radius: 99px;
+      padding: 0.65rem 1.85rem; border: 0; border-radius: 99px;
       background: linear-gradient(135deg, var(--cheddar-light), var(--cheddar-deep));
       color: var(--ink); font: 800 1.05rem var(--font-body);
       box-shadow: 0 8px 20px rgba(238, 122, 26, 0.45); cursor: pointer;
@@ -156,44 +145,45 @@
     .play-btn:hover { transform: scale(1.06); }
     .play-btn:active { transform: scale(0.94); }
 
-    /* أزرار التحكم الكلاسيكية (D-Pad للجوال والكمبيوتر) */
+    /* أزرار الثعبان */
     .dpad {
-      display: grid;
-      grid-template-columns: repeat(3, 62px);
-      grid-template-rows: repeat(3, 52px);
-      gap: 0.45rem;
-      justify-content: center;
-      margin-top: 1rem;
-      direction: ltr;
+      display: grid; grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(3, 50px);
+      gap: 0.42rem; justify-content: center; margin-top: 0.95rem; direction: ltr;
     }
+    .dpad[hidden] { display: none; }
     .dkey {
       border: 1.5px solid var(--line-soft); border-radius: 16px;
-      background: var(--bg); color: var(--text);
-      font-size: 1.25rem; font-weight: 800;
+      background: var(--bg); color: var(--text); font-size: 1.2rem; font-weight: 800;
       display: grid; place-items: center; cursor: pointer;
       box-shadow: 0 4px 0 rgba(0,0,0,0.18);
       transition: transform 0.1s ease, background 0.15s ease;
       -webkit-tap-highlight-color: transparent; user-select: none;
     }
-    .dkey:active, .dkey.is-down {
-      transform: translateY(3px) scale(0.95);
-      background: var(--cheddar); color: var(--ink);
-      box-shadow: 0 1px 0 rgba(0,0,0,0.18);
-    }
-    .dkey--up    { grid-column: 2; grid-row: 1; }
-    .dkey--left  { grid-column: 1; grid-row: 2; }
-    .dkey--mid   { grid-column: 2; grid-row: 2; font-size: 0.95rem; border-radius: 50%; }
+    .dkey:active { transform: translateY(3px) scale(0.95); background: var(--cheddar); color: var(--ink); box-shadow: 0 1px 0 rgba(0,0,0,0.18); }
+    .dkey--up { grid-column: 2; grid-row: 1; }
+    .dkey--left { grid-column: 1; grid-row: 2; }
+    .dkey--mid { grid-column: 2; grid-row: 2; font-size: 0.95rem; border-radius: 50%; }
     .dkey--right { grid-column: 3; grid-row: 2; }
-    .dkey--down  { grid-column: 2; grid-row: 3; }
+    .dkey--down { grid-column: 2; grid-row: 3; }
 
-    .hint-bar {
-      margin-top: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--muted);
+    /* زر القفز للعبة الطائر */
+    .flap-pad { display: flex; justify-content: center; margin-top: 0.95rem; }
+    .flap-pad[hidden] { display: none; }
+    .flap-btn {
+      width: 100%; max-width: 260px; height: 54px; border: 0; border-radius: 99px;
+      background: linear-gradient(135deg, var(--cheddar-light), var(--cheddar-deep));
+      color: var(--ink); font: 800 1.08rem var(--font-body);
+      box-shadow: 0 5px 0 #b45309, 0 10px 20px rgba(238, 122, 26, 0.35);
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
     }
+    .flap-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #b45309; }
+
+    .hint-bar { margin: 0.75rem 0 0; text-align: center; font-size: 0.8rem; color: var(--muted); }
   </style>
 </head>
 <body>
   <div class="arc-wrap">
-    <!-- الشريط العلوي -->
     <header class="arc-top">
       <a class="back-btn" href="index.html" id="backBtn">← رجوع للمنيو</a>
       <div class="arc-brand">
@@ -206,13 +196,12 @@
       </div>
     </header>
 
-    <!-- شريط الألعاب -->
-    <nav class="game-tabs">
-      <button class="game-tab is-active" type="button">🐍 <span id="tabSnake">الثعبان</span></button>
-      <button class="game-tab" type="button" disabled>🐦 <span id="tabFlappy">الطائر</span> <span class="soon-tag" id="soonLbl">قريباً</span></button>
+    <nav class="game-tabs" id="gameTabs">
+      <button class="game-tab is-active" type="button" data-game="snake">🐍 <span id="tabSnake">الثعبان</span></button>
+      <button class="game-tab" type="button" data-game="flappy">🐦 <span id="tabFlappy">الطائر</span></button>
+      <button class="game-tab" type="button" disabled>🧱 <span id="tabNext">تتريس</span> <span class="soon-tag" id="soonLbl">قريباً</span></button>
     </nav>
 
-    <!-- جهاز اللعبة -->
     <section class="console">
       <div class="hud">
         <div class="hud-stat">
@@ -220,9 +209,9 @@
           <span class="hud-val" id="scoreVal">0</span>
         </div>
         <div class="speed-group" id="speedGroup">
-          <button class="spd-btn" type="button" data-ms="155" id="spd1">هادي</button>
-          <button class="spd-btn is-on" type="button" data-ms="115" id="spd2">وسط</button>
-          <button class="spd-btn" type="button" data-ms="78" id="spd3">صاروخ</button>
+          <button class="spd-btn" type="button" data-ms="150" id="spd1">هادي</button>
+          <button class="spd-btn is-on" type="button" data-ms="110" id="spd2">وسط</button>
+          <button class="spd-btn" type="button" data-ms="75" id="spd3">صاروخ</button>
         </div>
         <div class="hud-stat" style="text-align:end">
           <span class="hud-label" id="lblBest">أعلى رقم</span>
@@ -231,18 +220,17 @@
       </div>
 
       <div class="screen-frame" id="screenFrame">
-        <canvas id="snakeCanvas" width="400" height="400"></canvas>
-
+        <canvas id="gameCanvas" width="420" height="420"></canvas>
         <div class="overlay" id="overlay">
           <div class="ov-emoji" id="ovEmoji">🐍🍔</div>
           <h1 class="ov-title" id="ovTitle">TAZA SNAKE</h1>
-          <p class="ov-sub" id="ovSub">كل وجبات TAZA 041 وكبّر الثعبان! الفلفل الحار 🌶️ يعطيك 30 نقطة!</p>
+          <p class="ov-sub" id="ovSub"></p>
           <button class="play-btn" id="playBtn" type="button">ابدأ اللعب ▶</button>
         </div>
       </div>
 
-      <!-- أزرار نوكيا الكلاسيكية -->
-      <div class="dpad" aria-label="Game controls">
+      <!-- أزرار الثعبان -->
+      <div class="dpad" id="snakePad">
         <button class="dkey dkey--up"    type="button" data-dir="U">▲</button>
         <button class="dkey dkey--left"  type="button" data-dir="L">◀</button>
         <button class="dkey dkey--mid"   type="button" id="pauseBtn">⏸</button>
@@ -250,7 +238,12 @@
         <button class="dkey dkey--down"  type="button" data-dir="D">▼</button>
       </div>
 
-      <p class="hint-bar" id="hintBar">اسحب على الشاشة أو استخدم الأسهم للتحكم</p>
+      <!-- زر القفز للعبة الطائر -->
+      <div class="flap-pad" id="flappyPad" hidden>
+        <button class="flap-btn" id="flapBtn" type="button">اضغط للقفز 🐦⬆️</button>
+      </div>
+
+      <p class="hint-bar" id="hintBar"></p>
     </section>
   </div>
 
@@ -260,316 +253,463 @@
       const html = document.documentElement;
       const isEn = html.lang === "en";
 
-      if (isEn) {
-        $("#backBtn").textContent = "← Back to Menu";
-        $("#tabSnake").textContent = "Snake";
-        $("#tabFlappy").textContent = "Flappy";
-        $("#soonLbl").textContent = "Soon";
-        $("#lblScore").textContent = "Score";
-        $("#lblBest").textContent = "Best";
-        $("#spd1").textContent = "Chill";
-        $("#spd2").textContent = "Normal";
-        $("#spd3").textContent = "Turbo";
-        $("#ovSub").textContent = "Eat TAZA 041 bites to grow! Golden Chili 🌶️ gives +30 pts!";
-        $("#playBtn").textContent = "Start Game ▶";
-        $("#hintBar").textContent = "Swipe on screen or use Arrow Keys / WASD";
-      }
+      const TXT = {
+        back: isEn ? "← Back to Menu" : "← رجوع للمنيو",
+        snake: isEn ? "Snake" : "الثعبان",
+        flappy: isEn ? "Flappy" : "الطائر",
+        next: isEn ? "Bricks" : "المكعبات",
+        soon: isEn ? "Soon" : "قريباً",
+        score: isEn ? "Score" : "النتيجة",
+        best: isEn ? "Best" : "أعلى رقم",
+        s1: isEn ? "Chill" : "هادي", s2: isEn ? "Normal" : "وسط", s3: isEn ? "Turbo" : "صاروخ",
+        play: isEn ? "Start Game ▶" : "ابدأ اللعب ▶",
+        again: isEn ? "Play Again ↻" : "العب مرة ثانية ↻",
+        over: isEn ? "GAME OVER" : "انتهت اللعبة!",
+        snakeSub: isEn ? "Eat TAZA 041 bites to grow! Golden Chili 🌶️ gives +30 pts!" : "كل وجبات TAZA 041 وكبّر الثعبان! الفلفل الحار 🌶️ يعطيك 30 نقطة!",
+        flappySub: isEn ? "Tap screen or press Space to fly through the pipes!" : "اضغط على الشاشة أو مسافة للطيران بين الأعمدة بدون ما تصطدم!",
+        snakeHint: isEn ? "Swipe on screen or use Arrow Keys / WASD" : "اسحب على الشاشة أو استخدم الأسهم للتحكم",
+        flappyHint: isEn ? "Tap anywhere on screen or press Space to jump" : "اضغط بأي مكان على الشاشة أو زر المسافة للقفز",
+        flapBtn: isEn ? "TAP TO FLY 🐦⬆️" : "اضغط للقفز 🐦⬆️",
+      };
 
-      /* ---------- أصوات بيب نوكيا الكلاسيكية (Web Audio 8-bit) ---------- */
-      let soundOn = true;
-      let audioCtx = null;
-      function beep(freq = 520, dur = 0.07, type = "square") {
+      $("#backBtn").textContent = TXT.back;
+      $("#tabSnake").textContent = TXT.snake;
+      $("#tabFlappy").textContent = TXT.flappy;
+      $("#tabNext").textContent = TXT.next;
+      $("#soonLbl").textContent = TXT.soon;
+      $("#lblScore").textContent = TXT.score;
+      $("#lblBest").textContent = TXT.best;
+      $("#spd1").textContent = TXT.s1; $("#spd2").textContent = TXT.s2; $("#spd3").textContent = TXT.s3;
+      $("#flapBtn").textContent = TXT.flapBtn;
+
+      /* ---------- أصوات 8-bit خفيفة بدون ملفات ---------- */
+      let soundOn = true, audioCtx = null;
+      function beep(freq = 520, dur = 0.065, type = "square") {
         if (!soundOn) return;
         try {
           audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = type;
-          osc.frequency.value = freq;
-          gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-          osc.connect(gain); gain.connect(audioCtx.destination);
+          const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+          osc.type = type; osc.frequency.value = freq;
+          g.gain.setValueAtTime(0.055, audioCtx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+          osc.connect(g); g.connect(audioCtx.destination);
           osc.start(); osc.stop(audioCtx.currentTime + dur);
         } catch (_) {}
       }
-
       $("#soundBtn").addEventListener("click", (e) => {
         soundOn = !soundOn;
         e.currentTarget.textContent = soundOn ? "🔊" : "🔇";
         if (soundOn) beep(660, 0.06);
       });
-
       $("#themeBtn").addEventListener("click", () => {
         const next = html.dataset.theme === "dark" ? "light" : "dark";
         html.dataset.theme = next;
         try { localStorage.setItem("taza-theme", next); } catch (_) {}
-        draw();
       });
 
-      /* ---------- محرك لعبة الثعبان (TAZA SNAKE) ---------- */
-      const canvas = $("#snakeCanvas");
-      const ctx = canvas.getContext("2d");
-      const frame = $("#screenFrame");
-      const overlay = $("#overlay");
-      const scoreEl = $("#scoreVal");
-      const bestEl = $("#bestVal");
+      /* ---------- متغيرات مشتركة ---------- */
+      const canvas = $("#gameCanvas"), ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      const frame = $("#screenFrame"), overlay = $("#overlay");
+      const scoreEl = $("#scoreVal"), bestEl = $("#bestVal");
 
-      const GRID = 20;
-      const CELL = canvas.width / GRID;
-      const FOODS = ["🍔", "🍟", "🌯", "🥤"];
+      let currentGame = "snake";
+      let rafId = 0, running = false, paused = false;
+      let particles = [];
 
-      let snake = [], dir = { x: 1, y: 0 }, nextDir = { x: 1, y: 0 };
-      let food = null, bonus = null, bonusTimer = 0;
-      let score = 0, best = Number(localStorage.getItem("taza-snake-best") || 0);
-      let speedMs = 115, loopId = 0, running = false, paused = false;
-
-      bestEl.textContent = best;
-
-      function freeCell() {
-        while (true) {
-          const x = Math.floor(Math.random() * GRID);
-          const y = Math.floor(Math.random() * GRID);
-          const hitSnake = snake.some((s) => s.x === x && s.y === y);
-          const hitFood = food && food.x === x && food.y === y;
-          const hitBonus = bonus && bonus.x === x && bonus.y === y;
-          if (!hitSnake && !hitFood && !hitBonus) return { x, y };
+      function spawnParticles(x, y, color, count = 10) {
+        for (let i = 0; i < count; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 1.5 + Math.random() * 3.5;
+          particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, r: 2.5 + Math.random() * 3, color });
         }
       }
-
-      function spawnFood() {
-        const c = freeCell();
-        food = { ...c, emoji: FOODS[Math.floor(Math.random() * FOODS.length)] };
-      }
-
-      function spawnBonus() {
-        const c = freeCell();
-        bonus = { ...c, emoji: "🌶️" };
-        bonusTimer = 42; // يختفي بعد 42 خطوة
-      }
-
-      function resetGame() {
-        snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
-        dir = { x: 1, y: 0 };
-        nextDir = { x: 1, y: 0 };
-        score = 0;
-        bonus = null;
-        bonusTimer = 0;
-        scoreEl.textContent = "0";
-        spawnFood();
-      }
-
-      function setDir(code) {
-        if (!running || paused) return;
-        const map = { U: { x: 0, y: -1 }, D: { x: 0, y: 1 }, L: { x: -1, y: 0 }, R: { x: 1, y: 0 } };
-        const nd = map[code];
-        if (!nd) return;
-        // منع الرجوع العكسي المباشر داخل جسم الثعبان
-        if (nd.x === -dir.x && nd.y === -dir.y) return;
-        nextDir = nd;
-      }
-
-      function draw() {
-        const cs = getComputedStyle(html);
-        const bg = cs.getPropertyValue("--screen-bg").trim();
-        const gridClr = cs.getPropertyValue("--screen-grid").trim();
-        const bodyClr = cs.getPropertyValue("--screen-ink").trim();
-        const headClr = cs.getPropertyValue("--screen-head").trim();
-
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // شبكة نوكيا الخفيفة
-        ctx.strokeStyle = gridClr;
-        ctx.lineWidth = 1;
-        for (let i = 1; i < GRID; i++) {
-          ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
+      function updateAndDrawParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+          if (p.life <= 0) { particles.splice(i, 1); continue; }
+          ctx.globalAlpha = p.life;
+          ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2); ctx.fill();
         }
-
-        // رسم الطعام
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.font = `${CELL * 0.82}px sans-serif`;
-        if (food) {
-          ctx.fillText(food.emoji, food.x * CELL + CELL / 2, food.y * CELL + CELL / 2 + 1);
-        }
-        if (bonus) {
-          const pulse = 1 + Math.sin(performance.now() / 110) * 0.14;
-          ctx.save();
-          ctx.translate(bonus.x * CELL + CELL / 2, bonus.y * CELL + CELL / 2);
-          ctx.scale(pulse, pulse);
-          ctx.fillText(bonus.emoji, 0, 1);
-          ctx.restore();
-        }
-
-        // رسم جسم الثعبان بلمسة دائرية ناعمة
-        snake.forEach((seg, idx) => {
-          const pad = idx === 0 ? 1.5 : 2.5;
-          const x = seg.x * CELL + pad;
-          const y = seg.y * CELL + pad;
-          const s = CELL - pad * 2;
-          ctx.fillStyle = idx === 0 ? headClr : bodyClr;
-          ctx.globalAlpha = idx === 0 ? 1 : Math.max(0.45, 1 - (idx / (snake.length + 12)));
-          ctx.beginPath();
-          ctx.roundRect(x, y, s, s, idx === 0 ? 6 : 5);
-          ctx.fill();
-
-          // عيون الثعبان في الرأس
-          if (idx === 0) {
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = bg;
-            const cx = seg.x * CELL + CELL / 2;
-            const cy = seg.y * CELL + CELL / 2;
-            const ex1 = cx + dir.x * 4 - dir.y * 4;
-            const ey1 = cy + dir.y * 4 + dir.x * 4;
-            const ex2 = cx + dir.x * 4 + dir.y * 4;
-            const ey2 = cy + dir.y * 4 - dir.x * 4;
-            ctx.beginPath(); ctx.arc(ex1, ey1, 2.1, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(ex2, ey2, 2.1, 0, Math.PI * 2); ctx.fill();
-          }
-        });
         ctx.globalAlpha = 1;
       }
 
-      function gameOver() {
-        running = false;
-        clearInterval(loopId);
-        beep(180, 0.25, "sawtooth");
-        frame.classList.remove("is-shake");
-        void frame.offsetWidth;
-        frame.classList.add("is-shake");
+      function triggerShake() {
+        frame.classList.remove("is-shake"); void frame.offsetWidth; frame.classList.add("is-shake");
+      }
 
-        if (score > best) {
-          best = score;
-          bestEl.textContent = best;
-          try { localStorage.setItem("taza-snake-best", String(best)); } catch (_) {}
+      /* ======================================================
+         اللعبة 1: الثعبان المحسّن (TAZA SNAKE)
+      ====================================================== */
+      const GRID = 20, CELL = W / GRID;
+      const FOODS = ["🍔", "🍟", "🌯", "🥤"];
+      const S = {
+        snake: [], dir: { x: 1, y: 0 }, nextDir: { x: 1, y: 0 },
+        food: null, bonus: null, bonusTimer: 0,
+        score: 0, best: Number(localStorage.getItem("taza-snake-best") || 0),
+        speedMs: 110, lastStep: 0, eatFlash: 0,
+      };
+
+      function snakeFreeCell() {
+        while (true) {
+          const x = Math.floor(Math.random() * GRID), y = Math.floor(Math.random() * GRID);
+          if (!S.snake.some((s) => s.x === x && s.y === y) && (!S.food || S.food.x !== x || S.food.y !== y)) return { x, y };
+        }
+      }
+
+      function snakeReset() {
+        S.snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }];
+        S.dir = { x: 1, y: 0 }; S.nextDir = { x: 1, y: 0 };
+        S.score = 0; S.bonus = null; S.bonusTimer = 0; S.eatFlash = 0; particles = [];
+        S.food = { ...snakeFreeCell(), emoji: FOODS[Math.floor(Math.random() * FOODS.length)] };
+        scoreEl.textContent = "0"; bestEl.textContent = S.best;
+      }
+
+      function snakeSetDir(code) {
+        if (currentGame !== "snake" || !running || paused) return;
+        const map = { U: { x: 0, y: -1 }, D: { x: 0, y: 1 }, L: { x: -1, y: 0 }, R: { x: 1, y: 0 } };
+        const nd = map[code];
+        if (nd && !(nd.x === -S.dir.x && nd.y === -S.dir.y)) S.nextDir = nd;
+      }
+
+      function snakeStep() {
+        S.dir = S.nextDir;
+        const head = { x: (S.snake[0].x + S.dir.x + GRID) % GRID, y: (S.snake[0].y + S.dir.y + GRID) % GRID };
+        if (S.snake.some((s) => s.x === head.x && s.y === head.y)) {
+          return showGameOver(S.score, S.best, "taza-snake-best", "snake");
+        }
+        S.snake.unshift(head);
+        let ate = false;
+        if (S.food && head.x === S.food.x && head.y === S.food.y) {
+          S.score += 10; ate = true; S.eatFlash = 1; beep(680, 0.06);
+          spawnParticles(head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, "#ffbd3f", 12);
+          S.food = { ...snakeFreeCell(), emoji: FOODS[Math.floor(Math.random() * FOODS.length)] };
+          if (!S.bonus && S.score > 0 && S.score % 50 === 0) { S.bonus = { ...snakeFreeCell(), emoji: "🌶️" }; S.bonusTimer = 42; }
+        } else if (S.bonus && head.x === S.bonus.x && head.y === S.bonus.y) {
+          S.score += 30; ate = true; S.bonus = null; S.eatFlash = 1; beep(880, 0.11); triggerShake();
+          spawnParticles(head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, "#ff4500", 18);
+        }
+        if (!ate) S.snake.pop();
+        if (S.bonus && --S.bonusTimer <= 0) S.bonus = null;
+        scoreEl.textContent = S.score;
+        if (S.score > S.best) { S.best = S.score; bestEl.textContent = S.best; try { localStorage.setItem("taza-snake-best", S.best); } catch (_) {} }
+      }
+
+      function snakeDraw(now) {
+        const cs = getComputedStyle(html);
+        ctx.clearRect(0, 0, W, H);
+        // شبكة خفيفة أنيقة
+        ctx.strokeStyle = cs.getPropertyValue("--screen-grid").trim();
+        ctx.lineWidth = 1;
+        for (let i = 1; i < GRID; i++) {
+          ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, H); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(W, i * CELL); ctx.stroke();
         }
 
-        $("#ovEmoji").textContent = score >= 100 ? "🏆🍔" : "💥🐍";
-        $("#ovTitle").textContent = isEn ? "GAME OVER" : "انتهت اللعبة!";
-        $("#ovSub").textContent = isEn
-          ? `Score: ${score} • Best: ${best}`
-          : `نتيجتك: ${score} نقطة • أعلى رقم: ${best}`;
-        $("#playBtn").textContent = isEn ? "Play Again ↻" : "العب مرة ثانية ↻";
+        // الطعام مع هالة توهج خفيفة
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.font = `${CELL * 0.84}px sans-serif`;
+        if (S.food) {
+          const fx = S.food.x * CELL + CELL / 2, fy = S.food.y * CELL + CELL / 2;
+          const p = 1 + Math.sin(now / 220) * 0.08;
+          ctx.fillStyle = "rgba(255, 189, 63, 0.18)";
+          ctx.beginPath(); ctx.arc(fx, fy, CELL * 0.55 * p, 0, Math.PI * 2); ctx.fill();
+          ctx.fillText(S.food.emoji, fx, fy + 1);
+        }
+        if (S.bonus) {
+          const bx = S.bonus.x * CELL + CELL / 2, by = S.bonus.y * CELL + CELL / 2;
+          const p = 1 + Math.sin(now / 100) * 0.16;
+          ctx.fillStyle = "rgba(255, 69, 0, 0.25)";
+          ctx.beginPath(); ctx.arc(bx, by, CELL * 0.62 * p, 0, Math.PI * 2); ctx.fill();
+          ctx.save(); ctx.translate(bx, by); ctx.scale(p, p); ctx.fillText(S.bonus.emoji, 0, 1); ctx.restore();
+        }
+
+        // جسم الثعبان بظل ناعم وتدرج من الرأس للذيل
+        const bodyClr = cs.getPropertyValue("--snake-body").trim();
+        const headClr = cs.getPropertyValue("--snake-head").trim();
+        for (let idx = S.snake.length - 1; idx >= 0; idx--) {
+          const seg = S.snake[idx];
+          const cx = seg.x * CELL + CELL / 2, cy = seg.y * CELL + CELL / 2;
+          const t = idx / Math.max(1, S.snake.length - 1);
+          const rad = idx === 0 ? CELL * 0.48 : CELL * (0.43 - t * 0.14);
+
+          ctx.fillStyle = idx === 0 ? headClr : bodyClr;
+          ctx.globalAlpha = idx === 0 ? 1 : Math.max(0.55, 1 - t * 0.45);
+          ctx.beginPath();
+          ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+          ctx.fill();
+
+          // لمعة علوية على كل فقرة
+          ctx.fillStyle = "rgba(255,255,255,0.22)";
+          ctx.beginPath();
+          ctx.arc(cx - rad * 0.28, cy - rad * 0.28, rad * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+
+          // عيون ولسان الرأس
+          if (idx === 0) {
+            ctx.globalAlpha = 1;
+            const ex1 = cx + S.dir.x * 4 - S.dir.y * 4.5, ey1 = cy + S.dir.y * 4 + S.dir.x * 4.5;
+            const ex2 = cx + S.dir.x * 4 + S.dir.y * 4.5, ey2 = cy + S.dir.y * 4 - S.dir.x * 4.5;
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(ex1, ey1, 3.2, 0, Math.PI * 2); ctx.arc(ex2, ey2, 3.2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#151210";
+            ctx.beginPath(); ctx.arc(ex1 + S.dir.x, ey1 + S.dir.y, 1.7, 0, Math.PI * 2); ctx.arc(ex2 + S.dir.x, ey2 + S.dir.y, 1.7, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+        ctx.globalAlpha = 1;
+        updateAndDrawParticles();
+      }
+
+      /* ======================================================
+         اللعبة 2: الطائر الطائر (TAZA FLAPPY)
+      ====================================================== */
+      const F = {
+        y: H / 2, vy: 0, pipes: [], frameCount: 0,
+        score: 0, best: Number(localStorage.getItem("taza-flappy-best") || 0),
+        gravity: 0.42, lift: -7.2, gap: 122, pipeW: 54,
+      };
+
+      function flappyReset() {
+        F.y = H * 0.45; F.vy = 0; F.pipes = []; F.frameCount = 0; F.score = 0; particles = [];
+        scoreEl.textContent = "0"; bestEl.textContent = F.best;
+      }
+
+      function flappyJump() {
+        if (currentGame !== "flappy") return;
+        if (!running) { startActiveGame(); return; }
+        F.vy = F.lift;
+        beep(540, 0.05, "triangle");
+        spawnParticles(95, F.y + 8, "#ffbd3f", 5);
+      }
+
+      function flappyUpdateAndDraw() {
+        // سماء دافئة بلمسة TAZA 041
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        if (html.dataset.theme === "dark") { sky.addColorStop(0, "#1c1713"); sky.addColorStop(1, "#2c2218"); }
+        else { sky.addColorStop(0, "#ffe4b5"); sky.addColorStop(1, "#ffd280"); }
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        // غيوم خفيفة متحركة في الخلفية
+        ctx.fillStyle = html.dataset.theme === "dark" ? "rgba(255,247,230,0.05)" : "rgba(255,255,255,0.45)";
+        const cloudShift = (F.frameCount * 0.6) % (W + 100);
+        for (let c = 0; c < 3; c++) {
+          const cx = ((W + 60) - ((cloudShift + c * 170) % (W + 120)));
+          const cy = 65 + c * 55;
+          ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.arc(cx + 18, cy - 6, 24, 0, Math.PI * 2); ctx.arc(cx + 38, cy, 18, 0, Math.PI * 2); ctx.fill();
+        }
+
+        if (running && !paused) {
+          F.frameCount++;
+          F.vy += F.gravity;
+          F.y += F.vy;
+
+          // توليد الأعمدة
+          if (F.frameCount % 95 === 0) {
+            const topH = 55 + Math.random() * (H - F.gap - 135);
+            F.pipes.push({ x: W + 10, top: topH, passed: false });
+          }
+
+          // تحريك الأعمدة وفحص التصادم
+          const birdX = 100, birdR = 14;
+          for (let i = F.pipes.length - 1; i >= 0; i--) {
+            const p = F.pipes[i];
+            p.x -= 2.6;
+            if (!p.passed && p.x + F.pipeW < birdX) {
+              p.passed = true; F.score++;
+              scoreEl.textContent = F.score;
+              beep(760, 0.07);
+              if (F.score > F.best) { F.best = F.score; bestEl.textContent = F.best; try { localStorage.setItem("taza-flappy-best", F.best); } catch (_) {} }
+            }
+            // تصادم مع العمود العلوي أو السفلي
+            if (birdX + birdR > p.x && birdX - birdR < p.x + F.pipeW) {
+              if (F.y - birdR < p.top || F.y + birdR > p.top + F.gap) {
+                return showGameOver(F.score, F.best, "taza-flappy-best", "flappy");
+              }
+            }
+            if (p.x + F.pipeW < -10) F.pipes.splice(i, 1);
+          }
+
+          // تصادم مع الأرض أو السقف
+          if (F.y + birdR > H - 22 || F.y - birdR < 0) {
+            return showGameOver(F.score, F.best, "taza-flappy-best", "flappy");
+          }
+        }
+
+        // رسم الأعمدة بستايل شيدر وأسود فخم
+        F.pipes.forEach((p) => {
+          const grad = ctx.createLinearGradient(p.x, 0, p.x + F.pipeW, 0);
+          grad.addColorStop(0, "#ee7a1a"); grad.addColorStop(0.5, "#ffbd3f"); grad.addColorStop(1, "#c85d0a");
+          ctx.fillStyle = grad;
+          ctx.strokeStyle = "#151210"; ctx.lineWidth = 2.5;
+          // العمود العلوي
+          ctx.fillRect(p.x, -4, F.pipeW, p.top + 4); ctx.strokeRect(p.x, -4, F.pipeW, p.top + 4);
+          ctx.fillRect(p.x - 4, p.top - 18, F.pipeW + 8, 18); ctx.strokeRect(p.x - 4, p.top - 18, F.pipeW + 8, 18);
+          // العمود السفلي
+          const botY = p.top + F.gap;
+          ctx.fillRect(p.x, botY, F.pipeW, H - botY); ctx.strokeRect(p.x, botY, F.pipeW, H - botY);
+          ctx.fillRect(p.x - 4, botY, F.pipeW + 8, 18); ctx.strokeRect(p.x - 4, botY, F.pipeW + 8, 18);
+        });
+
+        // شريط الأرضية
+        ctx.fillStyle = "#2b241d";
+        ctx.fillRect(0, H - 22, W, 22);
+        ctx.fillStyle = "#f5a21d";
+        ctx.fillRect(0, H - 22, W, 4);
+
+        // رسم الطائر (يميل حسب السرعة)
+        ctx.save();
+        ctx.translate(100, F.y);
+        const tilt = Math.max(-0.5, Math.min(0.85, F.vy * 0.08));
+        ctx.rotate(tilt);
+        ctx.font = "30px sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.scale(-1, 1); // يطالع لليمين
+        ctx.fillText("🐦", 0, 1);
+        ctx.restore();
+
+        updateAndDrawParticles();
+      }
+
+      /* ======================================================
+         إدارة التشغيل والتبديل بين الألعاب
+      ====================================================== */
+      function showGameOver(sc, bst, key, game) {
+        running = false;
+        beep(170, 0.25, "sawtooth");
+        triggerShake();
+        if (sc > bst) {
+          bst = sc;
+          if (game === "snake") S.best = bst; else F.best = bst;
+          bestEl.textContent = bst;
+          try { localStorage.setItem(key, String(bst)); } catch (_) {}
+        }
+        $("#ovEmoji").textContent = sc >= 20 ? "🏆🔥" : "💥";
+        $("#ovTitle").textContent = TXT.over;
+        $("#ovSub").textContent = isEn ? `Score: ${sc} • Best: ${bst}` : `نتيجتك: ${sc} • أعلى رقم: ${bst}`;
+        $("#playBtn").textContent = TXT.again;
         overlay.hidden = false;
       }
 
-      function tick() {
-        if (!running || paused) return;
-        dir = nextDir;
-        const head = {
-          x: (snake[0].x + dir.x + GRID) % GRID,
-          y: (snake[0].y + dir.y + GRID) % GRID,
-        };
+      function switchGame(name) {
+        currentGame = name;
+        running = false; paused = false;
+        cancelAnimationFrame(rafId);
 
-        // التصادم مع الجسم فقط (الجدران مفتوحة مثل نوكيا الكلاسيكية!)
-        if (snake.some((s) => s.x === head.x && s.y === head.y)) {
-          return gameOver();
+        $("#gameTabs").querySelectorAll(".game-tab").forEach((b) => b.classList.toggle("is-active", b.dataset.game === name));
+        const isSnake = name === "snake";
+        $("#speedGroup").hidden = !isSnake;
+        $("#snakePad").hidden = !isSnake;
+        $("#flappyPad").hidden = isSnake;
+        $("#hintBar").textContent = isSnake ? TXT.snakeHint : TXT.flappyHint;
+
+        if (isSnake) {
+          snakeReset();
+          $("#ovEmoji").textContent = "🐍🍔";
+          $("#ovTitle").textContent = "TAZA SNAKE";
+          $("#ovSub").textContent = TXT.snakeSub;
+        } else {
+          flappyReset();
+          $("#ovEmoji").textContent = "🐦✨";
+          $("#ovTitle").textContent = "TAZA FLAPPY";
+          $("#ovSub").textContent = TXT.flappySub;
         }
-
-        snake.unshift(head);
-
-        let ate = false;
-        if (food && head.x === food.x && head.y === food.y) {
-          score += 10;
-          ate = true;
-          beep(680, 0.06);
-          spawnFood();
-          if (!bonus && score > 0 && score % 50 === 0) spawnBonus();
-        } else if (bonus && head.x === bonus.x && head.y === bonus.y) {
-          score += 30;
-          ate = true;
-          bonus = null;
-          beep(880, 0.11);
-          frame.classList.remove("is-shake");
-          void frame.offsetWidth;
-          frame.classList.add("is-shake");
-        }
-
-        if (!ate) snake.pop();
-        if (bonus) {
-          bonusTimer--;
-          if (bonusTimer <= 0) bonus = null;
-        }
-
-        scoreEl.textContent = score;
-        if (score > best) {
-          best = score;
-          bestEl.textContent = best;
-          try { localStorage.setItem("taza-snake-best", String(best)); } catch (_) {}
-        }
-        draw();
+        $("#playBtn").textContent = TXT.play;
+        overlay.hidden = false;
+        mainLoop(performance.now());
       }
 
-      function startGame() {
-        resetGame();
-        running = true;
-        paused = false;
+      function mainLoop(now) {
+        if (currentGame === "snake") {
+          if (running && !paused && now - S.lastStep >= S.speedMs) {
+            S.lastStep = now;
+            snakeStep();
+          }
+          snakeDraw(now);
+        } else {
+          flappyUpdateAndDraw();
+        }
+        rafId = requestAnimationFrame(mainLoop);
+      }
+
+      function startActiveGame() {
+        if (currentGame === "snake") { snakeReset(); S.lastStep = performance.now(); }
+        else { flappyReset(); F.vy = F.lift * 0.7; }
+        running = true; paused = false;
         $("#pauseBtn").textContent = "⏸";
         overlay.hidden = true;
-        clearInterval(loopId);
         beep(520, 0.06);
-        draw();
-        loopId = setInterval(tick, speedMs);
       }
 
-      $("#playBtn").addEventListener("click", startGame);
+      $("#playBtn").addEventListener("click", startActiveGame);
+      $("#gameTabs").addEventListener("click", (e) => {
+        const b = e.target.closest(".game-tab[data-game]");
+        if (b && b.dataset.game !== currentGame) switchGame(b.dataset.game);
+      });
 
       $("#pauseBtn").addEventListener("click", () => {
-        if (!running) return;
+        if (!running || currentGame !== "snake") return;
         paused = !paused;
         $("#pauseBtn").textContent = paused ? "▶" : "⏸";
         beep(paused ? 320 : 540, 0.05);
       });
 
-      // تغيير السرعة
       $("#speedGroup").addEventListener("click", (e) => {
         const b = e.target.closest(".spd-btn");
         if (!b) return;
         $("#speedGroup").querySelectorAll(".spd-btn").forEach((x) => x.classList.remove("is-on"));
         b.classList.add("is-on");
-        speedMs = Number(b.dataset.ms);
-        if (running) { clearInterval(loopId); loopId = setInterval(tick, speedMs); }
+        S.speedMs = Number(b.dataset.ms);
       });
 
-      // أزرار الـ D-Pad
+      // تحكم الثعبان بالأزرار
       document.querySelectorAll(".dkey[data-dir]").forEach((btn) => {
-        const fire = (e) => { e.preventDefault(); setDir(btn.dataset.dir); };
+        const fire = (e) => { e.preventDefault(); snakeSetDir(btn.dataset.dir); };
         btn.addEventListener("touchstart", fire, { passive: false });
         btn.addEventListener("mousedown", fire);
       });
 
-      // تحكم الكيبورد
-      window.addEventListener("keydown", (e) => {
-        const k = e.key.toLowerCase();
-        if (k === "arrowup" || k === "w") { e.preventDefault(); setDir("U"); }
-        else if (k === "arrowdown" || k === "s") { e.preventDefault(); setDir("D"); }
-        else if (k === "arrowleft" || k === "a") { e.preventDefault(); setDir("L"); }
-        else if (k === "arrowright" || k === "d") { e.preventDefault(); setDir("R"); }
-        else if (k === " ") {
-          e.preventDefault();
-          if (!running) startGame();
-          else $("#pauseBtn").click();
-        }
+      // تحكم الطائر (الضغط على الزر أو الشاشة)
+      const fireFlap = (e) => { if (currentGame === "flappy" && running) { e.preventDefault(); flappyJump(); } };
+      $("#flapBtn").addEventListener("touchstart", fireFlap, { passive: false });
+      $("#flapBtn").addEventListener("mousedown", fireFlap);
+      frame.addEventListener("touchstart", (e) => {
+        if (currentGame === "flappy" && running) { e.preventDefault(); flappyJump(); }
+      }, { passive: false });
+      frame.addEventListener("mousedown", (e) => {
+        if (currentGame === "flappy" && running && !e.target.closest(".overlay")) flappyJump();
       });
 
-      // تحكم السحب بالإصبع على الشاشة (Swipe)
+      // تحكم الكيبورد للعبتين
+      window.addEventListener("keydown", (e) => {
+        const k = e.key.toLowerCase();
+        if (currentGame === "flappy") {
+          if (k === " " || k === "arrowup" || k === "w") { e.preventDefault(); flappyJump(); }
+          return;
+        }
+        if (k === "arrowup" || k === "w") { e.preventDefault(); snakeSetDir("U"); }
+        else if (k === "arrowdown" || k === "s") { e.preventDefault(); snakeSetDir("D"); }
+        else if (k === "arrowleft" || k === "a") { e.preventDefault(); snakeSetDir("L"); }
+        else if (k === "arrowright" || k === "d") { e.preventDefault(); snakeSetDir("R"); }
+        else if (k === " ") { e.preventDefault(); if (!running) startActiveGame(); else $("#pauseBtn").click(); }
+      });
+
+      // السحب بالإصبع للثعبان
       let sx = 0, sy = 0;
       frame.addEventListener("touchstart", (e) => {
-        if (e.touches.length !== 1) return;
-        sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+        if (currentGame === "snake" && e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }
       }, { passive: true });
       frame.addEventListener("touchend", (e) => {
-        if (!e.changedTouches.length) return;
-        const dx = e.changedTouches[0].clientX - sx;
-        const dy = e.changedTouches[0].clientY - sy;
+        if (currentGame !== "snake" || !e.changedTouches.length) return;
+        const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
         if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
-        if (Math.abs(dx) > Math.abs(dy)) setDir(dx > 0 ? "R" : "L");
-        else setDir(dy > 0 ? "D" : "U");
+        if (Math.abs(dx) > Math.abs(dy)) snakeSetDir(dx > 0 ? "R" : "L");
+        else snakeSetDir(dy > 0 ? "D" : "U");
       }, { passive: true });
 
-      resetGame();
-      draw();
+      switchGame("snake");
     })();
   </script>
 </body>
