@@ -124,13 +124,14 @@
       position: absolute; inset: 0; z-index: 5;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       padding: 1.25rem; text-align: center;
-      background: rgba(16, 13, 10, 0.74);
+      background: rgba(16, 13, 10, 0.76);
       -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
       color: #fff7e6;
     }
     .overlay[hidden] { display: none; }
+    .ov-art { width: 88px; height: 88px; object-fit: contain; margin-bottom: 0.35rem; filter: drop-shadow(0 8px 14px rgba(0,0,0,0.45)); animation: pop-bob 1.8s ease-in-out infinite; }
     .ov-emoji { font-size: 3rem; margin-bottom: 0.25rem; animation: pop-bob 1.8s ease-in-out infinite; }
-    @keyframes pop-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.08); } }
+    @keyframes pop-bob { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.06); } }
     .ov-title { margin: 0 0 0.3rem; font-family: var(--font-display); font-weight: 400; font-size: 2rem; color: var(--cheddar-light); }
     .ov-sub { margin: 0 0 1.1rem; font-size: 0.92rem; opacity: 0.92; max-width: 28ch; line-height: 1.5; }
     .play-btn {
@@ -194,7 +195,7 @@
 
     <nav class="game-tabs" id="gameTabs">
       <button class="game-tab is-active" type="button" data-game="snake">🐍 <span id="tabSnake">الثعبان</span></button>
-      <button class="game-tab" type="button" data-game="flappy">🐤 <span id="tabFlappy">الطائر</span></button>
+      <button class="game-tab" type="button" data-game="flappy">🐤 <span id="tabFlappy">طائر TAZA</span></button>
       <button class="game-tab" type="button" disabled>🧱 <span id="tabNext">المكعبات</span> <span class="soon-tag" id="soonLbl">قريباً</span></button>
     </nav>
 
@@ -218,7 +219,7 @@
       <div class="screen-frame" id="screenFrame">
         <canvas id="gameCanvas" width="420" height="420"></canvas>
         <div class="overlay" id="overlay">
-          <div class="ov-emoji" id="ovEmoji">🐍🍔</div>
+          <div id="ovMedia"></div>
           <h1 class="ov-title" id="ovTitle">TAZA SNAKE</h1>
           <p class="ov-sub" id="ovSub"></p>
           <button class="play-btn" id="playBtn" type="button">ابدأ اللعب ▶</button>
@@ -233,7 +234,6 @@
         <button class="dkey dkey--down"  type="button" data-dir="D">▼</button>
       </div>
 
-      <!-- زر القفز النظيف بدون أيقونات مزعجة -->
       <div class="flap-pad" id="flappyPad" hidden>
         <button class="flap-btn" id="flapBtn" type="button">اضغط للقفز</button>
       </div>
@@ -251,7 +251,7 @@
       const TXT = {
         back: isEn ? "← Back to Menu" : "← رجوع للمنيو",
         snake: isEn ? "Snake" : "الثعبان",
-        flappy: isEn ? "Flappy" : "الطائر",
+        flappy: isEn ? "TAZA Bird" : "طائر TAZA",
         next: isEn ? "Bricks" : "المكعبات",
         soon: isEn ? "Soon" : "قريباً",
         score: isEn ? "Score" : "النتيجة",
@@ -261,8 +261,8 @@
         again: isEn ? "Play Again ↻" : "العب مرة ثانية ↻",
         over: isEn ? "GAME OVER" : "انتهت اللعبة!",
         tapReady: isEn ? "TAP OR PRESS SPACE TO FLY" : "اضغط أو مسافة للانطلاق",
-        snakeSub: isEn ? "Eat TAZA 041 bites to grow! Golden Chili 🌶️ gives +30 pts!" : "كل وجبات TAZA 041 وكبّر الثعبان! الفلفل الحار 🌶️ يعطيك 30 نقطة!",
-        flappySub: isEn ? "Bird waits in mid-air until your first tap!" : "الطائر ينتظرك ثابت بالجو، وأول ما تنط تبدأ المغامرة!",
+        snakeSub: isEn ? "Eat TAZA 041 meals to grow! Golden Chili 🌶️ gives +30 pts!" : "كل وجبات TAZA 041 وكبّر الثعبان! الفلفل الحار 🌶️ يعطيك 30 نقطة!",
+        flappySub: isEn ? "Fly through pipes and grab TAZA 041 meals for +2 bonus!" : "طر بين الأعمدة والتهم وجبات TAZA 041 بالجو لبونص +2!",
         snakeHint: isEn ? "Swipe on screen or use Arrow Keys / WASD" : "اسحب على الشاشة أو استخدم الأسهم للتحكم",
         flappyHint: isEn ? "Tap anywhere on screen or press Space to jump" : "اضغط بأي مكان على الشاشة أو زر المسافة للقفز",
         flapBtn: isEn ? "TAP TO JUMP" : "اضغط للقفز",
@@ -278,6 +278,56 @@
       $("#spd1").textContent = TXT.s1; $("#spd2").textContent = TXT.s2; $("#spd3").textContent = TXT.s3;
       $("#flapBtn").textContent = TXT.flapBtn;
 
+      /* ---------- تحميل صور الشخصيات والوجبات (assets/images/game/) ---------- */
+      const ASSET_BASE = "assets/images/game/";
+      const SPRITES = {};
+      const ASSET_LIST = {
+        birdIdle: "bird-idle.svg",
+        birdFlap: "bird-flap.png",
+        birdEat: "bird-eat.png",
+        birdHappy: "bird-happy.png",
+        burger: "burger.png",
+        fries: "fries.png",
+        drink: "drink.png",
+        shawarma: "shawarma.png",
+        nuggets: "nuggets.png",
+      };
+
+      Object.entries(ASSET_LIST).forEach(([key, file]) => {
+        const img = new Image();
+        img.src = ASSET_BASE + file;
+        img._ready = false;
+        img.onload = () => { img._ready = true; };
+        SPRITES[key] = img;
+      });
+
+      const FOOD_ITEMS = [
+        { key: "burger", fallback: "🍔" },
+        { key: "fries", fallback: "🍟" },
+        { key: "drink", fallback: "🥤" },
+        { key: "shawarma", fallback: "🌯" },
+        { key: "nuggets", fallback: "🍗" },
+      ];
+
+      function drawSprite(key, cx, cy, size, fallbackEmoji = "") {
+        const img = SPRITES[key];
+        if (img && img._ready && img.naturalWidth > 0) {
+          const ratio = img.naturalWidth / img.naturalHeight;
+          const dw = ratio >= 1 ? size : size * ratio;
+          const dh = ratio >= 1 ? size / ratio : size;
+          ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
+          return true;
+        }
+        if (fallbackEmoji) {
+          ctx.fillStyle = "#ffffff";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.font = `${size * 0.8}px sans-serif`;
+          ctx.fillText(fallbackEmoji, cx, cy + 1);
+        }
+        return false;
+      }
+
+      /* ---------- أصوات 8-bit ---------- */
       let soundOn = true, audioCtx = null;
       function beep(freq = 520, dur = 0.065, type = "square") {
         if (!soundOn) return;
@@ -309,7 +359,7 @@
 
       let currentGame = "snake";
       let rafId = 0, running = false, paused = false, lastFrameT = 0;
-      let particles = [];
+      let particles = [], floatTexts = [];
 
       function spawnParticles(x, y, color, count = 10) {
         for (let i = 0; i < count; i++) {
@@ -318,7 +368,10 @@
           particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, r: 2.5 + Math.random() * 3, color });
         }
       }
-      function updateAndDrawParticles(dtNorm) {
+      function spawnFloatText(x, y, text, color = "#ffbd3f") {
+        floatTexts.push({ x, y, text, color, life: 1 });
+      }
+      function updateAndDrawFX(dtNorm) {
         for (let i = particles.length - 1; i >= 0; i--) {
           const p = particles[i];
           p.x += p.vx * dtNorm; p.y += p.vy * dtNorm; p.life -= 0.045 * dtNorm;
@@ -327,6 +380,18 @@
           ctx.fillStyle = p.color;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2); ctx.fill();
         }
+        for (let i = floatTexts.length - 1; i >= 0; i--) {
+          const ft = floatTexts[i];
+          ft.y -= 1.1 * dtNorm; ft.life -= 0.03 * dtNorm;
+          if (ft.life <= 0) { floatTexts.splice(i, 1); continue; }
+          ctx.globalAlpha = Math.max(0, ft.life);
+          ctx.font = '800 18px "Tajawal", sans-serif';
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#151210";
+          ctx.fillText(ft.text, ft.x + 1.5, ft.y + 1.5);
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, ft.x, ft.y);
+        }
         ctx.globalAlpha = 1;
       }
       function triggerShake() {
@@ -334,10 +399,9 @@
       }
 
       /* ======================================================
-         اللعبة 1: الثعبان المتصل (TAZA SNAKE)
+         اللعبة 1: الثعبان المتصل (TAZA SNAKE بوجباتك المرسومة!)
       ====================================================== */
-      const GRID = 20, CELL = W / GRID;
-      const FOODS = ["🍔", "🍟", "🌯", "🥤"];
+      const GRID = 18, CELL = W / GRID;
       const S = {
         snake: [], dir: { x: 1, y: 0 }, nextDir: { x: 1, y: 0 },
         food: null, bonus: null, bonusTimer: 0,
@@ -353,10 +417,11 @@
       }
 
       function snakeReset() {
-        S.snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }];
+        S.snake = [{ x: 9, y: 9 }, { x: 8, y: 9 }, { x: 7, y: 9 }, { x: 6, y: 9 }];
         S.dir = { x: 1, y: 0 }; S.nextDir = { x: 1, y: 0 };
-        S.score = 0; S.bonus = null; S.bonusTimer = 0; particles = [];
-        S.food = { ...snakeFreeCell(), emoji: FOODS[Math.floor(Math.random() * FOODS.length)] };
+        S.score = 0; S.bonus = null; S.bonusTimer = 0; particles = []; floatTexts = [];
+        const pick = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+        S.food = { ...snakeFreeCell(), ...pick };
         scoreEl.textContent = "0"; bestEl.textContent = S.best;
       }
 
@@ -375,14 +440,18 @@
         }
         S.snake.unshift(head);
         let ate = false;
+        const hx = head.x * CELL + CELL / 2, hy = head.y * CELL + CELL / 2;
         if (S.food && head.x === S.food.x && head.y === S.food.y) {
           S.score += 10; ate = true; beep(680, 0.06);
-          spawnParticles(head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, "#ffbd3f", 12);
-          S.food = { ...snakeFreeCell(), emoji: FOODS[Math.floor(Math.random() * FOODS.length)] };
+          spawnParticles(hx, hy, "#ffbd3f", 12);
+          spawnFloatText(hx, hy - 8, "+10");
+          const pick = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+          S.food = { ...snakeFreeCell(), ...pick };
           if (!S.bonus && S.score > 0 && S.score % 50 === 0) { S.bonus = { ...snakeFreeCell(), emoji: "🌶️" }; S.bonusTimer = 42; }
         } else if (S.bonus && head.x === S.bonus.x && head.y === S.bonus.y) {
           S.score += 30; ate = true; S.bonus = null; beep(880, 0.11); triggerShake();
-          spawnParticles(head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, "#ff4500", 18);
+          spawnParticles(hx, hy, "#ff4500", 18);
+          spawnFloatText(hx, hy - 8, "+30 🔥", "#ff5e00");
         }
         if (!ate) S.snake.pop();
         if (S.bonus && --S.bonusTimer <= 0) S.bonus = null;
@@ -400,15 +469,14 @@
           ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(W, i * CELL); ctx.stroke();
         }
 
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.font = `${CELL * 0.92}px sans-serif`;
+        // رسم وجبة TAZA 041 المرسومة
         if (S.food) {
           const fx = S.food.x * CELL + CELL / 2, fy = S.food.y * CELL + CELL / 2;
-          const p = 1 + Math.sin(now / 220) * 0.1;
-          ctx.fillStyle = "rgba(255, 189, 63, 0.28)";
-          ctx.beginPath(); ctx.arc(fx, fy, CELL * 0.62 * p, 0, Math.PI * 2); ctx.fill();
-          ctx.globalAlpha = 1; ctx.fillStyle = "#ffffff";
-          ctx.fillText(S.food.emoji, fx, fy + 1);
+          const p = 1 + Math.sin(now / 220) * 0.08;
+          ctx.fillStyle = "rgba(255, 189, 63, 0.25)";
+          ctx.beginPath(); ctx.arc(fx, fy, CELL * 0.65 * p, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
+          drawSprite(S.food.key, fx, fy, CELL * 1.25 * p, S.food.fallback);
         }
         if (S.bonus) {
           const bx = S.bonus.x * CELL + CELL / 2, by = S.bonus.y * CELL + CELL / 2;
@@ -416,6 +484,7 @@
           ctx.fillStyle = "rgba(255, 69, 0, 0.35)";
           ctx.beginPath(); ctx.arc(bx, by, CELL * 0.68 * p, 0, Math.PI * 2); ctx.fill();
           ctx.globalAlpha = 1; ctx.fillStyle = "#ffffff";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = `${CELL * 0.95}px sans-serif`;
           ctx.save(); ctx.translate(bx, by); ctx.scale(p, p); ctx.fillText(S.bonus.emoji, 0, 1); ctx.restore();
         }
 
@@ -427,14 +496,14 @@
           const a = S.snake[idx], b = S.snake[idx - 1];
           if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1) continue;
           const t = idx / Math.max(1, S.snake.length - 1);
-          const w = CELL * (0.86 - t * 0.22);
+          const w = CELL * (0.84 - t * 0.22);
           ctx.strokeStyle = bodyClr; ctx.lineWidth = w;
           ctx.beginPath();
           ctx.moveTo(a.x * CELL + CELL / 2, a.y * CELL + CELL / 2);
           ctx.lineTo(b.x * CELL + CELL / 2, b.y * CELL + CELL / 2);
           ctx.stroke();
 
-          ctx.strokeStyle = "rgba(255, 255, 255, 0.16)"; ctx.lineWidth = w * 0.35;
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.16)"; ctx.lineWidth = w * 0.34;
           ctx.beginPath();
           ctx.moveTo(a.x * CELL + CELL / 2 - 2, a.y * CELL + CELL / 2 - 2);
           ctx.lineTo(b.x * CELL + CELL / 2 - 2, b.y * CELL + CELL / 2 - 2);
@@ -444,7 +513,7 @@
         const head = S.snake[0];
         if (head) {
           const cx = head.x * CELL + CELL / 2, cy = head.y * CELL + CELL / 2;
-          const rad = CELL * 0.5;
+          const rad = CELL * 0.48;
           ctx.fillStyle = headClr;
           ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = "rgba(255, 255, 255, 0.25)";
@@ -457,29 +526,24 @@
           ctx.fillStyle = "#151210";
           ctx.beginPath(); ctx.arc(ex1 + S.dir.x * 1.2, ey1 + S.dir.y * 1.2, 1.8, 0, Math.PI * 2); ctx.arc(ex2 + S.dir.x * 1.2, ey2 + S.dir.y * 1.2, 1.8, 0, Math.PI * 2); ctx.fill();
         }
-        updateAndDrawParticles(dtNorm);
+        updateAndDrawFX(dtNorm);
       }
 
       /* ======================================================
-         اللعبة 2: الطائر الكلاسيكي المرسوم بالـ Canvas + فيزياء مستقرة (dt)
+         اللعبة 2: طائر TAZA 041 (بـ 4 تعابير حقيقية + أكل وجبات بالجو!)
       ====================================================== */
       const F = {
-        y: H * 0.45, vy: 0, pipes: [], pipeTimer: 0,
-        waiting: true, wingPhase: 0,
+        y: H * 0.45, vy: 0, pipes: [], snacks: [], pipeTimer: 0,
+        waiting: true, flapTimer: 0, happyTimer: 0,
         score: 0, best: Number(localStorage.getItem("taza-flappy-best") || 0),
-        // سرعة مريحة ومتوازنة ومستقلة عن تردد الشاشة (60Hz / 120Hz / 144Hz)
-        gravity: 0.22,
-        lift: -5.3,
-        maxFall: 5.8,
-        pipeSpeed: 1.95,
-        pipeInterval: 1.75, // عمود كل 1.75 ثانية
-        gap: 138,
-        pipeW: 54,
+        gravity: 0.21, lift: -5.2, maxFall: 5.5,
+        pipeSpeed: 1.95, pipeInterval: 1.8, gap: 142, pipeW: 54,
       };
 
       function flappyReset() {
-        F.y = H * 0.45; F.vy = 0; F.pipes = []; F.pipeTimer = 0.6; F.score = 0;
-        F.waiting = true; F.wingPhase = 0; particles = [];
+        F.y = H * 0.45; F.vy = 0; F.pipes = []; F.snacks = []; F.pipeTimer = 0.6;
+        F.score = 0; F.waiting = true; F.flapTimer = 0; F.happyTimer = 0;
+        particles = []; floatTexts = [];
         scoreEl.textContent = "0"; bestEl.textContent = F.best;
       }
 
@@ -488,65 +552,9 @@
         if (!running) { startActiveGame(); return; }
         if (F.waiting) F.waiting = false;
         F.vy = F.lift;
-        F.wingPhase = Math.PI; // رفرفة فورية للجناح
+        F.flapTimer = 0.22; // يعرض صورة العصفور رافع جناحيه
         beep(520, 0.05, "triangle");
-        spawnParticles(90, F.y + 6, "#fff7e6", 5);
-      }
-
-      // رسم طائر Flappy كرتوني احترافي مع جناح يرفرف
-      function drawFlappyBird(x, y, tilt, wingWave) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(tilt);
-
-        // 1) الجسم البيضاوي بلون الشيدر الذهبي وحدود سوداء حادة
-        const bodyGrad = ctx.createRadialGradient(-4, -5, 2, 0, 0, 18);
-        bodyGrad.addColorStop(0, "#ffe066");
-        bodyGrad.addColorStop(0.55, "#f5a21d");
-        bodyGrad.addColorStop(1, "#e06810");
-        ctx.fillStyle = bodyGrad;
-        ctx.strokeStyle = "#151210";
-        ctx.lineWidth = 2.4;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 17, 13.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // 2) بطن كريمي ناعم
-        ctx.fillStyle = "#fff3d1";
-        ctx.beginPath();
-        ctx.ellipse(2, 6, 10, 5.5, 0, 0, Math.PI);
-        ctx.fill();
-
-        // 3) العين البيضاء الكبيرة + البؤبؤ + لمعة
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath(); ctx.arc(7, -4, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "#151210";
-        ctx.beginPath(); ctx.arc(9, -4, 2.6, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath(); ctx.arc(10, -5.2, 1, 0, Math.PI * 2); ctx.fill();
-
-        // 4) المنقار البرتقالي/الأحمر الكلاسيكي
-        ctx.fillStyle = "#ff4d2e";
-        ctx.beginPath();
-        ctx.moveTo(13, -1);
-        ctx.lineTo(24, 2.5);
-        ctx.lineTo(13, 6.5);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        // خط فاصل في المنقار
-        ctx.beginPath(); ctx.moveTo(14, 3); ctx.lineTo(22, 3); ctx.stroke();
-
-        // 5) الجناح المتحرك (يرفرف لفوق وتحت)
-        const wingY = Math.sin(wingWave) * 5;
-        ctx.fillStyle = "#fff7e6";
-        ctx.beginPath();
-        ctx.ellipse(-5, 2 + wingY * 0.45, 9, 5.8, wingY * 0.08, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.restore();
+        spawnParticles(90, F.y + 8, "#fff7e6", 5);
       }
 
       function flappyUpdateAndDraw(now, dtSec, dtNorm) {
@@ -556,7 +564,7 @@
         ctx.fillStyle = sky;
         ctx.fillRect(0, 0, W, H);
 
-        // غيوم ناعمة
+        // غيوم
         ctx.fillStyle = html.dataset.theme === "dark" ? "rgba(255,247,230,0.06)" : "rgba(255,255,255,0.52)";
         const cloudShift = (now * 0.02) % (W + 120);
         for (let c = 0; c < 3; c++) {
@@ -565,13 +573,16 @@
           ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.arc(cx + 18, cy - 6, 24, 0, Math.PI * 2); ctx.arc(cx + 38, cy, 18, 0, Math.PI * 2); ctx.fill();
         }
 
-        F.wingPhase += dtSec * (F.waiting ? 8 : 14);
+        if (F.flapTimer > 0) F.flapTimer -= dtSec;
+        if (F.happyTimer > 0) F.happyTimer -= dtSec;
+
+        const birdX = 105, birdR = 15;
+        let nearSnack = false;
 
         if (running && !paused) {
           if (F.waiting) {
             F.y = H * 0.45 + Math.sin(now / 260) * 7;
           } else {
-            // فيزياء مستقلة عن تردد الشاشة (تعمل بنفس النعومة على 60Hz و 144Hz)
             F.vy = Math.min(F.maxFall, F.vy + F.gravity * dtNorm);
             F.y += F.vy * dtNorm;
 
@@ -580,16 +591,21 @@
               F.pipeTimer = 0;
               const topH = 55 + Math.random() * (H - F.gap - 140);
               F.pipes.push({ x: W + 10, top: topH, passed: false });
+              // كل ثاني عمود نحط وجبة TAZA 041 داخل الفتحة عشان العصفور ياكلها!
+              if (Math.random() < 0.65) {
+                const pick = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+                F.snacks.push({ x: W + 10 + F.pipeW / 2, y: topH + F.gap / 2, ...pick, taken: false });
+              }
             }
 
-            const birdX = 105, birdR = 12;
+            // تحريك الأعمدة وفحص التصادم
             for (let i = F.pipes.length - 1; i >= 0; i--) {
               const p = F.pipes[i];
               p.x -= F.pipeSpeed * dtNorm;
               if (!p.passed && p.x + F.pipeW < birdX) {
                 p.passed = true; F.score++;
                 scoreEl.textContent = F.score;
-                beep(760, 0.07);
+                beep(720, 0.06);
                 if (F.score > F.best) { F.best = F.score; bestEl.textContent = F.best; try { localStorage.setItem("taza-flappy-best", F.best); } catch (_) {} }
               }
               if (birdX + birdR > p.x && birdX - birdR < p.x + F.pipeW) {
@@ -598,6 +614,26 @@
                 }
               }
               if (p.x + F.pipeW < -10) F.pipes.splice(i, 1);
+            }
+
+            // تحريك الوجبات الطائرة وفحص الأكل (العصفور يفتح فمه لما يقرب ويفرح لما ياكل!)
+            for (let i = F.snacks.length - 1; i >= 0; i--) {
+              const sn = F.snacks[i];
+              sn.x -= F.pipeSpeed * dtNorm;
+              const dist = Math.hypot(sn.x - birdX, sn.y - F.y);
+              if (dist < 85 && sn.x > birdX - 10) nearSnack = true;
+              if (dist < 30) {
+                F.score += 2;
+                F.happyTimer = 0.65; // العصفور يبتسم ويغمض عيونه من اللذة!
+                scoreEl.textContent = F.score;
+                beep(880, 0.09);
+                spawnParticles(sn.x, sn.y, "#ffbd3f", 14);
+                spawnFloatText(sn.x, sn.y - 10, "+2 🍔", "#ffbd3f");
+                if (F.score > F.best) { F.best = F.score; bestEl.textContent = F.best; try { localStorage.setItem("taza-flappy-best", F.best); } catch (_) {} }
+                F.snacks.splice(i, 1);
+                continue;
+              }
+              if (sn.x < -30) F.snacks.splice(i, 1);
             }
 
             if (F.y + birdR > H - 22 || F.y - birdR < 0) {
@@ -618,13 +654,30 @@
           ctx.fillRect(p.x - 4, botY, F.pipeW + 8, 18); ctx.strokeRect(p.x - 4, botY, F.pipeW + 8, 18);
         });
 
+        // رسم الوجبات الطائرة في منتصف الفتحة
+        F.snacks.forEach((sn) => {
+          const bob = Math.sin(now / 180 + sn.x) * 4;
+          ctx.fillStyle = "rgba(255, 189, 63, 0.25)";
+          ctx.beginPath(); ctx.arc(sn.x, sn.y + bob, 20, 0, Math.PI * 2); ctx.fill();
+          drawSprite(sn.key, sn.x, sn.y + bob, 36, sn.fallback);
+        });
+
         // الأرضية
         ctx.fillStyle = "#2b241d"; ctx.fillRect(0, H - 22, W, 22);
         ctx.fillStyle = "#f5a21d"; ctx.fillRect(0, H - 22, W, 4);
 
-        // رسم الطائر المرسوم بالـ Canvas
-        const tilt = F.waiting ? 0 : Math.max(-0.42, Math.min(0.75, F.vy * 0.085));
-        drawFlappyBird(105, F.y, tilt, F.wingPhase);
+        // اختيار حالة العصفور الأسطورية من صورك الـ 4!
+        let birdKey = "birdIdle";
+        if (F.happyTimer > 0) birdKey = "birdHappy";
+        else if (nearSnack) birdKey = "birdEat";
+        else if (F.flapTimer > 0 || (F.waiting && Math.sin(now / 180) > 0.2)) birdKey = "birdFlap";
+
+        ctx.save();
+        ctx.translate(birdX, F.y);
+        const tilt = F.waiting ? 0 : Math.max(-0.35, Math.min(0.6, F.vy * 0.075));
+        ctx.rotate(tilt);
+        drawSprite(birdKey, 0, 0, 56, "🐤");
+        ctx.restore();
 
         if (running && F.waiting) {
           ctx.save();
@@ -636,12 +689,21 @@
           ctx.restore();
         }
 
-        updateAndDrawParticles(dtNorm);
+        updateAndDrawFX(dtNorm);
       }
 
       /* ======================================================
          التشغيل والتبديل بين الألعاب
       ====================================================== */
+      function setOverlayArt(imgKey, fallbackEmoji) {
+        const img = SPRITES[imgKey];
+        if (img && img._ready) {
+          $("#ovMedia").innerHTML = `<img class="ov-art" src="${img.src}" alt="">`;
+        } else {
+          $("#ovMedia").innerHTML = `<div class="ov-emoji">${fallbackEmoji}</div>`;
+        }
+      }
+
       function showGameOver(sc, bst, key, game) {
         running = false;
         beep(170, 0.25, "sawtooth");
@@ -652,7 +714,7 @@
           bestEl.textContent = bst;
           try { localStorage.setItem(key, String(bst)); } catch (_) {}
         }
-        $("#ovEmoji").textContent = sc >= 20 ? "🏆🔥" : "💥";
+        setOverlayArt(game === "flappy" ? "birdHappy" : "burger", sc >= 20 ? "🏆🔥" : "💥");
         $("#ovTitle").textContent = TXT.over;
         $("#ovSub").textContent = isEn ? `Score: ${sc} • Best: ${bst}` : `نتيجتك: ${sc} • أعلى رقم: ${bst}`;
         $("#playBtn").textContent = TXT.again;
@@ -673,13 +735,13 @@
 
         if (isSnake) {
           snakeReset();
-          $("#ovEmoji").textContent = "🐍🍔";
+          setOverlayArt("burger", "🐍🍔");
           $("#ovTitle").textContent = "TAZA SNAKE";
           $("#ovSub").textContent = TXT.snakeSub;
         } else {
           flappyReset();
-          $("#ovEmoji").textContent = "🐤✨";
-          $("#ovTitle").textContent = "TAZA FLAPPY";
+          setOverlayArt("birdFlap", "🐤✨");
+          $("#ovTitle").textContent = "TAZA BIRD";
           $("#ovSub").textContent = TXT.flappySub;
         }
         $("#playBtn").textContent = TXT.play;
@@ -690,7 +752,7 @@
       function mainLoop(now) {
         if (!lastFrameT) lastFrameT = now;
         const dtSec = Math.min(0.05, Math.max(0.004, (now - lastFrameT) / 1000));
-        const dtNorm = dtSec * 60; // معيار 60FPS عشان السرعة تكون متطابقة على كل الشاشات!
+        const dtNorm = dtSec * 60;
         lastFrameT = now;
 
         if (currentGame === "snake") {
