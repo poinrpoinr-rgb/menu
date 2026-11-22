@@ -1,4 +1,4 @@
-/* ========== إضافات TAZA 041: زر الصعود الفيزيائي الأنيق + واجهة التقييم والكومنتات المتحركة ========== */
+/* ========== إضافات TAZA 041: زر الصعود + زر الألعاب العائم + التقييمات ========== */
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const html = document.documentElement;
@@ -6,7 +6,8 @@
   const TXT = {
     ar: {
       topAria: "الصعود لأعلى الصفحة",
-      secTitle: "آراء زبائن تازة 041",
+      gameTip: "العب وأنت تنتظر! 🎮",
+      secTitle: "آراء زبائن TAZA 041",
       secSub: "تجارب حقيقية من عشاق اللقمة الطازجة",
       writeBtn: "✍️ أضف تقييمك",
       backBtn: "← عرض الآراء",
@@ -32,6 +33,7 @@
     },
     en: {
       topAria: "Back to top",
+      gameTip: "Play while waiting! 🎮",
       secTitle: "TAZA 041 Reviews",
       secSub: "Real love from our fresh-bite fans",
       writeBtn: "✍️ Leave a Review",
@@ -61,9 +63,62 @@
 
   const st = document.createElement("style");
   st.textContent = `
-    /* ===== 1) زر الصعود للأعلى (أنيق + حلقة التقدم + انطلاق السهم) ===== */
+    /* ===== 1) زر الألعاب العائم (تحت يسار) ===== */
+    .game-fab {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 1.15rem;
+      z-index: 65;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, var(--cheddar-light), var(--cheddar-deep));
+      color: var(--ink);
+      border: 2px solid var(--surface);
+      box-shadow: 0 8px 22px rgba(238, 122, 26, 0.45);
+      display: grid;
+      place-items: center;
+      text-decoration: none;
+      font-size: 1.45rem;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .game-fab::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--cheddar);
+      opacity: 0;
+      animation: game-fab-ping 2.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+      pointer-events: none;
+    }
+    @keyframes game-fab-ping {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      70%, 100% { transform: scale(1.38); opacity: 0; }
+    }
+    .game-fab:hover { transform: translateY(-4px) scale(1.08) rotate(-8deg); box-shadow: 0 12px 28px rgba(238, 122, 26, 0.6); }
+    .game-fab:active { transform: scale(0.92); }
+    .game-fab__tip {
+      position: absolute;
+      left: 60px;
+      white-space: nowrap;
+      padding: 0.3rem 0.75rem;
+      border-radius: 99px;
+      background: var(--ink);
+      color: var(--cheddar-light);
+      font: 700 0.78rem var(--font-body);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+      opacity: 0;
+      transform: translateX(-8px);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .game-fab:hover .game-fab__tip { opacity: 1; transform: translateX(0); }
+
+    /* ===== 2) زر الصعود للأعلى (تحت يمين) ===== */
     .btt {
-      position: fixed; bottom: 1.25rem; inset-inline-end: 1.15rem; z-index: 65;
+      position: fixed; bottom: 1.25rem; right: 1.15rem; z-index: 65;
       width: 50px; height: 50px; padding: 0; border: 0; border-radius: 50%;
       background: var(--surface); color: var(--text);
       box-shadow: 0 8px 22px rgba(21, 18, 16, 0.24); cursor: pointer;
@@ -80,11 +135,7 @@
     .btt__track { fill: none; stroke: var(--line-soft); stroke-width: 3.5; }
     .btt__prog  { fill: none; stroke: var(--cheddar); stroke-width: 3.5; stroke-linecap: round; transition: stroke-dashoffset 0.1s linear; }
     .btt:hover .btt__prog { stroke: var(--ink); }
-    .btt__arrow {
-      position: relative;
-      color: var(--cheddar-deep);
-      transition: transform 0.25s ease, color 0.25s ease;
-    }
+    .btt__arrow { position: relative; color: var(--cheddar-deep); transition: transform 0.25s ease, color 0.25s ease; }
     :root[data-theme="dark"] .btt__arrow { color: var(--cheddar-light); }
     .btt.is-launching .btt__arrow { animation: btt-arrow-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes btt-arrow-fly {
@@ -94,7 +145,7 @@
       100% { transform: translateY(0); opacity: 1; }
     }
 
-    /* ===== 2) قسم التقييمات + نموذج التقييم السريع ===== */
+    /* ===== 3) قسم التقييمات + نموذج التقييم السريع ===== */
     .fb-wrap { max-width: 620px; margin: 0.5rem auto 2.5rem; padding: 0 1rem; }
     .fb-shell {
       position: relative; overflow: hidden; padding: 1.35rem 1.25rem 1.45rem;
@@ -179,9 +230,20 @@
   `;
   document.head.appendChild(st);
 
+  /* ---------- زر الألعاب العائم تحت يسار ---------- */
+  function initGameFab() {
+    if ($("#gameFab")) return;
+    const a = document.createElement("a");
+    a.id = "gameFab";
+    a.className = "game-fab";
+    a.href = "games.html";
+    a.setAttribute("aria-label", T().gameTip);
+    a.innerHTML = `<span aria-hidden="true">🎮</span><span class="game-fab__tip" id="gameFabTip">${T().gameTip}</span>`;
+    document.body.appendChild(a);
+  }
+
   /* ---------- محرك الصعود الصاروخي الناعم لأول الصفحة ---------- */
   let topAnimId = null;
-
   function smoothFlyToTop() {
     if (topAnimId) cancelAnimationFrame(topAnimId);
     const startY = window.scrollY;
@@ -207,11 +269,8 @@
     function step(now) {
       const progress = Math.min((now - startTime) / duration, 1);
       window.scrollTo(0, startY * (1 - easeInOutCubic(progress)));
-      if (progress < 1) {
-        topAnimId = requestAnimationFrame(step);
-      } else {
-        stopFly();
-      }
+      if (progress < 1) topAnimId = requestAnimationFrame(step);
+      else stopFly();
     }
     topAnimId = requestAnimationFrame(step);
   }
@@ -255,7 +314,6 @@
       setTimeout(() => btn.classList.remove("is-launching"), 650);
     });
 
-    // نربط لوقو الشريط المثبت ولوقو الفوتر بنفس الصعود الصاروخي الناعم!
     $("#catLogo")?.addEventListener("click", (e) => { e.stopImmediatePropagation(); smoothFlyToTop(); }, true);
     document.addEventListener("click", (e) => {
       if (e.target.closest("#footerTopBtn")) { e.stopImmediatePropagation(); smoothFlyToTop(); }
@@ -415,7 +473,7 @@
       if (!rating) return;
       const entry = {
         id: Date.now(), createdAt: new Date().toISOString(), status: "pending",
-        name: ($("#fbName", wrap).value || "").trim() || (html.lang === "en" ? "Guest" : "ضيف تازة"),
+        name: ($("#fbName", wrap).value || "").trim() || (html.lang === "en" ? "Guest" : "ضيف TAZA 041"),
         rating, tags: [...selectedTags], note: ($("#fbNote", wrap).value || "").trim(),
       };
       try {
@@ -428,10 +486,14 @@
     });
   }
 
+  initGameFab();
   initBackToTop();
   renderFeedbackSection();
   new MutationObserver(() => {
     $("#bttBtn")?.setAttribute("aria-label", T().topAria);
+    const tip = $("#gameFabTip");
+    if (tip) tip.textContent = T().gameTip;
+    $("#gameFab")?.setAttribute("aria-label", T().gameTip);
     renderFeedbackSection();
   }).observe(html, { attributes: true, attributeFilter: ["lang"] });
 })();
