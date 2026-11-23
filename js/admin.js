@@ -27,26 +27,46 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
     return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
-  /* ---------- شاشة القفل (PIN) ---------- */
+ /* ---------- شاشة القفل (تسجيل الدخول عبر Google) ---------- */
   const lockScreen = $("#lockScreen");
-  if (sessionStorage.getItem("taza-admin-auth") === "1") lockScreen.hidden = true;
+  const authErr = $("#authErr");
+  const googleLoginBtn = $("#googleLoginBtn");
+  const logoutBtn = $("#logoutBtn");
 
-  $("#lockForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    if ($("#pinInput").value.trim() === ADMIN_PIN) {
-      sessionStorage.setItem("taza-admin-auth", "1");
-      lockScreen.hidden = true;
-    } else {
-      $("#pinErr").textContent = "الرمز غير صحيح! جرّب 0410";
-      $("#pinInput").value = "";
-      $("#pinInput").focus();
+  function handleAuthUser(user) {
+    if (!user) {
+      lockScreen.hidden = false;
+      if (logoutBtn) logoutBtn.hidden = true;
+      return;
+    }
+    if (ADMIN_EMAIL && user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      authErr.textContent = "عذراً، هذا الحساب غير مصرح له بدخول لوحة الإدارة.";
+      lockScreen.hidden = false;
+      window.TazaCloud?.logout();
+      return;
+    }
+    authErr.textContent = "";
+    lockScreen.hidden = true;
+    if (logoutBtn) logoutBtn.hidden = false;
+    console.info("Admin UID:", user.uid);
+  }
+
+  window.addEventListener("taza-auth-change", (e) => handleAuthUser(e.detail));
+  if (window.TazaCloud?.currentUser) handleAuthUser(window.TazaCloud.currentUser);
+
+  googleLoginBtn?.addEventListener("click", async () => {
+    authErr.textContent = "";
+    googleLoginBtn.disabled = true;
+    try {
+      await window.TazaCloud?.loginWithGoogle();
+    } catch (err) {
+      authErr.textContent = "تعذّر تسجيل الدخول: " + (err?.code || err?.message || "حاول مجدداً");
+    } finally {
+      googleLoginBtn.disabled = false;
     }
   });
 
-  $("#themeBtn").addEventListener("click", () => {
-    const d = document.documentElement;
-    d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
-  });
+  logoutBtn?.addEventListener("click", () => window.TazaCloud?.logout());
 
   /* ---------- حفظ وبث التعديلات فوراً لمنيو الزبون (Real-time Sync) ---------- */
   function saveAndSync(msg = "تم الحفظ والمزامنة فوراً ⚡") {
