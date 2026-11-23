@@ -1,7 +1,7 @@
 /* ========== لوحة إدارة TAZA 041 (Real-time Sync + Google Auth + الأطباق + الأقسام + التقييمات) ========== */
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
-  const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
+  const ADMIN_EMAIL = "mpoinr12@gmail.com";
   const STORAGE_KEY = "taza-menu-live";
   const FEEDBACK_KEY = "taza-feedbacks";
   const CYCLE_KEY = "taza-rev-cycle";
