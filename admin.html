@@ -1,341 +1,430 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TAZA 041 | لوحة الإدارة</title>
-  <link rel="icon" href="assets/images/logo.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --cheddar: #f5a21d; --cheddar-light: #ffbd3f; --cheddar-deep: #ee7a1a;
-      --ink: #151210; --bg: #16120f; --surface: #211c18; --card: #29221d;
-      --text: #f6ecd9; --muted: rgba(246, 236, 217, 0.62);
-      --line: rgba(246, 236, 217, 0.1);
-      --ok: #22c55e; --bad: #ef4444;
-      --font-display: "Lalezar", "Tajawal", sans-serif;
-      --font-body: "Tajawal", system-ui, sans-serif;
+/* ========== لوحة إدارة TAZA 041 (Firebase Firestore Real-time Sync) ========== */
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const STORAGE_KEY = "taza-menu-live";
+  const FEEDBACK_KEY = "taza-feedbacks";
+  const CYCLE_KEY = "taza-rev-cycle";
+  const ADMIN_PIN = "0410";
+
+  const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : null;
+  let menuData = null;
+
+  // إخفاء تبويب إعدادات المطعم (تعديلها برمجياً كما طلبت)
+  const setTabBtn = document.querySelector('.tab[data-tab="settings"]');
+  if (setTabBtn) setTabBtn.hidden = true;
+
+  function toast(msg) {
+    const t = $("#adminToast");
+    t.textContent = msg;
+    t.classList.add("is-on");
+    clearTimeout(t._tm);
+    t._tm = setTimeout(() => t.classList.remove("is-on"), 2400);
+  }
+
+  function esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  }
+
+  /* ---------- شاشة القفل (PIN: 0410) ---------- */
+  const lockScreen = $("#lockScreen");
+  if (sessionStorage.getItem("taza-admin-auth") === "1") lockScreen.hidden = true;
+
+  $("#lockForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if ($("#pinInput").value.trim() === ADMIN_PIN) {
+      sessionStorage.setItem("taza-admin-auth", "1");
+      lockScreen.hidden = true;
+    } else {
+      $("#pinErr").textContent = "الرمز غير صحيح! جرّب 0410";
+      $("#pinInput").value = "";
+      $("#pinInput").focus();
     }
-    :root[data-theme="light"] {
-      --bg: #f9efe0; --surface: #fff9f0; --card: #ffffff;
-      --text: #261c14; --muted: rgba(48, 34, 22, 0.65);
-      --line: rgba(180, 115, 35, 0.18);
+  });
+
+  $("#themeBtn").addEventListener("click", () => {
+    const d = document.documentElement;
+    d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
+  });
+
+  /* ---------- حفظ وبث التعديلات فوراً (محلي + Firebase Firestore) ---------- */
+  async function saveAndSync(msg = "تم الحفظ والمزامنة سحابياً ⚡") {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(menuData));
+      localStorage.setItem("taza-sync-ping", String(Date.now()));
+    } catch (_) {}
+    if (bc) bc.postMessage({ type: "menu-updated" });
+    if (window.TazaCloud?.saveMenu) {
+      const ok = await window.TazaCloud.saveMenu(menuData);
+      toast(ok ? msg : "حُفظ محلياً (تأكد من تفعيل Firestore)");
+    } else {
+      toast(msg);
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; }
+  }
 
-    /* شاشة القفل (PIN) */
-    .lock {
-      position: fixed; inset: 0; z-index: 200;
-      display: grid; place-items: center; padding: 1rem;
-      background: radial-gradient(circle at top, #2c2117, #14100d);
+  function syncReviews(msg = "تم تحديث التقييمات ⚡") {
+    localStorage.setItem("taza-sync-ping", String(Date.now()));
+    if (bc) bc.postMessage({ type: "reviews-updated" });
+    toast(msg);
+  }
+
+  /* ---------- التبويبات ---------- */
+  $("#adminTabs").addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab[data-tab]");
+    if (!btn) return;
+    const name = btn.dataset.tab;
+    $("#adminTabs").querySelectorAll(".tab").forEach((b) => b.classList.toggle("is-active", b === btn));
+    document.querySelectorAll(".panel").forEach((p) => (p.hidden = p.id !== `panel-${name}`));
+  });
+
+  /* ---------- 1) الأطباق ---------- */
+  function fillCatSelects() {
+    const curFilter = $("#filterCat").value || "all";
+    $("#filterCat").innerHTML = `<option value="all">كل الأقسام (${menuData.items.length})</option>` +
+      menuData.categories.map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
+    $("#filterCat").value = curFilter;
+
+    $("#itCat").innerHTML = menuData.categories
+      .map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
+  }
+
+  function renderItems() {
+    $("#cntItems").textContent = menuData.items.length;
+    const fCat = $("#filterCat").value || "all";
+    const list = fCat === "all" ? menuData.items : menuData.items.filter((i) => i.category === fCat);
+
+    $("#itemsGrid").innerHTML = list.map((it) => {
+      const cat = menuData.categories.find((c) => c.id === it.category);
+      const isAvail = it.available !== false;
+      return `
+        <article class="card${isAvail ? "" : " is-hidden"}">
+          <div class="card-top">
+            <h3 class="card-title">${esc(cat?.icon || "🍽️")} ${esc(it.name)}</h3>
+            <span class="pill">${Number(it.price).toLocaleString("en-US")} ل.س</span>
+          </div>
+          <p class="card-sub">${esc(it.description || "بدون وصف")}</p>
+          <div class="card-meta">
+            <span class="pill">⚡ ${esc(it.calories ?? 350)} سعرة</span>
+            ${it.featured ? `<span class="pill">🔥 الأكثر طلباً</span>` : ""}
+            ${(it.tags || []).includes("spicy") ? `<span class="pill">🌶️ حار</span>` : ""}
+            ${(it.tags || []).includes("vegetarian") ? `<span class="pill">🌱 نباتي</span>` : ""}
+          </div>
+          <div class="card-foot">
+            <label class="switch">
+              <input type="checkbox" data-toggle-item="${it.id}" ${isAvail ? "checked" : ""}>
+              <span class="switch-track"></span>
+              <span>${isAvail ? "ظاهر" : "مخفي"}</span>
+            </label>
+            <div style="display:flex;gap:0.35rem">
+              <button class="btn btn--sm" type="button" data-edit-item="${it.id}">✏️ تعديل</button>
+              <button class="btn btn--sm btn--danger" type="button" data-del-item="${it.id}">🗑️</button>
+            </div>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  $("#filterCat").addEventListener("change", renderItems);
+
+  $("#itemsGrid").addEventListener("change", (e) => {
+    const inp = e.target.closest("input[data-toggle-item]");
+    if (!inp) return;
+    const item = menuData.items.find((x) => x.id === Number(inp.dataset.toggleItem));
+    if (!item) return;
+    item.available = inp.checked;
+    renderItems();
+    saveAndSync(item.available ? `تم إظهار "${item.name}" ✅` : `تم إخفاء "${item.name}" 👁️‍🗨️`);
+  });
+
+  $("#itemsGrid").addEventListener("click", (e) => {
+    const editBtn = e.target.closest("[data-edit-item]");
+    if (editBtn) {
+      const item = menuData.items.find((x) => x.id === Number(editBtn.dataset.editItem));
+      if (item) openItemDialog(item);
+      return;
     }
-    .lock[hidden] { display: none; }
-    .lock-card {
-      width: 100%; max-width: 360px; padding: 2rem 1.5rem;
-      border-radius: 28px; background: var(--surface); border: 1.5px solid var(--line);
-      text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    const delBtn = e.target.closest("[data-del-item]");
+    if (delBtn) {
+      const id = Number(delBtn.dataset.delItem);
+      const item = menuData.items.find((x) => x.id === id);
+      if (item && confirm(`هل تريد حذف "${item.name}" نهائياً؟`)) {
+        menuData.items = menuData.items.filter((x) => x.id !== id);
+        fillCatSelects(); renderItems();
+        saveAndSync("تم حذف الطبق 🗑️");
+      }
     }
-    .lock-card img { width: 76px; height: 76px; margin-bottom: 0.5rem; }
-    .lock-card h1 { margin: 0 0 0.25rem; font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; color: var(--cheddar-light); }
-    .lock-card p { margin: 0 0 1.25rem; font-size: 0.88rem; color: var(--muted); }
-    .pin-input {
-      width: 100%; height: 48px; text-align: center; letter-spacing: 6px;
-      font: 800 1.25rem var(--font-body); border-radius: 16px;
-      border: 1.5px solid var(--line); background: var(--bg); color: var(--text);
-      outline: none; margin-bottom: 0.9rem;
-    }
-    .pin-input:focus { border-color: var(--cheddar); }
-    .pin-err { color: var(--bad); font-size: 0.84rem; font-weight: 700; min-height: 1.2em; margin: 0 0 0.5rem; }
+  });
 
-    /* الهيدر العلوي */
-    .topbar {
-      position: sticky; top: 0; z-index: 40;
-      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-      padding: 0.75rem 1.2rem; background: var(--surface); border-bottom: 1px solid var(--line);
-    }
-    .top-brand { display: flex; align-items: center; gap: 0.6rem; }
-    .top-brand img { width: 38px; height: 38px; }
-    .top-brand h1 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.45rem; color: var(--cheddar-light); }
-    .sync-pill {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      padding: 0.22rem 0.7rem; border-radius: 99px; font-size: 0.76rem; font-weight: 700;
-      background: rgba(34, 197, 94, 0.14); color: #4ade80;
-    }
-    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-    .top-actions { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+  const itemDlg = $("#itemDlg");
+  function openItemDialog(item = null) {
+    $("#itemDlgTitle").textContent = item ? "تعديل الطبق" : "إضافة طبق جديد";
+    $("#itId").value = item ? item.id : "";
+    $("#itNameAr").value = item ? item.name : "";
+    $("#itNameEn").value = item ? (item.name_en || "") : "";
+    $("#itCat").value = item ? item.category : (menuData.categories[0]?.id || "");
+    $("#itPrice").value = item ? item.price : "";
+    $("#itCal").value = item ? (item.calories ?? 400) : 400;
+    $("#itImg").value = item ? (item.image || "") : "";
+    $("#itDescAr").value = item ? (item.description || "") : "";
+    $("#itDescEn").value = item ? (item.description_en || "") : "";
+    $("#itAvail").checked = item ? item.available !== false : true;
+    $("#itFeat").checked = item ? !!item.featured : false;
+    $("#itSpicy").checked = item ? (item.tags || []).includes("spicy") : false;
+    $("#itVeg").checked = item ? (item.tags || []).includes("vegetarian") : false;
 
-    /* الأزرار العامة */
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
-      height: 38px; padding: 0 0.95rem; border-radius: 99px; border: 1px solid var(--line);
-      background: var(--card); color: var(--text); font: 700 0.86rem var(--font-body);
-      text-decoration: none; cursor: pointer; transition: transform 0.15s, border-color 0.2s, background 0.2s;
-    }
-    .btn:hover { border-color: var(--cheddar); }
-    .btn:active { transform: scale(0.95); }
-    .btn--pri { background: var(--cheddar); color: var(--ink); border-color: transparent; }
-    .btn--pri:hover { background: var(--cheddar-light); }
-    .btn--danger { background: rgba(239, 68, 68, 0.14); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
-    .btn--ok { background: rgba(34, 197, 94, 0.16); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
-    .btn--sm { height: 32px; padding: 0 0.7rem; font-size: 0.8rem; }
+    const alSet = new Set(item ? (item.allergens || []) : []);
+    $("#itAllergens").querySelectorAll("input").forEach((c) => (c.checked = alSet.has(c.value)));
+    itemDlg.hidden = false;
+  }
 
-    /* الحاوية والتبويبات */
-    .wrap { max-width: 1060px; margin: 0 auto; padding: 1.1rem 1rem 4rem; }
-    .tabs {
-      display: flex; gap: 0.45rem; overflow-x: auto; padding-bottom: 0.4rem; margin-bottom: 1.1rem;
-      scrollbar-width: none;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
-    .tab {
-      flex: none; height: 42px; padding: 0 1.15rem; border-radius: 99px;
-      border: 1px solid var(--line); background: var(--surface); color: var(--muted);
-      font: 700 0.92rem var(--font-body); cursor: pointer;
-    }
-    .tab.is-active { background: var(--cheddar); color: var(--ink); border-color: transparent; }
-    .tab-badge {
-      display: inline-block; margin-inline-start: 0.35rem; padding: 0.05rem 0.45rem;
-      border-radius: 99px; background: rgba(0,0,0,0.2); font-size: 0.75rem;
+  $("#addItemBtn").addEventListener("click", () => openItemDialog(null));
+  $("#closeItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
+  $("#cancelItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
+
+  $("#itemForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const idVal = $("#itId").value;
+    const tags = [];
+    if ($("#itSpicy").checked) tags.push("spicy");
+    if ($("#itVeg").checked) tags.push("vegetarian");
+    const allergens = [...$("#itAllergens").querySelectorAll("input:checked")].map((c) => c.value);
+
+    const payload = {
+      id: idVal ? Number(idVal) : (Math.max(0, ...menuData.items.map((x) => x.id)) + 1),
+      category: $("#itCat").value,
+      name: $("#itNameAr").value.trim(),
+      name_en: $("#itNameEn").value.trim(),
+      description: $("#itDescAr").value.trim(),
+      description_en: $("#itDescEn").value.trim(),
+      price: Number($("#itPrice").value) || 0,
+      calories: Number($("#itCal").value) || 0,
+      image: $("#itImg").value.trim(),
+      available: $("#itAvail").checked,
+      featured: $("#itFeat").checked,
+      tags,
+      allergens,
+    };
+
+    if (idVal) {
+      const idx = menuData.items.findIndex((x) => x.id === payload.id);
+      if (idx >= 0) menuData.items[idx] = payload;
+    } else {
+      menuData.items.push(payload);
     }
 
-    .panel[hidden] { display: none; }
-    .panel-head {
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
-      gap: 0.75rem; margin-bottom: 1rem;
+    itemDlg.hidden = true;
+    fillCatSelects(); renderItems();
+    saveAndSync(idVal ? "تم تعديل الطبق ومزامنته ⚡" : "تمت إضافة الطبق الجديد ⚡");
+  });
+
+  /* ---------- 2) الأقسام (إضافة + تعديل + إظهار/إخفاء فقط بدون حذف) ---------- */
+  function renderCats() {
+    $("#cntCats").textContent = menuData.categories.length;
+    $("#catsGrid").innerHTML = menuData.categories.map((c) => {
+      const isVis = c.visible !== false;
+      const count = menuData.items.filter((i) => i.category === c.id).length;
+      return `
+        <article class="card${isVis ? "" : " is-hidden"}">
+          <div class="card-top">
+            <h3 class="card-title">${esc(c.icon)} ${esc(c.name)}</h3>
+            <span class="pill">${count} أطباق</span>
+          </div>
+          <p class="card-sub" dir="ltr">${esc(c.name_en)} • ID: ${esc(c.id)}</p>
+          <div class="card-foot">
+            <label class="switch">
+              <input type="checkbox" data-toggle-cat="${esc(c.id)}" ${isVis ? "checked" : ""}>
+              <span class="switch-track"></span>
+              <span>${isVis ? "القسم ظاهر" : "القسم مخفي"}</span>
+            </label>
+            <button class="btn btn--sm" type="button" data-edit-cat="${esc(c.id)}">✏️ تعديل</button>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  $("#catsGrid").addEventListener("change", (e) => {
+    const inp = e.target.closest("input[data-toggle-cat]");
+    if (!inp) return;
+    const cat = menuData.categories.find((c) => c.id === inp.dataset.toggleCat);
+    if (!cat) return;
+    cat.visible = inp.checked;
+    renderCats();
+    saveAndSync(cat.visible ? `تم إظهار قسم "${cat.name}" ✅` : `تم إخفاء قسم "${cat.name}" 👁️‍🗨️`);
+  });
+
+  const catDlg = $("#catDlg");
+  function openCatDialog(cat = null) {
+    $("#catDlgTitle").textContent = cat ? "تعديل القسم" : "إضافة قسم جديد";
+    $("#catOrigId").value = cat ? cat.id : "";
+    $("#catNameAr").value = cat ? cat.name : "";
+    $("#catNameEn").value = cat ? (cat.name_en || "") : "";
+    $("#catId").value = cat ? cat.id : "";
+    $("#catId").readOnly = !!cat;
+    $("#catIcon").value = cat ? (cat.icon || "🍽️") : "🍽️";
+    $("#catVisible").checked = cat ? cat.visible !== false : true;
+    catDlg.hidden = false;
+  }
+
+  $("#catsGrid").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-edit-cat]");
+    if (!btn) return;
+    const cat = menuData.categories.find((c) => c.id === btn.dataset.editCat);
+    if (cat) openCatDialog(cat);
+  });
+
+  $("#addCatBtn").addEventListener("click", () => openCatDialog(null));
+  $("#closeCatDlg").addEventListener("click", () => (catDlg.hidden = true));
+  $("#cancelCatDlg").addEventListener("click", () => (catDlg.hidden = true));
+
+  $("#catForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const orig = $("#catOrigId").value;
+    const cleanId = $("#catId").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    if (!cleanId) return;
+
+    const payload = {
+      id: orig || cleanId,
+      name: $("#catNameAr").value.trim(),
+      name_en: $("#catNameEn").value.trim(),
+      icon: $("#catIcon").value.trim() || "🍽️",
+      visible: $("#catVisible").checked,
+    };
+
+    if (orig) {
+      const idx = menuData.categories.findIndex((c) => c.id === orig);
+      if (idx >= 0) menuData.categories[idx] = payload;
+    } else {
+      if (menuData.categories.some((c) => c.id === payload.id)) {
+        toast("هذا المعرّف (ID) مستخدم مسبقاً!"); return;
+      }
+      menuData.categories.push(payload);
     }
-    .panel-head h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.6rem; }
-    .filter-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 
-    /* البطاقات والشبكة */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 0.9rem; }
-    .card {
-      display: flex; flex-direction: column; gap: 0.65rem;
-      padding: 1rem; border-radius: 20px; background: var(--surface); border: 1px solid var(--line);
-      transition: opacity 0.25s ease, border-color 0.2s ease;
+    catDlg.hidden = true;
+    fillCatSelects(); renderCats(); renderItems();
+    saveAndSync(orig ? "تم تعديل القسم ⚡" : "تمت إضافة القسم الجديد ⚡");
+  });
+
+  /* ---------- 3) تقييمات الزبائن (سحابياً + محلياً) ---------- */
+  const revCycleSel = $("#revCycle");
+  revCycleSel.value = localStorage.getItem(CYCLE_KEY) || "forever";
+  revCycleSel.addEventListener("change", () => {
+    localStorage.setItem(CYCLE_KEY, revCycleSel.value);
+    window.TazaCloud?.saveRevCycle(revCycleSel.value);
+    syncReviews("تم تحديث مدة التجديد التلقائي للتعليقات ⚡");
+  });
+
+  function getReviews() {
+    try { return JSON.parse(localStorage.getItem(FEEDBACK_KEY) || "[]"); }
+    catch (_) { return []; }
+  }
+
+  function renderReviews() {
+    const list = getReviews();
+    $("#cntRevs").textContent = list.length;
+    if (!list.length) {
+      $("#revsGrid").innerHTML = `<p class="card-sub">لا توجد تقييمات مرسلة من الزبائن بعد.</p>`;
+      return;
     }
-    .card.is-hidden { opacity: 0.52; border-style: dashed; }
-    .card-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-    .card-title { margin: 0; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 0.45rem; }
-    .card-sub { margin: 0; font-size: 0.84rem; color: var(--muted); line-height: 1.5; }
-    .card-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 0.8rem; font-weight: 700; }
-    .pill { padding: 0.18rem 0.6rem; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); color: var(--cheddar-light); }
-    .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding-top: 0.6rem; border-top: 1px solid var(--line); margin-top: auto; }
+    $("#revsGrid").innerHTML = list.map((r) => {
+      const approved = r.status === "approved";
+      const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+      const dt = new Date(r.createdAt || r.date || Date.now()).toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" });
+      return `
+        <article class="card${approved ? "" : " is-hidden"}">
+          <div class="card-top">
+            <h3 class="card-title">👤 ${esc(r.name || "ضيف")}</h3>
+            <span class="pill" style="color:var(--cheddar)">${stars}</span>
+          </div>
+          <p class="card-sub">"${esc(r.note || "بدون تعليق نصي")}"</p>
+          <div class="card-meta">
+            <span class="pill">${approved ? "✅ منشور بالمنيو" : "⏳ بانتظار الموافقة"}</span>
+            <span class="pill">🕒 ${esc(dt)}</span>
+            ${(r.tags || []).map((tg) => `<span class="pill">${esc(tg)}</span>`).join("")}
+          </div>
+          <div class="card-foot">
+            <button class="btn btn--sm ${approved ? "" : "btn--ok"}" type="button" data-approve-rev="${esc(r.id)}">
+              ${approved ? "إخفاء من المنيو" : "✅ إظهار بالمنيو"}
+            </button>
+            <button class="btn btn--sm btn--danger" type="button" data-del-rev="${esc(r.id)}">🗑️ حذف</button>
+          </div>
+        </article>`;
+    }).join("");
+  }
 
-    /* زر التبديل (إظهار / إخفاء Toggle Switch) */
-    .switch { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; font-size: 0.82rem; font-weight: 700; user-select: none; }
-    .switch input { display: none; }
-    .switch-track {
-      position: relative; width: 42px; height: 24px; border-radius: 99px;
-      background: rgba(239, 68, 68, 0.35); transition: background 0.25s;
+  $("#revsGrid").addEventListener("click", (e) => {
+    const appBtn = e.target.closest("[data-approve-rev]");
+    if (appBtn) {
+      const id = String(appBtn.dataset.approveRev);
+      const list = getReviews();
+      const rev = list.find((x) => String(x.id) === id);
+      if (rev) {
+        rev.status = rev.status === "approved" ? "pending" : "approved";
+        localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
+        if (rev.docId) window.TazaCloud?.setReviewStatus(rev.docId, rev.status);
+        renderReviews();
+        syncReviews(rev.status === "approved" ? "تم نشر التقييم في المنيو ✅" : "تم إخفاء التقييم");
+      }
+      return;
     }
-    .switch-track::after {
-      content: ""; position: absolute; top: 3px; left: 3px;
-      width: 18px; height: 18px; border-radius: 50%; background: #fff;
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    const delBtn = e.target.closest("[data-del-rev]");
+    if (delBtn) {
+      const id = String(delBtn.dataset.delRev);
+      const list = getReviews();
+      const target = list.find((x) => String(x.id) === id);
+      if (target?.docId) window.TazaCloud?.deleteReview(target.docId);
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list.filter((x) => String(x.id) !== id)));
+      renderReviews();
+      syncReviews("تم حذف التقييم 🗑️");
     }
-    .switch input:checked + .switch-track { background: var(--ok); }
-    .switch input:checked + .switch-track::after { transform: translateX(18px); }
+  });
 
-    /* النماذج والمدخلات */
-    .field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.8rem; }
-    .field label { font-size: 0.84rem; font-weight: 700; color: var(--muted); }
-    .inp, .sel, .txt {
-      width: 100%; padding: 0.6rem 0.85rem; border-radius: 14px;
-      border: 1.5px solid var(--line); background: var(--bg); color: var(--text);
-      font: 500 0.92rem var(--font-body); outline: none;
+  /* ---------- تصدير menu.json ---------- */
+  $("#exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(menuData, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "menu.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast("تم تنزيل menu.json المحدّث 💾");
+  });
+
+  /* ---------- الاستماع اللحظي لتحديثات Firebase Firestore ---------- */
+  window.addEventListener("taza-cloud-menu", (e) => {
+    if (!e.detail) return;
+    menuData = e.detail;
+    fillCatSelects(); renderItems(); renderCats();
+  });
+
+  window.addEventListener("taza-cloud-reviews", () => {
+    revCycleSel.value = localStorage.getItem(CYCLE_KEY) || "forever";
+    renderReviews();
+  });
+
+  window.addEventListener("storage", (e) => {
+    if (e.key === FEEDBACK_KEY) renderReviews();
+  });
+
+  /* ---------- التشغيل ---------- */
+  async function boot() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { menuData = JSON.parse(saved); } catch (_) {}
     }
-    .inp:focus, .sel:focus, .txt:focus { border-color: var(--cheddar); }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
-    .checks { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-    .chk {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      padding: 0.32rem 0.72rem; border-radius: 99px; background: var(--bg);
-      border: 1px solid var(--line); font-size: 0.82rem; font-weight: 700; cursor: pointer;
+    if (!menuData) {
+      try {
+        const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+        menuData = await res.json();
+      } catch (_) {
+        toast("تعذّر تحميل data/menu.json");
+        return;
+      }
     }
-    .chk input { accent-color: var(--cheddar); }
+    fillCatSelects();
+    renderItems();
+    renderCats();
+    renderReviews();
+  }
 
-    /* النافذة المنبثقة للتعديل والإضافة */
-    .dlg {
-      position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 1rem;
-      background: rgba(10, 8, 6, 0.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-    }
-    .dlg[hidden] { display: none; }
-    .dlg-box {
-      width: 100%; max-width: 520px; max-height: 90dvh; overflow-y: auto;
-      padding: 1.35rem; border-radius: 26px; background: var(--surface); border: 1.5px solid var(--line);
-    }
-    .dlg-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-    .dlg-head h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.55rem; color: var(--cheddar-light); }
-
-    /* إشعار التزامن */
-    .toast {
-      position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%) translateY(20px);
-      z-index: 300; padding: 0.55rem 1.2rem; border-radius: 99px;
-      background: var(--ink); color: var(--cheddar-light); border: 1.5px solid var(--cheddar);
-      font-weight: 700; font-size: 0.88rem; opacity: 0; pointer-events: none;
-      transition: opacity 0.25s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
-  </style>
-</head>
-<body>
-
-  <!-- شاشة الدخول (الرمز الافتراضي: 0410) -->
-  <div class="lock" id="lockScreen">
-    <form class="lock-card" id="lockForm">
-      <img src="assets/images/logo.svg" alt="TAZA 041">
-      <h1>إدارة TAZA 041</h1>
-      <p>أدخل رمز الدخول للوحة التحكم (الافتراضي: 0410)</p>
-      <input class="pin-input" id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
-      <p class="pin-err" id="pinErr"></p>
-      <button class="btn btn--pri" style="width:100%;height:46px;font-size:1rem" type="submit">دخول للوحة التحكم</button>
-    </form>
-  </div>
-
-  <!-- الهيدر -->
-  <header class="topbar">
-    <div class="top-brand">
-      <img src="assets/images/logo.svg" alt="TAZA 041">
-      <div>
-        <h1>لوحة إدارة TAZA 041</h1>
-        <span class="sync-pill"><span class="sync-dot"></span> تزامن فوري مفعل (Real-time)</span>
-      </div>
-    </div>
-    <div class="top-actions">
-      <a class="btn" href="index.html" target="_blank">👁️ معاينة المنيو</a>
-      <button class="btn btn--pri" id="exportBtn" type="button">💾 تصدير menu.json</button>
-      <button class="btn" id="themeBtn" type="button" aria-label="Theme">🌓</button>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <!-- التبويبات -->
-    <nav class="tabs" id="adminTabs">
-      <button class="tab is-active" type="button" data-tab="items">🍔 الأطباق <span class="tab-badge" id="cntItems">0</span></button>
-      <button class="tab" type="button" data-tab="cats">📂 الأقسام <span class="tab-badge" id="cntCats">0</span></button>
-      <button class="tab" type="button" data-tab="reviews">⭐ التقييمات <span class="tab-badge" id="cntRevs">0</span></button>
-    </nav>
-
-    <!-- 1) لوحة الأطباق -->
-    <section class="panel" id="panel-items">
-      <div class="panel-head">
-        <h2>إدارة الأطباق والأسعار</h2>
-        <div class="filter-row">
-          <select class="sel" id="filterCat" style="width:auto;min-width:150px"></select>
-          <button class="btn btn--pri" id="addItemBtn" type="button">+ إضافة طبق جديد</button>
-        </div>
-      </div>
-      <div class="grid" id="itemsGrid"></div>
-    </section>
-
-    <!-- 2) لوحة الأقسام -->
-    <section class="panel" id="panel-cats" hidden>
-      <div class="panel-head">
-        <h2>إدارة الأقسام (Categories)</h2>
-        <button class="btn btn--pri" id="addCatBtn" type="button">+ إضافة قسم جديد</button>
-      </div>
-      <div class="grid" id="catsGrid"></div>
-    </section>
-
-    <!-- 3) لوحة التقييمات والكومنتات -->
-    <section class="panel" id="panel-reviews" hidden>
-      <div class="panel-head">
-        <h2>إدارة تقييمات الزبائن</h2>
-        <div class="filter-row">
-          <label style="font-size:0.84rem;color:var(--muted);font-weight:700">التجديد التلقائي:</label>
-          <select class="sel" id="revCycle" style="width:auto">
-            <option value="forever">دائم (بدون حذف تلقائي)</option>
-            <option value="daily">يومي (آخر 24 ساعة)</option>
-            <option value="weekly">أسبوعي (آخر 7 أيام)</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid" id="revsGrid"></div>
-    </section>
-
-  <!-- نافذة إضافة / تعديل طبق -->
-  <div class="dlg" id="itemDlg" hidden>
-    <form class="dlg-box" id="itemForm">
-      <div class="dlg-head">
-        <h3 id="itemDlgTitle">إضافة طبق</h3>
-        <button class="btn btn--sm" type="button" id="closeItemDlg">✕</button>
-      </div>
-      <input type="hidden" id="itId">
-      <div class="two-col">
-        <div class="field"><label>اسم الطبق (عربي)*</label><input class="inp" id="itNameAr" required></div>
-        <div class="field"><label>Dish Name (EN)*</label><input class="inp" id="itNameEn" dir="ltr" required></div>
-      </div>
-      <div class="two-col">
-        <div class="field"><label>القسم*</label><select class="sel" id="itCat" required></select></div>
-        <div class="field"><label>السعر (ل.س)*</label><input class="inp" id="itPrice" type="number" min="0" required></div>
-      </div>
-      <div class="two-col">
-        <div class="field"><label>السعرات الحرارية (kcal)</label><input class="inp" id="itCal" type="number" min="0" value="450"></div>
-        <div class="field"><label>رابط الصورة (اختياري)</label><input class="inp" id="itImg" dir="ltr" placeholder="assets/images/..."></div>
-      </div>
-      <div class="field"><label>المكونات / الوصف (عربي)</label><textarea class="txt" id="itDescAr" rows="2"></textarea></div>
-      <div class="field"><label>Ingredients / Description (EN)</label><textarea class="txt" id="itDescEn" rows="2" dir="ltr"></textarea></div>
-
-      <div class="field">
-        <label>الوسوم والحالة</label>
-        <div class="checks">
-          <label class="chk"><input type="checkbox" id="itAvail" checked> ✅ متوفر (ظاهر بالمنيو)</label>
-          <label class="chk"><input type="checkbox" id="itFeat"> 🔥 الأكثر طلباً</label>
-          <label class="chk"><input type="checkbox" id="itSpicy"> 🌶️ حار</label>
-          <label class="chk"><input type="checkbox" id="itVeg"> 🌱 نباتي</label>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>مسببات الحساسية (Allergens)</label>
-        <div class="checks" id="itAllergens">
-          <label class="chk"><input type="checkbox" value="gluten"> 🌾 غلوتين</label>
-          <label class="chk"><input type="checkbox" value="dairy"> 🧀 ألبان</label>
-          <label class="chk"><input type="checkbox" value="eggs"> 🥚 بيض</label>
-          <label class="chk"><input type="checkbox" value="sesame"> 🥯 سمسم</label>
-          <label class="chk"><input type="checkbox" value="soy"> 🫘 صويا</label>
-          <label class="chk"><input type="checkbox" value="nuts"> 🥜 مكسرات</label>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:1rem">
-        <button class="btn" type="button" id="cancelItemDlg">إلغاء</button>
-        <button class="btn btn--pri" type="submit">💾 حفظ الطبق</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- نافذة إضافة / تعديل قسم -->
-  <div class="dlg" id="catDlg" hidden>
-    <form class="dlg-box" id="catForm">
-      <div class="dlg-head">
-        <h3 id="catDlgTitle">إضافة قسم</h3>
-        <button class="btn btn--sm" type="button" id="closeCatDlg">✕</button>
-      </div>
-      <input type="hidden" id="catOrigId">
-      <div class="two-col">
-        <div class="field"><label>اسم القسم (عربي)*</label><input class="inp" id="catNameAr" required></div>
-        <div class="field"><label>Category Name (EN)*</label><input class="inp" id="catNameEn" dir="ltr" required></div>
-      </div>
-      <div class="two-col">
-        <div class="field"><label>المعرّف الإنجليزي (ID)*</label><input class="inp" id="catId" dir="ltr" placeholder="desserts" required></div>
-        <div class="field"><label>أيقونة / إيموجي</label><input class="inp" id="catIcon" value="🍽️"></div>
-      </div>
-      <div class="field">
-        <label class="chk"><input type="checkbox" id="catVisible" checked> ✅ القسم ظاهر في المنيو</label>
-      </div>
-      <div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:1rem">
-        <button class="btn" type="button" id="cancelCatDlg">إلغاء</button>
-        <button class="btn btn--pri" type="submit">💾 حفظ القسم</button>
-      </div>
-    </form>
-  </div>
-
-  <div class="toast" id="adminToast"></div>
-<script type="module" src="js/firebase-sync.js"></script>
-<script src="js/admin.js"></script>
-</body>
-</body>
-</html>
+  boot();
+})();
