@@ -4,7 +4,7 @@
   const STORAGE_KEY = "taza-menu-live";
   const FEEDBACK_KEY = "taza-feedbacks";
   const CYCLE_KEY = "taza-rev-cycle";
-  const ADMIN_PIN = "0410";
+const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
 
   // قناة بث فوري لتحديث منيو الزبون في نفس اللحظة بدون رفرش!
   const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : null;
