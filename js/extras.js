@@ -504,6 +504,7 @@
         list.unshift(entry);
         localStorage.setItem("taza-feedbacks", JSON.stringify(list));
       } catch (_) {}
+      window.TazaCloud?.addReview(entry);
       if (rating === 5) spawnBurgerHearts(fbStage);
       formView.innerHTML = `<div class="fb-done">${T().fbThanks}</div>`;
     });
@@ -519,4 +520,5 @@
     $("#gameFab")?.setAttribute("aria-label", T().gameTip);
     renderFeedbackSection();
   }).observe(html, { attributes: true, attributeFilter: ["lang"] });
+  window.addEventListener("taza-cloud-reviews", () => renderFeedbackSection());
 })();
