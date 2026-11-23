@@ -1,4 +1,4 @@
-/* ========== المنيو: البيانات + العرض + السعرات + البحث الهلامي + النافذة + التحديث + اللغة + الوضع ========== */
+/* ========== المنيو: البيانات + شعارات الأقسام SVG + السعرات + البحث الهلامي + النافذة + التحديث ========== */
 (() => {
   const $ = (sel, root = document) => root.querySelector(sel);
   const html = document.documentElement;
@@ -60,6 +60,19 @@
   };
   const TAG_ICONS = { spicy: "🌶️", vegetarian: "🌱" };
 
+  // شعارات الأقسام المرسومة (SVG)
+  const CAT_IMAGES = {
+    starters: "assets/images/game/fries.svg",
+    burgers: "assets/images/game/burger.svg",
+    sandwiches: "assets/images/game/shawarma.svg",
+    drinks: "assets/images/game/drink.svg",
+  };
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  const catIconHtml = (c) =>
+    CAT_IMAGES[c.id]
+      ? `<img class="cat-img" src="${CAT_IMAGES[c.id]}" alt="">`
+      : esc(c.icon);
+
   const ALLERGENS = {
     gluten: { ar: "غلوتين (قمح)", en: "Gluten (Wheat)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/></svg>` },
     dairy:  { ar: "ألبان", en: "Dairy", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/><path d="M5 11a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9Z"/><path d="M5 15h14"/></svg>` },
@@ -85,7 +98,6 @@
   let lang = html.lang === "en" ? "en" : "ar";
   const T = () => UI[lang];
   const pick = (obj, key) => (lang === "en" && obj[key + "_en"]) || obj[key];
-  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const price = (n, cur) => `${Number(n).toLocaleString("en-US")} ${cur}`;
 
   let data = null, cats = [], cards = [], orderedItems = [];
@@ -103,7 +115,7 @@
       return `
         <article class="dish${i.featured ? " dish--featured" : ""}" data-idx="${idx}" tabindex="0" role="button" aria-label="${esc(pick(i, "name"))}">
           <div class="dish__media">
-            <div class="dish__ph" aria-hidden="true"><span class="dish__ph-icon">${esc(c.icon)}</span></div>
+            <div class="dish__ph" aria-hidden="true"><span class="dish__ph-icon">${catIconHtml(c)}</span></div>
             ${i.image ? `<img src="${esc(i.image)}" alt="${esc(pick(i, "name"))}" loading="lazy">` : ""}
             ${i.featured ? `<span class="dish__flag">🔥 ${esc(T().featured)}</span>` : ""}
             ${tagsHtml ? `<span class="dish__tags">${tagsHtml}</span>` : ""}
@@ -127,7 +139,7 @@
       }).join("");
       return `
         <section class="menu-section" id="cat-${esc(c.id)}">
-          <h2 class="menu-section__title"><span class="menu-section__icon" aria-hidden="true">${esc(c.icon)}</span>${esc(pick(c, "name"))}</h2>
+          <h2 class="menu-section__title"><span class="menu-section__icon" aria-hidden="true">${catIconHtml(c)}</span>${esc(pick(c, "name"))}</h2>
           <div class="dishes">${cardsHtml}</div>
         </section>`;
     }).join("");
@@ -158,15 +170,16 @@
 
   function renderQuickChips() {
     const chips = [
-      { id: "#featured", label: `🔥 ${T().featured}` },
-      { id: "#spicy", label: `🌶️ ${T().spicy}` },
-      { id: "#vegetarian", label: `🌱 ${T().vegetarian}` },
-      ...cats.map((c) => ({ id: pick(c, "name"), label: `${c.icon} ${pick(c, "name")}` })),
+      { id: "#featured", label: `🔥 ${esc(T().featured)}` },
+      { id: "#spicy", label: `🌶️ ${esc(T().spicy)}` },
+      { id: "#vegetarian", label: `🌱 ${esc(T().vegetarian)}` },
+      ...cats.map((c) => ({ id: pick(c, "name"), label: `${catIconHtml(c)} ${esc(pick(c, "name"))}` })),
     ];
     searchChips.innerHTML = chips.map((ch, i) => `
       <button class="search-chip${activeChipFilter === ch.id ? " is-active" : ""}" type="button" data-q="${esc(ch.id)}" style="--jd:${i * 55}ms">
-        ${esc(ch.label)}
-      </button>`).join("");
+        ${ch.label}
+      </button>
+    `).join("");
   }
 
   function runSearch(rawQuery) {
@@ -213,7 +226,7 @@
       const badges = [item.featured ? "🔥" : "", ...(item.tags || []).map((t) => TAG_ICONS[t] || "")].filter(Boolean).join(" ");
       return `
         <button class="suggestion-item" type="button" role="option" data-idx="${idx}" style="--jd:${i * 60}ms">
-          <span class="suggestion-item__icon" aria-hidden="true">${esc(cat.icon)}</span>
+          <span class="suggestion-item__icon" aria-hidden="true">${catIconHtml(cat)}</span>
           <div class="suggestion-item__info">
             <h4 class="suggestion-item__name">${highlightText(pick(item, "name"), rawQuery)} ${badges}</h4>
             <div class="suggestion-item__meta"><span>${esc(pick(cat, "name"))}</span><span>•</span><span>${esc(pick(item, "description"))}</span></div>
@@ -326,7 +339,7 @@
       modalContent.classList.add(slideDir === "next" ? "slide-next" : "slide-prev");
     }
 
-    modalIcon.textContent = cat.icon;
+    modalIcon.innerHTML = catIconHtml(cat);
     if (item.image) {
       modalImg.src = item.image;
       modalImg.alt = pick(item, "name");
@@ -350,7 +363,7 @@
     });
     modalBadges.innerHTML = badges.join("");
 
-    modalCat.textContent = `${cat.icon} ${pick(cat, "name")}`;
+    modalCat.innerHTML = `${catIconHtml(cat)} ${esc(pick(cat, "name"))}`;
     modalTitle.textContent = pick(item, "name");
     modalIngTitle.textContent = T().ingTitle;
     modalDesc.textContent = pick(item, "description");
@@ -589,7 +602,7 @@
     const el = document.createElement("span");
     el.className = "fly";
     el.setAttribute("aria-hidden", "true");
-    el.textContent = from.textContent;
+    el.innerHTML = from.innerHTML;
     el.style.cssText = `left:${a.left}px;top:${a.top}px;font-size:${fromSize}px`;
     document.body.append(el);
 
@@ -662,7 +675,7 @@
     inner.querySelectorAll(".cat").forEach((b) => b.remove());
     inner.insertAdjacentHTML("beforeend", cats.map((c) => `
       <button class="cat" type="button" data-cat="${esc(c.id)}">
-        <span class="cat__icon" aria-hidden="true">${esc(c.icon)}</span>
+        <span class="cat__icon" aria-hidden="true">${catIconHtml(c)}</span>
         <span class="cat__name">${esc(pick(c, "name"))}</span>
       </button>`).join(""));
     buttons = [...inner.querySelectorAll(".cat")];
@@ -698,7 +711,7 @@
 
   $("#catLogo").addEventListener("click", () => scrollTo({ top: 0, behavior: "smooth" }));
 
-  const replacePill = () => active >= 0 && movePill(buttons[active], false);
+ const replacePill = () => active >= 0 && movePill(buttons[active], false);
   new ResizeObserver(replacePill).observe(inner);
   new ResizeObserver(replacePill).observe(track);
   document.fonts && document.fonts.ready.then(replacePill);
