@@ -832,9 +832,7 @@
       if (e.data?.type === "menu-updated") applyLiveSync();
     });
   }
-  window.addEventListener("storage", (e) => {
-    if (e.key === "taza-menu-live" || e.key === "taza-sync-ping") applyLiveSync();
-  });
+  window.addEventListener("taza-cloud-menu", () => applyLiveSync());
 
   /* ---------- تشغيل ---------- */
   async function init() {
@@ -858,3 +856,4 @@
 
   init();
 })();
+
