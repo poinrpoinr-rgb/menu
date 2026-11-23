@@ -1,5 +1,4 @@
-
-/* ========== الربط السحابي الفوري مع Firebase Firestore (TAZA 041 Real-time Sync) ========== */
+/* ========== الربط السحابي الفوري مع Firebase Firestore + Auth (TAZA 041) ========== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getFirestore,
@@ -13,6 +12,13 @@ import {
   query,
   orderBy,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDBeMjFtzBn7bFQ3ht4Sk1RYJygs3H9bJg",
@@ -26,6 +32,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 const menuDocRef = doc(db, "taza", "menu");
 const settingsDocRef = doc(db, "taza", "settings");
@@ -35,6 +44,16 @@ const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : nu
 /* ---------- واجهة موحدة يستخدمها admin.js و menu.js و extras.js ---------- */
 window.TazaCloud = {
   ready: true,
+  currentUser: null,
+
+  async loginWithGoogle() {
+    const res = await signInWithPopup(auth, googleProvider);
+    return res.user;
+  },
+
+  async logout() {
+    await signOut(auth);
+  },
 
   // حفظ المنيو الكامل (أقسام + أطباق) على السحابة
   async saveMenu(menuData) {
@@ -92,7 +111,13 @@ window.TazaCloud = {
   },
 };
 
-/* ---------- 1) الاستماع اللحظي للمنيو من Firestore (Real-time onSnapshot) ---------- */
+/* ---------- متابعة حالة تسجيل دخول الأدمن ---------- */
+onAuthStateChanged(auth, (user) => {
+  window.TazaCloud.currentUser = user || null;
+  window.dispatchEvent(new CustomEvent("taza-auth-change", { detail: user || null }));
+});
+
+/* ---------- 1) الاستماع اللحظي للمنيو من Firestore ---------- */
 onSnapshot(
   menuDocRef,
   (snap) => {
