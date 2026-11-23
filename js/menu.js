@@ -807,16 +807,48 @@
     }
   };
 
+ /* ---------- قراءة التعديلات الفورية من لوحة الإدارة (Real-time Sync) ---------- */
+  function loadLiveData() {
+    try {
+      const live = localStorage.getItem("taza-menu-live");
+      return live ? JSON.parse(live) : null;
+    } catch (_) { return null; }
+  }
+
+  function applyLiveSync() {
+    const live = loadLiveData();
+    if (!live) return;
+    data = live;
+    const keep = cats[active] && cats[active].id;
+    renderMenu();
+    buildNav(keep);
+    observeCards();
+    revealVisible();
+    spy();
+  }
+
+  if ("BroadcastChannel" in window) {
+    new BroadcastChannel("taza-sync").addEventListener("message", (e) => {
+      if (e.data?.type === "menu-updated") applyLiveSync();
+    });
+  }
+  window.addEventListener("storage", (e) => {
+    if (e.key === "taza-menu-live" || e.key === "taza-sync-ping") applyLiveSync();
+  });
+
   /* ---------- تشغيل ---------- */
   async function init() {
     updateStatic();
-    try {
-      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) throw new Error(res.status);
-      data = await res.json();
-    } catch (err) {
-      $("#menu").innerHTML = `<p class="menu-error">${T().error}</p>`;
-      return;
+    data = loadLiveData();
+    if (!data) {
+      try {
+        const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error(res.status);
+        data = await res.json();
+      } catch (err) {
+        $("#menu").innerHTML = `<p class="menu-error">${T().error}</p>`;
+        return;
+      }
     }
     renderMenu();
     buildNav();
