@@ -362,7 +362,22 @@
 
     const t = T();
     const starSvg = `<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
-    const reviews = t.demoReviews;
+  // جلب التقييمات المعتمدة من الأدمن + تطبيق التجديد التلقائي (يومي / أسبوعي / دائم)
+    const cycle = localStorage.getItem("taza-rev-cycle") || "forever";
+    const maxAgeMs = cycle === "daily" ? 86400000 : cycle === "weekly" ? 604800000 : Infinity;
+    let approvedRevs = [];
+    try {
+      approvedRevs = JSON.parse(localStorage.getItem("taza-feedbacks") || "[]")
+        .filter((r) => r.status === "approved" && (Date.now() - new Date(r.createdAt || r.date || Date.now()).getTime() <= maxAgeMs))
+        .map((r) => ({
+          name: r.name || "ضيف TAZA 041",
+          rating: r.rating,
+          tags: r.tags || [],
+          note: r.note || (html.lang === "en" ? "Great experience!" : "تجربة رائعة!"),
+          time: new Date(r.createdAt || Date.now()).toLocaleDateString(html.lang === "en" ? "en-US" : "ar-EG"),
+        }));
+    } catch (_) {}
+    const reviews = approvedRevs.length ? [...approvedRevs, ...t.demoReviews] : t.demoReviews;
 
     wrap.innerHTML = `
       <div class="fb-shell">
