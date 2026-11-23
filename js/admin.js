@@ -1,0 +1,413 @@
+/* ========== لوحة إدارة TAZA 041 (Real-time Sync + الأطباق + الأقسام + التقييمات) ========== */
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const STORAGE_KEY = "taza-menu-live";
+  const FEEDBACK_KEY = "taza-feedbacks";
+  const CYCLE_KEY = "taza-rev-cycle";
+  const ADMIN_PIN = "0410";
+
+  // قناة بث فوري لتحديث منيو الزبون في نفس اللحظة بدون رفرش!
+  const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : null;
+
+  let menuData = null;
+
+  // إخفاء تبويب إعدادات المطعم (يبقى التعديل برمجياً كما طلبت)
+  const setTabBtn = document.querySelector('.tab[data-tab="settings"]');
+  if (setTabBtn) setTabBtn.hidden = true;
+
+  function toast(msg) {
+    const t = $("#adminToast");
+    t.textContent = msg;
+    t.classList.add("is-on");
+    clearTimeout(t._tm);
+    t._tm = setTimeout(() => t.classList.remove("is-on"), 2400);
+  }
+
+  function esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  }
+
+  /* ---------- شاشة القفل (PIN) ---------- */
+  const lockScreen = $("#lockScreen");
+  if (sessionStorage.getItem("taza-admin-auth") === "1") lockScreen.hidden = true;
+
+  $("#lockForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if ($("#pinInput").value.trim() === ADMIN_PIN) {
+      sessionStorage.setItem("taza-admin-auth", "1");
+      lockScreen.hidden = true;
+    } else {
+      $("#pinErr").textContent = "الرمز غير صحيح! جرّب 0410";
+      $("#pinInput").value = "";
+      $("#pinInput").focus();
+    }
+  });
+
+  $("#themeBtn").addEventListener("click", () => {
+    const d = document.documentElement;
+    d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
+  });
+
+  /* ---------- حفظ وبث التعديلات فوراً لمنيو الزبون (Real-time Sync) ---------- */
+  function saveAndSync(msg = "تم الحفظ والمزامنة فوراً ⚡") {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(menuData));
+      localStorage.setItem("taza-sync-ping", String(Date.now()));
+    } catch (_) {}
+    if (bc) bc.postMessage({ type: "menu-updated" });
+    toast(msg);
+  }
+
+  function syncReviews(msg = "تم تحديث التقييمات ⚡") {
+    localStorage.setItem("taza-sync-ping", String(Date.now()));
+    if (bc) bc.postMessage({ type: "reviews-updated" });
+    toast(msg);
+  }
+
+  /* ---------- التبويبات ---------- */
+  $("#adminTabs").addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab[data-tab]");
+    if (!btn) return;
+    const name = btn.dataset.tab;
+    $("#adminTabs").querySelectorAll(".tab").forEach((b) => b.classList.toggle("is-active", b === btn));
+    document.querySelectorAll(".panel").forEach((p) => (p.hidden = p.id !== `panel-${name}`));
+  });
+
+  /* ---------- 1) عرض وإدارة الأطباق ---------- */
+  function fillCatSelects() {
+    const curFilter = $("#filterCat").value || "all";
+    $("#filterCat").innerHTML = `<option value="all">كل الأقسام (${menuData.items.length})</option>` +
+      menuData.categories.map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
+    $("#filterCat").value = curFilter;
+
+    $("#itCat").innerHTML = menuData.categories
+      .map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
+  }
+
+  function renderItems() {
+    $("#cntItems").textContent = menuData.items.length;
+    const fCat = $("#filterCat").value || "all";
+    const list = fCat === "all" ? menuData.items : menuData.items.filter((i) => i.category === fCat);
+
+    $("#itemsGrid").innerHTML = list.map((it) => {
+      const cat = menuData.categories.find((c) => c.id === it.category);
+      const isAvail = it.available !== false;
+      return `
+        <article class="card${isAvail ? "" : " is-hidden"}">
+          <div class="card-top">
+            <h3 class="card-title">${esc(cat?.icon || "🍽️")} ${esc(it.name)}</h3>
+            <span class="pill">${Number(it.price).toLocaleString("en-US")} ل.س</span>
+          </div>
+          <p class="card-sub">${esc(it.description || "بدون وصف")}</p>
+          <div class="card-meta">
+            <span class="pill">⚡ ${esc(it.calories ?? 350)} سعرة</span>
+            ${it.featured ? `<span class="pill">🔥 الأكثر طلباً</span>` : ""}
+            ${(it.tags || []).includes("spicy") ? `<span class="pill">🌶️ حار</span>` : ""}
+            ${(it.tags || []).includes("vegetarian") ? `<span class="pill">🌱 نباتي</span>` : ""}
+          </div>
+          <div class="card-foot">
+            <label class="switch">
+              <input type="checkbox" data-toggle-item="${it.id}" ${isAvail ? "checked" : ""}>
+              <span class="switch-track"></span>
+              <span>${isAvail ? "ظاهر" : "مخفي"}</span>
+            </label>
+            <div style="display:flex;gap:0.35rem">
+              <button class="btn btn--sm" type="button" data-edit-item="${it.id}">✏️ تعديل</button>
+              <button class="btn btn--sm btn--danger" type="button" data-del-item="${it.id}">🗑️</button>
+            </div>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  $("#filterCat").addEventListener("change", renderItems);
+
+  $("#itemsGrid").addEventListener("change", (e) => {
+    const inp = e.target.closest("input[data-toggle-item]");
+    if (!inp) return;
+    const item = menuData.items.find((x) => x.id === Number(inp.dataset.toggleItem));
+    if (!item) return;
+    item.available = inp.checked;
+    renderItems();
+    saveAndSync(item.available ? `تم إظهار "${item.name}" ✅` : `تم إخفاء "${item.name}" 👁️‍🗨️`);
+  });
+
+  $("#itemsGrid").addEventListener("click", (e) => {
+    const editBtn = e.target.closest("[data-edit-item]");
+    if (editBtn) {
+      const item = menuData.items.find((x) => x.id === Number(editBtn.dataset.editItem));
+      if (item) openItemDialog(item);
+      return;
+    }
+    const delBtn = e.target.closest("[data-del-item]");
+    if (delBtn) {
+      const id = Number(delBtn.dataset.delItem);
+      const item = menuData.items.find((x) => x.id === id);
+      if (item && confirm(`هل تريد حذف "${item.name}" نهائياً؟`)) {
+        menuData.items = menuData.items.filter((x) => x.id !== id);
+        fillCatSelects(); renderItems();
+        saveAndSync("تم حذف الطبق 🗑️");
+      }
+    }
+  });
+
+  /* ---------- نافذة إضافة / تعديل طبق ---------- */
+  const itemDlg = $("#itemDlg");
+  function openItemDialog(item = null) {
+    $("#itemDlgTitle").textContent = item ? "تعديل الطبق" : "إضافة طبق جديد";
+    $("#itId").value = item ? item.id : "";
+    $("#itNameAr").value = item ? item.name : "";
+    $("#itNameEn").value = item ? (item.name_en || "") : "";
+    $("#itCat").value = item ? item.category : (menuData.categories[0]?.id || "");
+    $("#itPrice").value = item ? item.price : "";
+    $("#itCal").value = item ? (item.calories ?? 400) : 400;
+    $("#itImg").value = item ? (item.image || "") : "";
+    $("#itDescAr").value = item ? (item.description || "") : "";
+    $("#itDescEn").value = item ? (item.description_en || "") : "";
+    $("#itAvail").checked = item ? item.available !== false : true;
+    $("#itFeat").checked = item ? !!item.featured : false;
+    $("#itSpicy").checked = item ? (item.tags || []).includes("spicy") : false;
+    $("#itVeg").checked = item ? (item.tags || []).includes("vegetarian") : false;
+
+    const alSet = new Set(item ? (item.allergens || []) : []);
+    $("#itAllergens").querySelectorAll("input").forEach((c) => (c.checked = alSet.has(c.value)));
+    itemDlg.hidden = false;
+  }
+
+  $("#addItemBtn").addEventListener("click", () => openItemDialog(null));
+  $("#closeItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
+  $("#cancelItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
+
+  $("#itemForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const idVal = $("#itId").value;
+    const tags = [];
+    if ($("#itSpicy").checked) tags.push("spicy");
+    if ($("#itVeg").checked) tags.push("vegetarian");
+    const allergens = [...$("#itAllergens").querySelectorAll("input:checked")].map((c) => c.value);
+
+    const payload = {
+      id: idVal ? Number(idVal) : (Math.max(0, ...menuData.items.map((x) => x.id)) + 1),
+      category: $("#itCat").value,
+      name: $("#itNameAr").value.trim(),
+      name_en: $("#itNameEn").value.trim(),
+      description: $("#itDescAr").value.trim(),
+      description_en: $("#itDescEn").value.trim(),
+      price: Number($("#itPrice").value) || 0,
+      calories: Number($("#itCal").value) || 0,
+      image: $("#itImg").value.trim(),
+      available: $("#itAvail").checked,
+      featured: $("#itFeat").checked,
+      tags,
+      allergens,
+    };
+
+    if (idVal) {
+      const idx = menuData.items.findIndex((x) => x.id === payload.id);
+      if (idx >= 0) menuData.items[idx] = payload;
+    } else {
+      menuData.items.push(payload);
+    }
+
+    itemDlg.hidden = true;
+    fillCatSelects(); renderItems();
+    saveAndSync(idVal ? "تم تعديل الطبق ومزامنته ⚡" : "تمت إضافة الطبق الجديد ⚡");
+  });
+
+  /* ---------- 2) عرض وإدارة الأقسام (إضافة + تعديل + إظهار/إخفاء فقط بدون حذف) ---------- */
+  function renderCats() {
+    $("#cntCats").textContent = menuData.categories.length;
+    $("#catsGrid").innerHTML = menuData.categories.map((c) => {
+      const isVis = c.visible !== false;
+      const count = menuData.items.filter((i) => i.category === c.id).length;
+      return `
+        <article class="card${isVis ? "" : " is-hidden"}">
+          <div class="card-top">
+            <h3 class="card-title">${esc(c.icon)} ${esc(c.name)}</h3>
+            <span class="pill">${count} أطباق</span>
+          </div>
+          <p class="card-sub" dir="ltr">${esc(c.name_en)} • ID: ${esc(c.id)}</p>
+          <div class="card-foot">
+            <label class="switch">
+              <input type="checkbox" data-toggle-cat="${esc(c.id)}" ${isVis ? "checked" : ""}>
+              <span class="switch-track"></span>
+              <span>${isVis ? "القسم ظاهر" : "القسم مخفي"}</span>
+            </label>
+            <button class="btn btn--sm" type="button" data-edit-cat="${esc(c.id)}">✏️ تعديل</button>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  $("#catsGrid").addEventListener("change", (e) => {
+    const inp = e.target.closest("input[data-toggle-cat]");
+    if (!inp) return;
+    const cat = menuData.categories.find((c) => c.id === inp.dataset.toggleCat);
+    if (!cat) return;
+    cat.visible = inp.checked;
+    renderCats();
+    saveAndSync(cat.visible ? `تم إظهار قسم "${cat.name}" ✅` : `تم إخفاء قسم "${cat.name}" 👁️‍🗨️`);
+  });
+
+  const catDlg = $("#catDlg");
+  function openCatDialog(cat = null) {
+    $("#catDlgTitle").textContent = cat ? "تعديل القسم" : "إضافة قسم جديد";
+    $("#catOrigId").value = cat ? cat.id : "";
+    $("#catNameAr").value = cat ? cat.name : "";
+    $("#catNameEn").value = cat ? (cat.name_en || "") : "";
+    $("#catId").value = cat ? cat.id : "";
+    $("#catId").readOnly = !!cat;
+    $("#catIcon").value = cat ? (cat.icon || "🍽️") : "🍽️";
+    $("#catVisible").checked = cat ? cat.visible !== false : true;
+    catDlg.hidden = false;
+  }
+
+  $("#catsGrid").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-edit-cat]");
+    if (!btn) return;
+    const cat = menuData.categories.find((c) => c.id === btn.dataset.editCat);
+    if (cat) openCatDialog(cat);
+  });
+
+  $("#addCatBtn").addEventListener("click", () => openCatDialog(null));
+  $("#closeCatDlg").addEventListener("click", () => (catDlg.hidden = true));
+  $("#cancelCatDlg").addEventListener("click", () => (catDlg.hidden = true));
+
+  $("#catForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const orig = $("#catOrigId").value;
+    const cleanId = $("#catId").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    if (!cleanId) return;
+
+    const payload = {
+      id: orig || cleanId,
+      name: $("#catNameAr").value.trim(),
+      name_en: $("#catNameEn").value.trim(),
+      icon: $("#catIcon").value.trim() || "🍽️",
+      visible: $("#catVisible").checked,
+    };
+
+    if (orig) {
+      const idx = menuData.categories.findIndex((c) => c.id === orig);
+      if (idx >= 0) menuData.categories[idx] = payload;
+    } else {
+      if (menuData.categories.some((c) => c.id === payload.id)) {
+        toast("هذا المعرّف (ID) مستخدم مسبقاً!"); return;
+      }
+      menuData.categories.push(payload);
+    }
+
+    catDlg.hidden = true;
+    fillCatSelects(); renderCats(); renderItems();
+    saveAndSync(orig ? "تم تعديل القسم ⚡" : "تمت إضافة القسم الجديد ⚡");
+  });
+
+  /* ---------- 3) إدارة تقييمات الزبائن (موافقة / إخفاء / حذف / تجديد تلقائي) ---------- */
+  const revCycleSel = $("#revCycle");
+  revCycleSel.value = localStorage.getItem(CYCLE_KEY) || "forever";
+  revCycleSel.addEventListener("change", () => {
+    localStorage.setItem(CYCLE_KEY, revCycleSel.value);
+    syncReviews("تم تحديث مدة التجديد التلقائي للتعليقات ⚡");
+  });
+
+  function getReviews() {
+    try { return JSON.parse(localStorage.getItem(FEEDBACK_KEY) || "[]"); }
+    catch (_) { return []; }
+  }
+
+  function renderReviews() {
+    const list = getReviews();
+    $("#cntRevs").textContent = list.length;
+    if (!list.length) {
+      $("#revsGrid").innerHTML = `<p class="card-sub">لا توجد تقييمات مرسلة من الزبائن بعد. جرّب إرسال تقييم من صفحة المنيو!</p>`;
+      return;
+    }
+    $("#revsGrid").innerHTML = list.map((r) => {
+      const approved = r.status === "approved";
+      const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+      const dt = new Date(r.createdAt || r.date || Date.now()).toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" });
+      return `
+        <article class="card${approved ? "" : " is-hidden"}">
+          <div class="card-top">
+            <h3 class="card-title">👤 ${esc(r.name || "ضيف")}</h3>
+            <span class="pill" style="color:var(--cheddar)">${stars}</span>
+          </div>
+          <p class="card-sub">"${esc(r.note || "بدون تعليق نصي")}"</p>
+          <div class="card-meta">
+            <span class="pill">${approved ? "✅ منشور بالمنيو" : "⏳ بانتظار الموافقة"}</span>
+            <span class="pill">🕒 ${esc(dt)}</span>
+            ${(r.tags || []).map((tg) => `<span class="pill">${esc(tg)}</span>`).join("")}
+          </div>
+          <div class="card-foot">
+            <button class="btn btn--sm ${approved ? "" : "btn--ok"}" type="button" data-approve-rev="${r.id}">
+              ${approved ? "إخفاء من المنيو" : "✅ إظهار بالمنيو"}
+            </button>
+            <button class="btn btn--sm btn--danger" type="button" data-del-rev="${r.id}">🗑️ حذف</button>
+          </div>
+        </article>`;
+    }).join("");
+  }
+
+  $("#revsGrid").addEventListener("click", (e) => {
+    const appBtn = e.target.closest("[data-approve-rev]");
+    if (appBtn) {
+      const id = Number(appBtn.dataset.approveRev);
+      const list = getReviews();
+      const rev = list.find((x) => x.id === id);
+      if (rev) {
+        rev.status = rev.status === "approved" ? "pending" : "approved";
+        localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
+        renderReviews();
+        syncReviews(rev.status === "approved" ? "تم نشر التقييم في المنيو ✅" : "تم إخفاء التقييم");
+      }
+      return;
+    }
+    const delBtn = e.target.closest("[data-del-rev]");
+    if (delBtn) {
+      const id = Number(delBtn.dataset.delRev);
+      const list = getReviews().filter((x) => x.id !== id);
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
+      renderReviews();
+      syncReviews("تم حذف التقييم 🗑️");
+    }
+  });
+
+  /* ---------- تصدير ملف menu.json الجاهز للرفع ---------- */
+  $("#exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(menuData, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "menu.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast("تم تنزيل menu.json المحدّث 💾");
+  });
+
+  /* ---------- تشغيل لوحة الإدارة ---------- */
+  async function boot() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { menuData = JSON.parse(saved); } catch (_) {}
+    }
+    if (!menuData) {
+      try {
+        const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+        menuData = await res.json();
+      } catch (_) {
+        toast("تعذّر تحميل data/menu.json");
+        return;
+      }
+    }
+    fillCatSelects();
+    renderItems();
+    renderCats();
+    renderReviews();
+  }
+
+  // تحديث التقييمات تلقائياً لو زبون أرسل تقييم جديد الآن
+  window.addEventListener("storage", (e) => {
+    if (e.key === FEEDBACK_KEY) renderReviews();
+  });
+
+  boot();
+})();
