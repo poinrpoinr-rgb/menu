@@ -54,6 +54,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(menuData));
       localStorage.setItem("taza-sync-ping", String(Date.now()));
     } catch (_) {}
+    window.TazaCloud?.saveMenu(menuData);
     if (bc) bc.postMessage({ type: "menu-updated" });
     toast(msg);
   }
@@ -307,6 +308,7 @@
   revCycleSel.value = localStorage.getItem(CYCLE_KEY) || "forever";
   revCycleSel.addEventListener("change", () => {
     localStorage.setItem(CYCLE_KEY, revCycleSel.value);
+    window.TazaCloud?.saveRevCycle(revCycleSel.value);
     syncReviews("تم تحديث مدة التجديد التلقائي للتعليقات ⚡");
   });
 
@@ -357,6 +359,7 @@
       if (rev) {
         rev.status = rev.status === "approved" ? "pending" : "approved";
         localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
+        if (rev.docId) window.TazaCloud?.setReviewStatus(rev.docId, rev.status);
         renderReviews();
         syncReviews(rev.status === "approved" ? "تم نشر التقييم في المنيو ✅" : "تم إخفاء التقييم");
       }
@@ -364,6 +367,8 @@
     }
     const delBtn = e.target.closest("[data-del-rev]");
     if (delBtn) {
+      const target = getReviews().find((x) => String(x.id) === String(delBtn.dataset.delRev));
+      if (target?.docId) window.TazaCloud?.deleteReview(target.docId);
       const id = Number(delBtn.dataset.delRev);
       const list = getReviews().filter((x) => x.id !== id);
       localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
@@ -407,6 +412,13 @@
   // تحديث التقييمات تلقائياً لو زبون أرسل تقييم جديد الآن
   window.addEventListener("storage", (e) => {
     if (e.key === FEEDBACK_KEY) renderReviews();
+  });
+
+  window.addEventListener("taza-cloud-reviews", () => renderReviews());
+  window.addEventListener("taza-cloud-menu", (e) => {
+    if (!e.detail) return;
+    menuData = e.detail;
+    fillCatSelects(); renderItems(); renderCats();
   });
 
   boot();
