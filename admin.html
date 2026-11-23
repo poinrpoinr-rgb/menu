@@ -182,16 +182,23 @@
 </head>
 <body>
 
-  <!-- شاشة الدخول (الرمز الافتراضي: 0410) -->
+  <!-- شاشة الدخول عبر Google -->
   <div class="lock" id="lockScreen">
-    <form class="lock-card" id="lockForm">
+    <div class="lock-card">
       <img src="assets/images/logo.svg" alt="TAZA 041">
       <h1>إدارة TAZA 041</h1>
-      <p>أدخل رمز الدخول للوحة التحكم (الافتراضي: 0410)</p>
-      <input class="pin-input" id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
-      <p class="pin-err" id="pinErr"></p>
-      <button class="btn btn--pri" style="width:100%;height:46px;font-size:1rem" type="submit">دخول للوحة التحكم</button>
-    </form>
+      <p>سجّل الدخول بحساب الإدارة للمتابعة</p>
+      <p class="pin-err" id="authErr"></p>
+      <button class="btn btn--pri" id="googleLoginBtn" style="width:100%;height:46px;font-size:0.96rem;gap:0.6rem" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path fill="currentColor" d="M21.35 11.1h-9.18v2.92h5.27c-.23 1.24-.92 2.29-1.96 3v2.49h3.17c1.86-1.71 2.93-4.23 2.93-7.21 0-.41-.04-.81-.23-1.2z"/>
+          <path fill="currentColor" d="M12.17 22c2.65 0 4.88-.88 6.51-2.38l-3.17-2.49c-.88.59-2 .95-3.34.95-2.57 0-4.74-1.73-5.52-4.06H3.38v2.56A9.83 9.83 0 0 0 12.17 22z"/>
+          <path fill="currentColor" d="M6.65 14.02A5.9 5.9 0 0 1 6.34 12c0-.7.12-1.38.31-2.02V7.42H3.38A9.83 9.83 0 0 0 2.34 12c0 1.59.38 3.09 1.04 4.58l3.27-2.56z"/>
+          <path fill="currentColor" d="M12.17 5.92c1.44 0 2.74.5 3.76 1.47l2.82-2.82C17.04 2.98 14.82 2 12.17 2a9.83 9.83 0 0 0-8.79 5.42l3.27 2.56c.78-2.33 2.95-4.06 5.52-4.06z"/>
+        </svg>
+        <span>تسجيل الدخول عبر Google</span>
+      </button>
+    </div>
   </div>
 
   <!-- الهيدر -->
