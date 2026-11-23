@@ -105,7 +105,7 @@
   /* ---------- عرض المنيو ---------- */
   function renderMenu() {
     const cur = pick(data.restaurant, "currency");
-    cats = data.categories.filter((c) => data.items.some((i) => i.category === c.id && i.available !== false));
+   cats = data.categories.filter((c) => c.visible !== false && data.items.some((i) => i.category === c.id && i.available !== false));
     orderedItems = [];
 
     const card = (i, c, idx) => {
