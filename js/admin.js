@@ -1,17 +1,14 @@
-/* ========== لوحة إدارة TAZA 041 (Real-time Sync + الأطباق + الأقسام + التقييمات) ========== */
+/* ========== لوحة إدارة TAZA 041 (Real-time Sync + Google Auth + الأطباق + الأقسام + التقييمات) ========== */
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
+  const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
   const STORAGE_KEY = "taza-menu-live";
   const FEEDBACK_KEY = "taza-feedbacks";
   const CYCLE_KEY = "taza-rev-cycle";
-const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
 
-  // قناة بث فوري لتحديث منيو الزبون في نفس اللحظة بدون رفرش!
   const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : null;
-
   let menuData = null;
 
-  // إخفاء تبويب إعدادات المطعم (يبقى التعديل برمجياً كما طلبت)
   const setTabBtn = document.querySelector('.tab[data-tab="settings"]');
   if (setTabBtn) setTabBtn.hidden = true;
 
@@ -27,7 +24,7 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
     return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
- /* ---------- شاشة القفل (تسجيل الدخول عبر Google) ---------- */
+  /* ---------- شاشة القفل (تسجيل الدخول عبر Google) ---------- */
   const lockScreen = $("#lockScreen");
   const authErr = $("#authErr");
   const googleLoginBtn = $("#googleLoginBtn");
@@ -42,6 +39,7 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
     if (ADMIN_EMAIL && user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
       authErr.textContent = "عذراً، هذا الحساب غير مصرح له بدخول لوحة الإدارة.";
       lockScreen.hidden = false;
+      if (logoutBtn) logoutBtn.hidden = true;
       window.TazaCloud?.logout();
       return;
     }
@@ -56,9 +54,13 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
 
   googleLoginBtn?.addEventListener("click", async () => {
     authErr.textContent = "";
+    if (!window.TazaCloud?.loginWithGoogle) {
+      authErr.textContent = "جاري الاتصال بـ Firebase، حاول بعد ثانية...";
+      return;
+    }
     googleLoginBtn.disabled = true;
     try {
-      await window.TazaCloud?.loginWithGoogle();
+      await window.TazaCloud.loginWithGoogle();
     } catch (err) {
       authErr.textContent = "تعذّر تسجيل الدخول: " + (err?.code || err?.message || "حاول مجدداً");
     } finally {
@@ -67,6 +69,11 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
   });
 
   logoutBtn?.addEventListener("click", () => window.TazaCloud?.logout());
+
+  $("#themeBtn").addEventListener("click", () => {
+    const d = document.documentElement;
+    d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
+  });
 
   /* ---------- حفظ وبث التعديلات فوراً لمنيو الزبون (Real-time Sync) ---------- */
   function saveAndSync(msg = "تم الحفظ والمزامنة فوراً ⚡") {
@@ -235,7 +242,7 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
     saveAndSync(idVal ? "تم تعديل الطبق ومزامنته ⚡" : "تمت إضافة الطبق الجديد ⚡");
   });
 
-  /* ---------- 2) عرض وإدارة الأقسام (إضافة + تعديل + إظهار/إخفاء فقط بدون حذف) ---------- */
+  /* ---------- 2) عرض وإدارة الأقسام ---------- */
   function renderCats() {
     $("#cntCats").textContent = menuData.categories.length;
     $("#catsGrid").innerHTML = menuData.categories.map((c) => {
@@ -323,7 +330,7 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
     saveAndSync(orig ? "تم تعديل القسم ⚡" : "تمت إضافة القسم الجديد ⚡");
   });
 
-  /* ---------- 3) إدارة تقييمات الزبائن (موافقة / إخفاء / حذف / تجديد تلقائي) ---------- */
+  /* ---------- 3) إدارة تقييمات الزبائن ---------- */
   const revCycleSel = $("#revCycle");
   revCycleSel.value = localStorage.getItem(CYCLE_KEY) || "forever";
   revCycleSel.addEventListener("change", () => {
@@ -361,10 +368,10 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
             ${(r.tags || []).map((tg) => `<span class="pill">${esc(tg)}</span>`).join("")}
           </div>
           <div class="card-foot">
-            <button class="btn btn--sm ${approved ? "" : "btn--ok"}" type="button" data-approve-rev="${r.id}">
+            <button class="btn btn--sm ${approved ? "" : "btn--ok"}" type="button" data-approve-rev="${esc(r.id)}">
               ${approved ? "إخفاء من المنيو" : "✅ إظهار بالمنيو"}
             </button>
-            <button class="btn btn--sm btn--danger" type="button" data-del-rev="${r.id}">🗑️ حذف</button>
+            <button class="btn btn--sm btn--danger" type="button" data-del-rev="${esc(r.id)}">🗑️ حذف</button>
           </div>
         </article>`;
     }).join("");
@@ -373,9 +380,9 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
   $("#revsGrid").addEventListener("click", (e) => {
     const appBtn = e.target.closest("[data-approve-rev]");
     if (appBtn) {
-      const id = Number(appBtn.dataset.approveRev);
+      const idStr = String(appBtn.dataset.approveRev);
       const list = getReviews();
-      const rev = list.find((x) => x.id === id);
+      const rev = list.find((x) => String(x.id) === idStr);
       if (rev) {
         rev.status = rev.status === "approved" ? "pending" : "approved";
         localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
@@ -387,10 +394,10 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
     }
     const delBtn = e.target.closest("[data-del-rev]");
     if (delBtn) {
-      const target = getReviews().find((x) => String(x.id) === String(delBtn.dataset.delRev));
+      const idStr = String(delBtn.dataset.delRev);
+      const target = getReviews().find((x) => String(x.id) === idStr);
       if (target?.docId) window.TazaCloud?.deleteReview(target.docId);
-      const id = Number(delBtn.dataset.delRev);
-      const list = getReviews().filter((x) => x.id !== id);
+      const list = getReviews().filter((x) => String(x.id) !== idStr);
       localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
       renderReviews();
       syncReviews("تم حذف التقييم 🗑️");
@@ -429,7 +436,6 @@ const ADMIN_EMAIL = "ضع_ايميلك_هنا@gmail.com";
     renderReviews();
   }
 
-  // تحديث التقييمات تلقائياً لو زبون أرسل تقييم جديد الآن
   window.addEventListener("storage", (e) => {
     if (e.key === FEEDBACK_KEY) renderReviews();
   });
