@@ -187,16 +187,18 @@
 </head>
 <body>
 
-  <!-- شاشة الدخول (الرمز الافتراضي: 0410) -->
+ <!-- شاشة تسجيل الدخول بحساب Google (Firebase Auth) -->
   <div class="lock" id="lockScreen">
-    <form class="lock-card" id="lockForm">
+    <div class="lock-card">
       <img src="assets/images/logo.svg" alt="TAZA 041">
       <h1>إدارة TAZA 041</h1>
-      <p>أدخل رمز الدخول للوحة التحكم (الافتراضي: 0410)</p>
-      <input class="pin-input" id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
+      <p>سجّل الدخول بحساب Google المصرح له للوصول للوحة التحكم</p>
       <p class="pin-err" id="pinErr"></p>
-      <button class="btn btn--pri" style="width:100%;height:46px;font-size:1rem" type="submit">دخول للوحة التحكم</button>
-    </form>
+      <button class="btn btn--pri" id="googleLoginBtn" type="button" style="width:100%;height:48px;font-size:0.98rem;gap:0.6rem">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
+        <span>الدخول بحساب Google</span>
+      </button>
+    </div>
   </div>
 
   <!-- الهيدر -->
