@@ -676,7 +676,7 @@
 
         // رسم الوجبات الطائرة في منتصف الفتحة
         F.snacks.forEach((sn) => {
-          const bob = Math.sin(now / 180 + sn.x) * 4;
+          const bob = Math.sin(now / 420) * 3;
           ctx.fillStyle = "rgba(255, 189, 63, 0.25)";
           ctx.beginPath(); ctx.arc(sn.x, sn.y + bob, 20, 0, Math.PI * 2); ctx.fill();
           drawSprite(sn.key, sn.x, sn.y + bob, 36, sn.fallback);
