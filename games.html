@@ -636,18 +636,19 @@
             }
 
             // تحريك الوجبات الطائرة وفحص الأكل (العصفور يفتح فمه لما يقرب ويفرح لما ياكل!)
-            for (let i = F.snacks.length - 1; i >= 0; i--) {
+           for (let i = F.snacks.length - 1; i >= 0; i--) {
               const sn = F.snacks[i];
               sn.x -= F.pipeSpeed * dtNorm;
               const dist = Math.hypot(sn.x - birdX, sn.y - F.y);
               if (dist < 85 && sn.x > birdX - 10) nearSnack = true;
               if (dist < 30) {
-                F.score += 2;
+                const bonusPts = sn.birdPts || 2;
+                F.score += bonusPts;
                 F.happyTimer = 0.65; // العصفور يبتسم ويغمض عيونه من اللذة!
                 scoreEl.textContent = F.score;
                 beep(880, 0.09);
                 spawnParticles(sn.x, sn.y, "#ffbd3f", 14);
-                spawnFloatText(sn.x, sn.y - 10, "+2 🍔", "#ffbd3f");
+                spawnFloatText(sn.x, sn.y - 10, `+${bonusPts} ${sn.fallback}`, "#ffbd3f");
                 if (F.score > F.best) { F.best = F.score; bestEl.textContent = F.best; try { localStorage.setItem("taza-flappy-best", F.best); } catch (_) {} }
                 F.snacks.splice(i, 1);
                 continue;
