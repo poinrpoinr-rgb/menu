@@ -278,7 +278,7 @@
       $("#spd1").textContent = TXT.s1; $("#spd2").textContent = TXT.s2; $("#spd3").textContent = TXT.s3;
       $("#flapBtn").textContent = TXT.flapBtn;
 
-      /* ---------- تحميل صور الشخصيات والوجبات (assets/images/game/) ---------- */
+      /* ---------- تحميل جميع رسومات TAZA 041 (12 صنف + 4 تعابير للطائر) ---------- */
       const ASSET_BASE = "assets/images/game/";
       const SPRITES = {};
       const ASSET_LIST = {
@@ -287,10 +287,18 @@
         birdEat: "bird-eat.svg",
         birdHappy: "bird-happy.svg",
         burger: "burger.svg",
-        fries: "fries.svg",
-        drink: "drink.svg",
+        chickenBurger: "chicken-burger.svg",
         shawarma: "shawarma.svg",
+        sandwich: "sandwich.svg",
+        western: "western.svg",
+        pasta: "pasta.svg",
+        pizza: "pizza.svg",
+        fries: "fries.svg",
         nuggets: "nuggets.svg",
+        salad: "salad.svg",
+        healthy: "healthy.svg",
+        sauce: "sauce.svg",
+        drink: "drink.svg",
       };
 
       Object.entries(ASSET_LIST).forEach(([key, file]) => {
@@ -301,12 +309,21 @@
         SPRITES[key] = img;
       });
 
+      // كل صنف له نقاطه الخاصة (snakePts للثعبان، birdPts لطائر TAZA)
       const FOOD_ITEMS = [
-        { key: "burger", fallback: "🍔" },
-        { key: "fries", fallback: "🍟" },
-        { key: "drink", fallback: "🥤" },
-        { key: "shawarma", fallback: "🌯" },
-        { key: "nuggets", fallback: "🍗" },
+        { key: "western",       fallback: "🍽️", snakePts: 25, birdPts: 5 },
+        { key: "pizza",         fallback: "🍕", snakePts: 25, birdPts: 5 },
+        { key: "burger",        fallback: "🍔", snakePts: 20, birdPts: 4 },
+        { key: "chickenBurger", fallback: "🍗", snakePts: 20, birdPts: 4 },
+        { key: "pasta",         fallback: "🍝", snakePts: 20, birdPts: 4 },
+        { key: "shawarma",      fallback: "🌯", snakePts: 15, birdPts: 3 },
+        { key: "sandwich",      fallback: "🥖", snakePts: 15, birdPts: 3 },
+        { key: "healthy",       fallback: "🥑", snakePts: 15, birdPts: 3 },
+        { key: "nuggets",       fallback: "🍗", snakePts: 15, birdPts: 3 },
+        { key: "salad",         fallback: "🥗", snakePts: 12, birdPts: 2 },
+        { key: "fries",         fallback: "🍟", snakePts: 10, birdPts: 2 },
+        { key: "sauce",         fallback: "🥫", snakePts: 10, birdPts: 2 },
+        { key: "drink",         fallback: "🥤", snakePts: 10, birdPts: 2 },
       ];
 
       function drawSprite(key, cx, cy, size, fallbackEmoji = "") {
