@@ -1,5 +1,5 @@
 /* ========== Service Worker لدعم العمل بدون إنترنت (TAZA 041 PWA) ========== */
-const CACHE_NAME = "taza-041-v2";
+const CACHE_NAME = "taza-041-v3";
 
 // الملفات الأساسية التي تُحفظ فور فتح الموقع
 const CORE_ASSETS = [
