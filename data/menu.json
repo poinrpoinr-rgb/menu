@@ -40,256 +40,62 @@
     }
   },
   "categories": [
-    {
-      "id": "starters",
-      "name": "المقبلات",
-      "name_en": "Starters",
-      "icon": "🍟"
-    },
-    {
-      "id": "burgers",
-      "name": "البرجر",
-      "name_en": "Burgers",
-      "icon": "🍔"
-    },
-    {
-      "id": "sandwiches",
-      "name": "الساندويتشات",
-      "name_en": "Sandwiches",
-      "icon": "🌯"
-    },
-    {
-      "id": "drinks",
-      "name": "المشروبات",
-      "name_en": "Drinks",
-      "icon": "🥤"
-    }
+    { "id": "shawarma", "name": "قسم الشاورما", "name_en": "Shawarma", "icon": "🌯", "visible": true },
+    { "id": "chicken_burgers", "name": "برغر الدجاج", "name_en": "Chicken Burgers", "icon": "🍗", "visible": true },
+    { "id": "beef_burgers", "name": "برغر اللحم", "name_en": "Beef Burgers", "icon": "🍔", "visible": true },
+    { "id": "sandwiches", "name": "السندويش", "name_en": "Sandwiches", "icon": "🥖", "visible": true },
+    { "id": "western", "name": "القسم الغربي", "name_en": "Western Meals", "icon": "🍽️", "visible": true },
+    { "id": "rizo", "name": "قسم الريزو", "name_en": "Rizo", "icon": "🍚", "visible": true },
+    { "id": "pasta", "name": "الباستا", "name_en": "Pasta", "icon": "🍝", "visible": true },
+    { "id": "pizza", "name": "البيتزا", "name_en": "Pizza", "icon": "🍕", "visible": true },
+    { "id": "starters", "name": "المقبلات", "name_en": "Starters", "icon": "🍟", "visible": true },
+    { "id": "salads", "name": "السلطات", "name_en": "Salads", "icon": "🥗", "visible": true },
+    { "id": "healthy", "name": "القسم الصحي", "name_en": "Healthy", "icon": "🥑", "visible": true },
+    { "id": "sauces", "name": "الصوصات", "name_en": "Sauces", "icon": "🥫", "visible": true },
+    { "id": "drinks", "name": "المشروبات", "name_en": "Drinks", "icon": "🥤", "visible": true }
   ],
   "items": [
-    {
-      "id": 1,
-      "category": "starters",
-      "name": "بطاطا مقلية",
-      "name_en": "French Fries",
-      "description": "بطاطا ذهبية مقرمشة مع الكاتشب",
-      "description_en": "Golden crispy fries with ketchup",
-      "price": 150,
-      "calories": 310,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [
-        "vegetarian"
-      ],
-      "allergens": []
-    },
-    {
-      "id": 2,
-      "category": "starters",
-      "name": "أصابع موزاريلا",
-      "name_en": "Mozzarella Sticks",
-      "description": "6 قطع مقرمشة بقلب الجبن الذائب",
-      "description_en": "6 crispy sticks with melted cheese",
-      "price": 280,
-      "calories": 440,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [
-        "vegetarian"
-      ],
-      "allergens": [
-        "dairy",
-        "gluten",
-        "eggs"
-      ]
-    },
-    {
-      "id": 3,
-      "category": "starters",
-      "name": "أجنحة دجاج",
-      "name_en": "Chicken Wings",
-      "description": "أجنحة متبلة مع صوص حار",
-      "description_en": "Seasoned wings with hot sauce",
-      "price": 320,
-      "calories": 490,
-      "image": "",
-      "available": true,
-      "featured": true,
-      "tags": [
-        "spicy"
-      ],
-      "allergens": [
-        "soy",
-        "sesame"
-      ]
-    },
-    {
-      "id": 4,
-      "category": "burgers",
-      "name": "برجر كلاسيك",
-      "name_en": "Classic Burger",
-      "description": "لحم مشوي مع جبن شيدر وخس وطماطم",
-      "description_en": "Grilled beef with cheddar, lettuce and tomato",
-      "price": 380,
-      "calories": 620,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [],
-      "allergens": [
-        "gluten",
-        "dairy",
-        "sesame",
-        "eggs"
-      ]
-    },
-    {
-      "id": 5,
-      "category": "burgers",
-      "name": "برجر دجاج مقرمش",
-      "name_en": "Crispy Chicken Burger",
-      "description": "صدر دجاج مقرمش مع مايونيز",
-      "description_en": "Crispy chicken breast with mayo",
-      "price": 340,
-      "calories": 580,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [],
-      "allergens": [
-        "gluten",
-        "eggs",
-        "sesame"
-      ]
-    },
-    {
-      "id": 6,
-      "category": "burgers",
-      "name": "برجر دبل شيدر",
-      "name_en": "Double Cheddar Burger",
-      "description": "قطعتين لحم مع جبن شيدر مضاعف",
-      "description_en": "Two patties with double cheddar",
-      "price": 520,
-      "calories": 860,
-      "image": "",
-      "available": true,
-      "featured": true,
-      "tags": [],
-      "allergens": [
-        "gluten",
-        "dairy",
-        "sesame",
-        "eggs"
-      ]
-    },
-    {
-      "id": 7,
-      "category": "sandwiches",
-      "name": "شاورما دجاج",
-      "name_en": "Chicken Shawarma",
-      "description": "شاورما دجاج مع ثوم ومخلل",
-      "description_en": "Chicken shawarma with garlic and pickles",
-      "price": 220,
-      "calories": 470,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [],
-      "allergens": [
-        "gluten",
-        "eggs"
-      ]
-    },
-    {
-      "id": 8,
-      "category": "sandwiches",
-      "name": "زنجر",
-      "name_en": "Zinger",
-      "description": "دجاج مقرمش حار مع صوص الرانش",
-      "description_en": "Spicy crispy chicken with ranch",
-      "price": 300,
-      "calories": 640,
-      "image": "",
-      "available": true,
-      "featured": true,
-      "tags": [
-        "spicy"
-      ],
-      "allergens": [
-        "gluten",
-        "dairy",
-        "eggs"
-      ]
-    },
-    {
-      "id": 9,
-      "category": "sandwiches",
-      "name": "كريسبي",
-      "name_en": "Crispy Sandwich",
-      "description": "قطع دجاج مقرمشة مع بطاطا",
-      "description_en": "Crispy chicken strips with fries",
-      "price": 360,
-      "calories": 690,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [],
-      "allergens": [
-        "gluten",
-        "eggs"
-      ]
-    },
-    {
-      "id": 10,
-      "category": "drinks",
-      "name": "ليمون بالنعناع",
-      "name_en": "Lemon Mint",
-      "description": "عصير ليمون طازج مع نعناع",
-      "description_en": "Fresh lemon juice with mint",
-      "price": 120,
-      "calories": 110,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [
-        "vegetarian"
-      ],
-      "allergens": []
-    },
-    {
-      "id": 11,
-      "category": "drinks",
-      "name": "كولا",
-      "name_en": "Cola",
-      "description": "علبة باردة",
-      "description_en": "Cold can",
-      "price": 80,
-      "calories": 140,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [],
-      "allergens": []
-    },
-    {
-      "id": 12,
-      "category": "drinks",
-      "name": "ميلك شيك",
-      "name_en": "Milkshake",
-      "description": "فانيلا أو شوكولا أو فراولة",
-      "description_en": "Vanilla, chocolate or strawberry",
-      "price": 250,
-      "calories": 520,
-      "image": "",
-      "available": true,
-      "featured": false,
-      "tags": [
-        "vegetarian"
-      ],
-      "allergens": [
-        "dairy"
-      ]
-    }
+    { "id": 1, "category": "shawarma", "name": "الشاورما العادية", "name_en": "Classic Shawarma", "description": "دجاج مشوي، ثوم، مخلل", "description_en": "Grilled chicken, garlic, pickles", "price": 220, "calories": 460, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "eggs"] },
+    { "id": 2, "category": "shawarma", "name": "شاورما دبل", "name_en": "Double Shawarma", "description": "دجاج مشوي مضاعف، ثوم، مخلل، زيت زيتون", "description_en": "Double grilled chicken, garlic, pickles, olive oil", "price": 320, "calories": 640, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "eggs"] },
+    { "id": 3, "category": "shawarma", "name": "شاورما بانيه", "name_en": "Shawarma Pane", "description": "دجاج مشوي، جبنة، فطر، ذرة، بطاطا، صوص مايونيز، صوص شيدر، كورن فليكس", "description_en": "Chicken, cheese, mushroom, corn, fries, mayo, cheddar sauce, cornflakes", "price": 380, "calories": 780, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "eggs"] },
+
+    { "id": 4, "category": "chicken_burgers", "name": "برغر دجاج كلاسيك", "name_en": "Classic Chicken Burger", "description": "صدر دجاج مقرمش، شيدر، خس، طماطم، صوص مايونيز", "description_en": "Crispy chicken breast, cheddar, lettuce, tomato, mayo", "price": 340, "calories": 580, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "dairy", "eggs", "sesame"] },
+    { "id": 5, "category": "chicken_burgers", "name": "سبايسي زنجر", "name_en": "Spicy Zinger", "description": "دجاج مقرمش حار، جبن شيدر، خس، مخلل، صوص حار", "description_en": "Spicy crispy chicken, cheddar, lettuce, pickles, hot sauce", "price": 360, "calories": 640, "image": "", "available": true, "featured": true, "tags": ["spicy"], "allergens": ["gluten", "dairy", "eggs", "sesame"] },
+    { "id": 6, "category": "chicken_burgers", "name": "تشيلي تازة", "name_en": "Chili Taza Burger", "description": "صدر دجاج، صوص تشيلي، جبنة شيدر، خس، بطاطا", "description_en": "Chicken breast, chili sauce, cheddar, lettuce, fries", "price": 370, "calories": 660, "image": "", "available": true, "featured": false, "tags": ["spicy"], "allergens": ["gluten", "dairy", "sesame"] },
+
+    { "id": 7, "category": "beef_burgers", "name": "كلاسيك برغر", "name_en": "Classic Beef Burger", "description": "لحم بقري مشوي، جبن شيدر، خس، طماطم، صوص كوكتيل", "description_en": "Grilled beef patty, cheddar, lettuce, tomato, cocktail sauce", "price": 380, "calories": 620, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "dairy", "sesame", "eggs"] },
+    { "id": 8, "category": "beef_burgers", "name": "سموكي برغر", "name_en": "Smoky Burger", "description": "لحم مشوي، جبن شيدر، بصل مكرمل، صوص باربكيو مدخن", "description_en": "Grilled beef, cheddar, caramelized onion, smoky BBQ sauce", "price": 440, "calories": 710, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "sesame", "soy"] },
+    { "id": 9, "category": "beef_burgers", "name": "ماشروم برغر", "name_en": "Mushroom Burger", "description": "لحم مشوي، صوص فطر كريمي، جبنة موزاريلا وشيدر", "description_en": "Grilled beef, creamy mushroom sauce, mozzarella & cheddar", "price": 450, "calories": 730, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "dairy", "sesame"] },
+
+    { "id": 10, "category": "sandwiches", "name": "سندويش كريسبي", "name_en": "Crispy Sandwich", "description": "قطع دجاج كريسبي مقرمش، مايونيز، خس، بطاطا", "description_en": "Crispy chicken strips, mayo, lettuce, fries", "price": 300, "calories": 590, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "eggs"] },
+    { "id": 11, "category": "sandwiches", "name": "سندويش فاهيتا", "name_en": "Fajita Sandwich", "description": "شرائح دجاج بالخضار، جبنة موزاريلا، ذرة، صوص أفوكادو ومايونيز", "description_en": "Chicken fajita with peppers, mozzarella, corn, mayo", "price": 330, "calories": 610, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "eggs"] },
+    { "id": 12, "category": "sandwiches", "name": "سندويش مكسيكي", "name_en": "Mexican Sandwich", "description": "دجاج متبل حار، ذرة، فليفلة، جبنة، صوص مكسيكي", "description_en": "Spicy marinated chicken, corn, peppers, cheese, Mexican sauce", "price": 320, "calories": 600, "image": "", "available": true, "featured": false, "tags": ["spicy"], "allergens": ["gluten", "dairy"] },
+
+    { "id": 13, "category": "western", "name": "وجبة اسكالوب", "name_en": "Escalope Meal", "description": "شرائح دجاج بانيه مقرمشة، بطاطا مقلية، كول سلو، صوص خاص", "description_en": "Crispy breaded chicken escalope, fries, coleslaw, special sauce", "price": 540, "calories": 820, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "eggs", "dairy"] },
+    { "id": 14, "category": "western", "name": "كوردن بلو", "name_en": "Cordon Bleu", "description": "صدر دجاج محشي بالجبن والحبش المدخن مع صوص الكريمة والبطاطا", "description_en": "Chicken stuffed with cheese & smoked turkey, creamy sauce, fries", "price": 590, "calories": 890, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "eggs"] },
+
+    { "id": 15, "category": "rizo", "name": "ريزو كريسبي", "name_en": "Crispy Rizo", "description": "أرز متبل بالبهارات، قطع دجاج كريسبي، صوص شيدر وباربكيو", "description_en": "Seasoned rice, crispy chicken pieces, cheddar & BBQ sauce", "price": 360, "calories": 720, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "soy"] },
+    { "id": 16, "category": "rizo", "name": "ريزو شيش", "name_en": "Shish Rizo", "description": "أرز متبل، شيش طاووق مشوي، صوص ثوم وكاجو", "description_en": "Seasoned rice, grilled shish tawook, garlic sauce", "price": 350, "calories": 680, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["eggs", "nuts"] },
+
+    { "id": 17, "category": "pasta", "name": "باستا ألفريدو", "name_en": "Alfredo Pasta", "description": "باستا، دجاج مشوي، فطر فريش، كريمة طبخ، جبنة بارميزان", "description_en": "Pasta, grilled chicken, fresh mushroom, cream, parmesan", "price": 460, "calories": 760, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy"] },
+    { "id": 18, "category": "pasta", "name": "بيني أرابياتا", "name_en": "Penne Arrabbiata", "description": "بيني باستا مع صوص الطماطم الحار والأعشاب الإيطالية", "description_en": "Penne pasta with spicy tomato sauce and Italian herbs", "price": 390, "calories": 580, "image": "", "available": true, "featured": false, "tags": ["spicy", "vegetarian"], "allergens": ["gluten"] },
+
+    { "id": 19, "category": "pizza", "name": "بيتزا مارغريتا", "name_en": "Margherita Pizza", "description": "عجينة طازجة، صوص طماطم إيطالي، جبنة موزاريلا، ريحان", "description_en": "Fresh dough, Italian tomato sauce, mozzarella, basil", "price": 420, "calories": 810, "image": "", "available": true, "featured": false, "tags": ["vegetarian"], "allergens": ["gluten", "dairy"] },
+    { "id": 20, "category": "pizza", "name": "بيتزا الفصول الأربعة", "name_en": "Four Seasons Pizza", "description": "موزاريلا، فطر، فليفلة، زيتون، ذرة، سلامي", "description_en": "Mozzarella, mushroom, peppers, olives, corn, salami", "price": 520, "calories": 940, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy"] },
+
+    { "id": 21, "category": "starters", "name": "بوم فريت (بطاطا مقلية)", "name_en": "Pommes Frites", "description": "بطاطا ذهبية مقرمشة مع الكاتشب والثوم", "description_en": "Golden crispy fries with ketchup & garlic", "price": 150, "calories": 310, "image": "", "available": true, "featured": false, "tags": ["vegetarian"], "allergens": [] },
+    { "id": 22, "category": "starters", "name": "أصابع الموزاريلا", "name_en": "Mozzarella Sticks", "description": "أصابع جبنة موزاريلا مقرمشة مع صوص كوكتيل", "description_en": "Crispy mozzarella sticks with cocktail sauce", "price": 280, "calories": 440, "image": "", "available": true, "featured": false, "tags": ["vegetarian"], "allergens": ["gluten", "dairy", "eggs"] },
+    { "id": 23, "category": "starters", "name": "جوانح بوفالو", "name_en": "Buffalo Wings", "description": "أجنحة دجاج مقرمشة مغطاة بصوص البوفالو الحار مع بطاطا", "description_en": "Crispy wings tossed in spicy buffalo sauce with fries", "price": 320, "calories": 490, "image": "", "available": true, "featured": true, "tags": ["spicy"], "allergens": ["soy", "sesame"] },
+
+    { "id": 24, "category": "salads", "name": "سيزر سالاد", "name_en": "Caesar Salad", "description": "خس مقرمش، دجاج مشوي، خبز محمص، جبنة بارميزان، صوص سيزر", "description_en": "Crisp lettuce, grilled chicken, croutons, parmesan, Caesar dressing", "price": 310, "calories": 380, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "eggs"] },
+    { "id": 25, "category": "salads", "name": "كول سلو", "name_en": "Coleslaw", "description": "ملفوف وجزر طازج بصوص الكريمة الخاص", "description_en": "Fresh cabbage & carrot in creamy dressing", "price": 120, "calories": 210, "image": "", "available": true, "featured": false, "tags": ["vegetarian"], "allergens": ["eggs", "dairy"] },
+
+    { "id": 26, "category": "healthy", "name": "دجاج مشوي صحي", "name_en": "Healthy Grilled Chicken", "description": "صدر دجاج مشوي على الفحم مع خضار سوتيه وأرز مسلوق", "description_en": "Charcoal grilled chicken breast with sautéed veggies & steamed rice", "price": 430, "calories": 410, "image": "", "available": true, "featured": true, "tags": [], "allergens": [] },
+
+    { "id": 27, "category": "sauces", "name": "صوص شيدر ساخن", "name_en": "Hot Cheddar Sauce", "description": "جبنة شيدر ذائبة وغنية", "description_en": "Rich melted cheddar cheese dip", "price": 50, "calories": 130, "image": "", "available": true, "featured": false, "tags": ["vegetarian"], "allergens": ["dairy"] },
+    { "id": 28, "category": "sauces", "name": "صوص تازة 041 الخاص", "name_en": "TAZA 041 Special Sauce", "description": "خلطة تازة السرية للبرغر والبطاطا", "description_en": "TAZA secret signature dip", "price": 45, "calories": 110, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["eggs"] },
+
+    { "id": 29, "category": "drinks", "name": "ليمون بالنعناع", "name_en": "Lemon Mint", "description": "عصير ليمون طازج مع نعناع وثلج", "description_en": "Fresh lemon juice with mint & ice", "price": 120, "calories": 110, "image": "", "available": true, "featured": false, "tags": ["vegetarian"], "allergens": [] },
+    { "id": 30, "category": "drinks", "name": "كولا باردة", "name_en": "Cold Cola", "description": "مشروب غازي بارد", "description_en": "Chilled soft drink", "price": 80, "calories": 140, "image": "", "available": true, "featured": false, "tags": [], "allergens": [] }
   ]
 }
