@@ -62,15 +62,25 @@
 
   // شعارات الأقسام المرسومة (SVG)
   const CAT_IMAGES = {
+    shawarma: "assets/images/game/shawarma.svg",
+    chicken_burgers: "assets/images/game/chicken-burger.svg",
+    beef_burgers: "assets/images/game/burger.svg",
+    sandwiches: "assets/images/game/sandwich.svg",
+    western: "assets/images/game/western.svg",
+    rizo: "assets/images/game/rizo.svg",
+    pasta: "assets/images/game/pasta.svg",
+    pizza: "assets/images/game/pizza.svg",
     starters: "assets/images/game/fries.svg",
-    burgers: "assets/images/game/burger.svg",
-    sandwiches: "assets/images/game/shawarma.svg",
+    salads: "assets/images/game/salad.svg",
+    healthy: "assets/images/game/healthy.svg",
+    sauces: "assets/images/game/sauce.svg",
     drinks: "assets/images/game/drink.svg",
   };
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  // إذا الصورة موجودة يعرضها، وإذا لسه ما رسمتها يعرض الإيموجي تلقائياً بدون خطأ!
   const catIconHtml = (c) =>
     CAT_IMAGES[c.id]
-      ? `<img class="cat-img" src="${CAT_IMAGES[c.id]}" alt="">`
+      ? `<img class="cat-img" src="${CAT_IMAGES[c.id]}" alt="" onerror="this.replaceWith(document.createTextNode('${esc(c.icon)}'))">`
       : esc(c.icon);
 
   const ALLERGENS = {
