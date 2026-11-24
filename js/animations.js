@@ -270,14 +270,42 @@ radial.addEventListener("click", (e) => {
     }
   }
 
-  async function initFooter() {
+ async function initFooter() {
     setupShareWidget();
+
+    // 1) قراءة سريعة من الكاش الحي إن وجد
     try {
-      const res = await fetch("data/menu.json?v=" + Date.now());
-      const json = await res.json();
-      restData = json.restaurant;
-      renderFooter();
+      const live = JSON.parse(localStorage.getItem("taza-menu-live") || "null");
+      if (live?.restaurant) {
+        restData = live.restaurant;
+        renderFooter();
+      }
+    } catch (_) {}
+
+    // 2) جلب أحدث نسخة من السحابة أو الملف الثابت
+    try {
+      if (window.TazaCloud?.fetchMenu) {
+        const cloudRes = await window.TazaCloud.fetchMenu();
+        if (cloudRes.exists && cloudRes.data?.restaurant) {
+          restData = cloudRes.data.restaurant;
+          renderFooter();
+        }
+      }
+      if (!restData) {
+        const res = await fetch("data/menu.json?v=" + Date.now());
+        const json = await res.json();
+        restData = json.restaurant;
+        renderFooter();
+      }
     } catch (e) {}
+
+    // 3) الاستماع لأي تحديث فوري قادم من Firebase
+    window.addEventListener("taza-cloud-menu", (e) => {
+      if (e.detail?.restaurant) {
+        restData = e.detail.restaurant;
+        renderFooter();
+      }
+    });
 
     new MutationObserver(() => renderFooter()).observe(html, {
       attributes: true,
