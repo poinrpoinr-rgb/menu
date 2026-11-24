@@ -1,91 +1,60 @@
-/* ========== لوحة إدارة TAZA 041 (Real-time Sync + Google Auth + الأطباق + الأقسام + التقييمات) ========== */
+/* ========== لوحة إدارة TAZA 041 (Firebase Firestore + رفع الصور بالسحب والإفلات + إظهار/إخفاء الأقسام) ========== */
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
-  const ADMIN_EMAIL = "mpoinr12@gmail.com";
   const STORAGE_KEY = "taza-menu-live";
   const FEEDBACK_KEY = "taza-feedbacks";
   const CYCLE_KEY = "taza-rev-cycle";
+  const ADMIN_PIN = "0410";
 
   const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : null;
   let menuData = null;
-
-  const setTabBtn = document.querySelector('.tab[data-tab="settings"]');
-  if (setTabBtn) setTabBtn.hidden = true;
-  const addCatBtn = $("#addCatBtn");
-if (addCatBtn) addCatBtn.hidden = true;
 
   function toast(msg) {
     const t = $("#adminToast");
     t.textContent = msg;
     t.classList.add("is-on");
     clearTimeout(t._tm);
-    t._tm = setTimeout(() => t.classList.remove("is-on"), 2400);
+    t._tm = setTimeout(() => t.classList.remove("is-on"), 2600);
   }
 
   function esc(v) {
     return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
-  /* ---------- شاشة القفل (تسجيل الدخول عبر Google) ---------- */
+  /* ---------- شاشة القفل (PIN: 0410) ---------- */
   const lockScreen = $("#lockScreen");
-  const authErr = $("#authErr");
-  const googleLoginBtn = $("#googleLoginBtn");
-  const logoutBtn = $("#logoutBtn");
+  if (sessionStorage.getItem("taza-admin-auth") === "1") lockScreen.hidden = true;
 
-  function handleAuthUser(user) {
-    if (!user) {
-      lockScreen.hidden = false;
-      if (logoutBtn) logoutBtn.hidden = true;
-      return;
-    }
-    if (ADMIN_EMAIL && user.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-      authErr.textContent = "عذراً، هذا الحساب غير مصرح له بدخول لوحة الإدارة.";
-      lockScreen.hidden = false;
-      if (logoutBtn) logoutBtn.hidden = true;
-      window.TazaCloud?.logout();
-      return;
-    }
-    authErr.textContent = "";
-    lockScreen.hidden = true;
-    if (logoutBtn) logoutBtn.hidden = false;
-    console.info("Admin UID:", user.uid);
-  }
-
-  window.addEventListener("taza-auth-change", (e) => handleAuthUser(e.detail));
-  if (window.TazaCloud?.currentUser) handleAuthUser(window.TazaCloud.currentUser);
-
-  googleLoginBtn?.addEventListener("click", async () => {
-    authErr.textContent = "";
-    if (!window.TazaCloud?.loginWithGoogle) {
-      authErr.textContent = "جاري الاتصال بـ Firebase، حاول بعد ثانية...";
-      return;
-    }
-    googleLoginBtn.disabled = true;
-    try {
-      await window.TazaCloud.loginWithGoogle();
-    } catch (err) {
-      authErr.textContent = "تعذّر تسجيل الدخول: " + (err?.code || err?.message || "حاول مجدداً");
-    } finally {
-      googleLoginBtn.disabled = false;
+  $("#lockForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if ($("#pinInput").value.trim() === ADMIN_PIN) {
+      sessionStorage.setItem("taza-admin-auth", "1");
+      lockScreen.hidden = true;
+    } else {
+      $("#pinErr").textContent = "الرمز غير صحيح! جرّب 0410";
+      $("#pinInput").value = "";
+      $("#pinInput").focus();
     }
   });
-
-  logoutBtn?.addEventListener("click", () => window.TazaCloud?.logout());
 
   $("#themeBtn").addEventListener("click", () => {
     const d = document.documentElement;
     d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
   });
 
-  /* ---------- حفظ وبث التعديلات فوراً لمنيو الزبون (Real-time Sync) ---------- */
-  function saveAndSync(msg = "تم الحفظ والمزامنة فوراً ⚡") {
+  /* ---------- حفظ وبث التعديلات فوراً (محلي + Firebase Firestore) ---------- */
+  async function saveAndSync(msg = "تم الحفظ والمزامنة سحابياً ⚡") {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(menuData));
       localStorage.setItem("taza-sync-ping", String(Date.now()));
     } catch (_) {}
-    window.TazaCloud?.saveMenu(menuData);
     if (bc) bc.postMessage({ type: "menu-updated" });
-    toast(msg);
+    if (window.TazaCloud?.saveMenu) {
+      const ok = await window.TazaCloud.saveMenu(menuData);
+      toast(ok ? msg : "حُفظ محلياً (تحقق من تفعيل Firestore)");
+    } else {
+      toast(msg);
+    }
   }
 
   function syncReviews(msg = "تم تحديث التقييمات ⚡") {
@@ -93,6 +62,20 @@ if (addCatBtn) addCatBtn.hidden = true;
     if (bc) bc.postMessage({ type: "reviews-updated" });
     toast(msg);
   }
+
+  /* ---------- زر سحب الأقسام والأطباق من data/menu.json ورفعها للـ Firebase ---------- */
+  $("#syncFromFileBtn")?.addEventListener("click", async () => {
+    if (!confirm("هل تريد تحميل جميع الأقسام والأطباق من ملف data/menu.json ورفعها للـ Firebase؟")) return;
+    try {
+      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error(res.status);
+      menuData = await res.json();
+      fillCatSelects(); renderItems(); renderCats();
+      await saveAndSync(`تم تحميل ${menuData.categories.length} قسم و ${menuData.items.length} طبق ومزامنتهم 🔥`);
+    } catch (err) {
+      toast("تعذّر قراءة data/menu.json! تأكد من تنسيق الملف");
+    }
+  });
 
   /* ---------- التبويبات ---------- */
   $("#adminTabs").addEventListener("click", (e) => {
@@ -108,7 +91,7 @@ if (addCatBtn) addCatBtn.hidden = true;
     const curFilter = $("#filterCat").value || "all";
     $("#filterCat").innerHTML = `<option value="all">كل الأقسام (${menuData.items.length})</option>` +
       menuData.categories.map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
-    $("#filterCat").value = curFilter;
+    $("#filterCat").value = menuData.categories.some((c) => c.id === curFilter) ? curFilter : "all";
 
     $("#itCat").innerHTML = menuData.categories
       .map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
@@ -124,6 +107,7 @@ if (addCatBtn) addCatBtn.hidden = true;
       const isAvail = it.available !== false;
       return `
         <article class="card${isAvail ? "" : " is-hidden"}">
+          ${it.image ? `<img class="card-thumb" src="${esc(it.image)}" alt="">` : ""}
           <div class="card-top">
             <h3 class="card-title">${esc(cat?.icon || "🍽️")} ${esc(it.name)}</h3>
             <span class="pill">${Number(it.price).toLocaleString("en-US")} ل.س</span>
@@ -181,6 +165,80 @@ if (addCatBtn) addCatBtn.hidden = true;
     }
   });
 
+  /* ---------- رفع الصور من المعرض أو بالسحب والإفلات + ضغط تلقائي ذكي ---------- */
+  const imgDropZone = $("#imgDropZone");
+  const imgFileInp = $("#itImgFile");
+  const imgPreview = $("#imgPreview");
+  const imgDropHint = $("#imgDropHint");
+  const imgRemoveBtn = $("#imgRemoveBtn");
+
+  function setImgPreview(src) {
+    $("#itImg").value = src || "";
+    if (src) {
+      imgPreview.src = src;
+      imgPreview.hidden = false;
+      imgDropHint.hidden = true;
+      imgRemoveBtn.hidden = false;
+    } else {
+      imgPreview.removeAttribute("src");
+      imgPreview.hidden = true;
+      imgDropHint.hidden = false;
+      imgRemoveBtn.hidden = true;
+      if (imgFileInp) imgFileInp.value = "";
+    }
+  }
+
+  function compressAndLoadImage(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      toast("الرجاء اختيار ملف صورة صالح 📸");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIM = 540;
+        let w = img.width, h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w >= h) { h = Math.round((h * MAX_DIM) / w); w = MAX_DIM; }
+          else { w = Math.round((w * MAX_DIM) / h); h = MAX_DIM; }
+        }
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        const dataUrl = c.toDataURL("image/webp", 0.78);
+        setImgPreview(dataUrl.startsWith("data:image/webp") ? dataUrl : c.toDataURL("image/jpeg", 0.78));
+        toast("تم تجهيز الصورة وضغطها بنجاح 📸✨");
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  if (imgDropZone && imgFileInp) {
+    imgDropZone.addEventListener("click", (e) => {
+      if (e.target.closest("#imgRemoveBtn")) return;
+      imgFileInp.click();
+    });
+    imgFileInp.addEventListener("change", () => {
+      if (imgFileInp.files[0]) compressAndLoadImage(imgFileInp.files[0]);
+    });
+    imgRemoveBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setImgPreview("");
+    });
+    ["dragenter", "dragover"].forEach((ev) =>
+      imgDropZone.addEventListener(ev, (e) => { e.preventDefault(); imgDropZone.classList.add("is-drag"); })
+    );
+    ["dragleave", "drop"].forEach((ev) =>
+      imgDropZone.addEventListener(ev, (e) => { e.preventDefault(); imgDropZone.classList.remove("is-drag"); })
+    );
+    imgDropZone.addEventListener("drop", (e) => {
+      const f = e.dataTransfer?.files?.[0];
+      if (f) compressAndLoadImage(f);
+    });
+  }
+
   /* ---------- نافذة إضافة / تعديل طبق ---------- */
   const itemDlg = $("#itemDlg");
   function openItemDialog(item = null) {
@@ -191,7 +249,7 @@ if (addCatBtn) addCatBtn.hidden = true;
     $("#itCat").value = item ? item.category : (menuData.categories[0]?.id || "");
     $("#itPrice").value = item ? item.price : "";
     $("#itCal").value = item ? (item.calories ?? 400) : 400;
-    $("#itImg").value = item ? (item.image || "") : "";
+    setImgPreview(item ? (item.image || "") : "");
     $("#itDescAr").value = item ? (item.description || "") : "";
     $("#itDescEn").value = item ? (item.description_en || "") : "";
     $("#itAvail").checked = item ? item.available !== false : true;
@@ -244,7 +302,7 @@ if (addCatBtn) addCatBtn.hidden = true;
     saveAndSync(idVal ? "تم تعديل الطبق ومزامنته ⚡" : "تمت إضافة الطبق الجديد ⚡");
   });
 
-  /* ---------- 2) عرض وإدارة الأقسام ---------- */
+  /* ---------- 2) الأقسام (إظهار وإخفاء فقط) ---------- */
   function renderCats() {
     $("#cntCats").textContent = menuData.categories.length;
     $("#catsGrid").innerHTML = menuData.categories.map((c) => {
@@ -256,12 +314,12 @@ if (addCatBtn) addCatBtn.hidden = true;
             <h3 class="card-title">${esc(c.icon)} ${esc(c.name)}</h3>
             <span class="pill">${count} أطباق</span>
           </div>
-          <p class="card-sub" dir="ltr">${esc(c.name_en)} • ID: ${esc(c.id)}</p>
+          <p class="card-sub" dir="ltr">${esc(c.name_en)}</p>
           <div class="card-foot">
             <label class="switch">
               <input type="checkbox" data-toggle-cat="${esc(c.id)}" ${isVis ? "checked" : ""}>
               <span class="switch-track"></span>
-              <span>${isVis ? "القسم ظاهر" : "القسم مخفي"}</span>
+              <span>${isVis ? "القسم ظاهر بالمنيو" : "القسم مخفي"}</span>
             </label>
           </div>
         </article>`;
@@ -278,60 +336,7 @@ if (addCatBtn) addCatBtn.hidden = true;
     saveAndSync(cat.visible ? `تم إظهار قسم "${cat.name}" ✅` : `تم إخفاء قسم "${cat.name}" 👁️‍🗨️`);
   });
 
-  const catDlg = $("#catDlg");
-  function openCatDialog(cat = null) {
-    $("#catDlgTitle").textContent = cat ? "تعديل القسم" : "إضافة قسم جديد";
-    $("#catOrigId").value = cat ? cat.id : "";
-    $("#catNameAr").value = cat ? cat.name : "";
-    $("#catNameEn").value = cat ? (cat.name_en || "") : "";
-    $("#catId").value = cat ? cat.id : "";
-    $("#catId").readOnly = !!cat;
-    $("#catIcon").value = cat ? (cat.icon || "🍽️") : "🍽️";
-    $("#catVisible").checked = cat ? cat.visible !== false : true;
-    catDlg.hidden = false;
-  }
-
-  $("#catsGrid").addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-edit-cat]");
-    if (!btn) return;
-    const cat = menuData.categories.find((c) => c.id === btn.dataset.editCat);
-    if (cat) openCatDialog(cat);
-  });
-
-  $("#addCatBtn").addEventListener("click", () => openCatDialog(null));
-  $("#closeCatDlg").addEventListener("click", () => (catDlg.hidden = true));
-  $("#cancelCatDlg").addEventListener("click", () => (catDlg.hidden = true));
-
-  $("#catForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const orig = $("#catOrigId").value;
-    const cleanId = $("#catId").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
-    if (!cleanId) return;
-
-    const payload = {
-      id: orig || cleanId,
-      name: $("#catNameAr").value.trim(),
-      name_en: $("#catNameEn").value.trim(),
-      icon: $("#catIcon").value.trim() || "🍽️",
-      visible: $("#catVisible").checked,
-    };
-
-    if (orig) {
-      const idx = menuData.categories.findIndex((c) => c.id === orig);
-      if (idx >= 0) menuData.categories[idx] = payload;
-    } else {
-      if (menuData.categories.some((c) => c.id === payload.id)) {
-        toast("هذا المعرّف (ID) مستخدم مسبقاً!"); return;
-      }
-      menuData.categories.push(payload);
-    }
-
-    catDlg.hidden = true;
-    fillCatSelects(); renderCats(); renderItems();
-    saveAndSync(orig ? "تم تعديل القسم ⚡" : "تمت إضافة القسم الجديد ⚡");
-  });
-
-  /* ---------- 3) إدارة تقييمات الزبائن ---------- */
+  /* ---------- 3) تقييمات الزبائن ---------- */
   const revCycleSel = $("#revCycle");
   revCycleSel.value = localStorage.getItem(CYCLE_KEY) || "forever";
   revCycleSel.addEventListener("change", () => {
@@ -349,13 +354,13 @@ if (addCatBtn) addCatBtn.hidden = true;
     const list = getReviews();
     $("#cntRevs").textContent = list.length;
     if (!list.length) {
-      $("#revsGrid").innerHTML = `<p class="card-sub">لا توجد تقييمات مرسلة من الزبائن بعد. جرّب إرسال تقييم من صفحة المنيو!</p>`;
+      $("#revsGrid").innerHTML = `<p class="card-sub">لا توجد تقييمات مرسلة من الزبائن بعد.</p>`;
       return;
     }
     $("#revsGrid").innerHTML = list.map((r) => {
       const approved = r.status === "approved";
       const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
-      const dt = new Date(r.createdAt || r.date || Date.now()).toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" });
+      const dt = new Date(r.createdAt || r.createdAtMs || Date.now()).toLocaleString("ar-EG", { dateStyle: "short", timeStyle: "short" });
       return `
         <article class="card${approved ? "" : " is-hidden"}">
           <div class="card-top">
@@ -381,9 +386,9 @@ if (addCatBtn) addCatBtn.hidden = true;
   $("#revsGrid").addEventListener("click", (e) => {
     const appBtn = e.target.closest("[data-approve-rev]");
     if (appBtn) {
-      const idStr = String(appBtn.dataset.approveRev);
+      const id = String(appBtn.dataset.approveRev);
       const list = getReviews();
-      const rev = list.find((x) => String(x.id) === idStr);
+      const rev = list.find((x) => String(x.id) === id);
       if (rev) {
         rev.status = rev.status === "approved" ? "pending" : "approved";
         localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
@@ -395,17 +400,16 @@ if (addCatBtn) addCatBtn.hidden = true;
     }
     const delBtn = e.target.closest("[data-del-rev]");
     if (delBtn) {
-      const idStr = String(delBtn.dataset.delRev);
-      const target = getReviews().find((x) => String(x.id) === idStr);
+      const id = String(delBtn.dataset.delRev);
+      const list = getReviews();
+      const target = list.find((x) => String(x.id) === id);
       if (target?.docId) window.TazaCloud?.deleteReview(target.docId);
-      const list = getReviews().filter((x) => String(x.id) !== idStr);
-      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list));
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list.filter((x) => String(x.id) !== id)));
       renderReviews();
       syncReviews("تم حذف التقييم 🗑️");
     }
   });
 
-  /* ---------- تصدير ملف menu.json الجاهز للرفع ---------- */
   $("#exportBtn").addEventListener("click", () => {
     const blob = new Blob([JSON.stringify(menuData, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -416,7 +420,19 @@ if (addCatBtn) addCatBtn.hidden = true;
     toast("تم تنزيل menu.json المحدّث 💾");
   });
 
-  /* ---------- تشغيل لوحة الإدارة ---------- */
+  window.addEventListener("taza-cloud-menu", (e) => {
+    if (!e.detail) return;
+    menuData = e.detail;
+    fillCatSelects(); renderItems(); renderCats();
+  });
+  window.addEventListener("taza-cloud-reviews", () => {
+    revCycleSel.value = localStorage.getItem(CYCLE_KEY) || "forever";
+    renderReviews();
+  });
+  window.addEventListener("storage", (e) => {
+    if (e.key === FEEDBACK_KEY) renderReviews();
+  });
+
   async function boot() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -436,17 +452,6 @@ if (addCatBtn) addCatBtn.hidden = true;
     renderCats();
     renderReviews();
   }
-
-  window.addEventListener("storage", (e) => {
-    if (e.key === FEEDBACK_KEY) renderReviews();
-  });
-
-  window.addEventListener("taza-cloud-reviews", () => renderReviews());
-  window.addEventListener("taza-cloud-menu", (e) => {
-    if (!e.detail) return;
-    menuData = e.detail;
-    fillCatSelects(); renderItems(); renderCats();
-  });
 
   boot();
 })();
