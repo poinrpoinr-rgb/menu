@@ -84,4 +84,11 @@ const Loader = (() => {
   return { start };
 })();
 
-Loader.start();
+if (sessionStorage.getItem("taza-seen-intro")) {
+  const el = document.getElementById("loader");
+  if (el) el.remove();
+  document.body.classList.replace("is-loading", "is-ready");
+} else {
+  sessionStorage.setItem("taza-seen-intro", "1");
+  Loader.start();
+}
