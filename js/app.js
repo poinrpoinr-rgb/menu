@@ -1,7 +1,7 @@
-/* ========== شاشة التحميل السريعة ========== */
+/* ========== شاشة التحميل السريعة + تسجيل PWA (TAZA 041) ========== */
 const Loader = (() => {
-  const MIN_DURATION = 950;   // مدة أنيميشن الغطاء
-  const MAX_WAIT = 2200;      // أقصى انتظار مهما كان النت بطيئاً!
+  const MIN_DURATION = 950;
+  const MAX_WAIT = 2000;
   const ZOOM_DURATION = 650;
   const OPEN_AT = 0.65;
 
@@ -17,23 +17,33 @@ const Loader = (() => {
   let finished = false;
 
   function setProgress(p) {
-    fill.style.transform = `scaleX(${p / 100})`;
-    percent.textContent = `${Math.round(p)}%`;
+    if (fill) fill.style.transform = `scaleX(${p / 100})`;
+    if (percent) percent.textContent = `${Math.round(p)}%`;
+  }
+
+  function openSite() {
+    if (el) {
+      el.classList.add("done");
+      el.addEventListener("transitionend", (e) => e.target === el && el.remove(), { once: false });
+      setTimeout(() => el.isConnected && el.remove(), 1200);
+    }
+    document.body.classList.remove("is-loading");
+    document.body.classList.add("is-ready");
   }
 
   function zoomIntoPlate() {
+    if (!el) return openSite();
     const svg = el.querySelector(".cloche");
     const plate = document.getElementById("plate");
+    if (!svg || !plate) return openSite();
+
     const s = svg.getBoundingClientRect();
     const p = plate.getBoundingClientRect();
-
     const cx = p.left + p.width / 2;
     const cy = p.top + p.height / 2;
-
     const a = (p.width / 2) * 0.9;
     const b = (p.height / 2) * 0.9;
-    const k =
-      Math.sqrt(Math.pow(innerWidth / 2 / a, 2) + Math.pow(innerHeight / 2 / b, 2)) * 1.25;
+    const k = Math.sqrt(Math.pow(innerWidth / 2 / a, 2) + Math.pow(innerHeight / 2 / b, 2)) * 1.25;
 
     svg.style.transformOrigin = `${cx - s.left}px ${cy - s.top}px`;
     svg.animate(
@@ -45,27 +55,20 @@ const Loader = (() => {
     );
   }
 
-  function openSite() {
-    el.classList.add("done");
-    document.body.classList.replace("is-loading", "is-ready");
-    el.addEventListener("transitionend", (e) => e.target === el && el.remove(), { once: false });
-    setTimeout(() => el.isConnected && el.remove(), 1200);
-  }
-
   function finish() {
     if (finished) return;
     finished = true;
     setProgress(100);
     setTimeout(() => {
-      el.classList.add("leaving");
+      if (el) el.classList.add("leaving");
       zoomIntoPlate();
       setTimeout(openSite, ZOOM_DURATION * OPEN_AT);
     }, 120);
   }
 
   function start() {
+    if (!el) return openSite();
     const t0 = performance.now();
-    // صمام أمان: لو النت علق لأي سبب، يفتح الموقع غصباً عنه بعد MAX_WAIT
     setTimeout(finish, MAX_WAIT);
 
     function tick(now) {
@@ -84,12 +87,17 @@ const Loader = (() => {
   return { start };
 })();
 
-if (sessionStorage.getItem("taza-seen-intro")) {
-  const el = document.getElementById("loader");
-  if (el) el.remove();
-  document.body.classList.replace("is-loading", "is-ready");
-} else {
-  sessionStorage.setItem("taza-seen-intro", "1");
+try {
+  if (sessionStorage.getItem("taza-seen-intro")) {
+    const el = document.getElementById("loader");
+    if (el) el.remove();
+    document.body.classList.remove("is-loading");
+    document.body.classList.add("is-ready");
+  } else {
+    sessionStorage.setItem("taza-seen-intro", "1");
+    Loader.start();
+  }
+} catch (_) {
   Loader.start();
 }
 
@@ -97,7 +105,4 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
-}
-  sessionStorage.setItem("taza-seen-intro", "1");
-  Loader.start();
 }
