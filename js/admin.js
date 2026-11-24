@@ -11,6 +11,8 @@
 
   const setTabBtn = document.querySelector('.tab[data-tab="settings"]');
   if (setTabBtn) setTabBtn.hidden = true;
+  const addCatBtn = $("#addCatBtn");
+if (addCatBtn) addCatBtn.hidden = true;
 
   function toast(msg) {
     const t = $("#adminToast");
@@ -261,7 +263,6 @@
               <span class="switch-track"></span>
               <span>${isVis ? "القسم ظاهر" : "القسم مخفي"}</span>
             </label>
-            <button class="btn btn--sm" type="button" data-edit-cat="${esc(c.id)}">✏️ تعديل</button>
           </div>
         </article>`;
     }).join("");
