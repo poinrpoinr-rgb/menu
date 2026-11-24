@@ -1,4 +1,4 @@
-/* ========== لوحة إدارة TAZA 041 (Firebase Auth + Firestore + Storage) ========== */
+/* ========== لوحة إدارة TAZA 041 (Firebase Auth + Firestore مقسّم) ========== */
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const STORAGE_KEY = "taza-menu-live";
@@ -7,8 +7,6 @@
 
   const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : null;
   let menuData = null;
-  let isUploadingImg = false;
-  let tempPreviewUrl = "";
 
   function toast(msg) {
     const t = $("#adminToast");
@@ -23,9 +21,9 @@
   }
 
   /* ---------- تسجيل الدخول بحساب Google (مغلق افتراضياً) ---------- */
-  // ضع إيميلك وإيميل صاحب المطعم هنا فقط (يجب أن تطابق الإيميلات في قواعد Firebase)
   const ALLOWED_ADMINS = [
-    "mpoinr12@gmail.com"
+    "mpoinr12@gmail.com",
+    // "owner@gmail.com",
   ];
 
   const lockScreen = $("#lockScreen");
@@ -71,25 +69,12 @@
     toast("تم تسجيل الخروج 👋");
   });
 
-  /* ---------- حفظ وبث التعديلات فوراً (محلي + Firebase Firestore) ---------- */
-  async function saveAndSync(msg = "تم الحفظ والمزامنة سحابياً ⚡") {
+  function syncLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(menuData));
       localStorage.setItem("taza-sync-ping", String(Date.now()));
     } catch (_) {}
     if (bc) bc.postMessage({ type: "menu-updated" });
-    if (window.TazaCloud?.saveMenu) {
-      const ok = await window.TazaCloud.saveMenu(menuData);
-      toast(ok ? msg : "فشل الحفظ السحابي! تحقق من صلاحيات الحساب وقواعد Firestore");
-    } else {
-      toast(msg);
-    }
-  }
-
-  function syncReviews(msg = "تم تحديث التقييمات ⚡") {
-    localStorage.setItem("taza-sync-ping", String(Date.now()));
-    if (bc) bc.postMessage({ type: "reviews-updated" });
-    toast(msg);
   }
 
   /* ---------- زر سحب الأقسام والأطباق من data/menu.json ورفعها للـ Firebase ---------- */
@@ -100,7 +85,11 @@
       if (!res.ok) throw new Error(res.status);
       menuData = await res.json();
       fillCatSelects(); renderItems(); renderCats();
-      await saveAndSync(`تم تحميل ${menuData.categories.length} قسم و ${menuData.items.length} طبق ومزامنتهم 🔥`);
+      syncLocal();
+      const ok = await window.TazaCloud?.syncAllMenu(menuData);
+      toast(ok
+        ? `تم رفع ${menuData.categories.length} قسم و ${menuData.items.length} طبق بنجاح 🔥`
+        : "فشل الرفع السحابي! تحقق من قواعد Firestore");
     } catch (err) {
       toast("تعذّر قراءة data/menu.json! تأكد من تنسيق الملف");
     }
@@ -165,17 +154,21 @@
 
   $("#filterCat").addEventListener("change", renderItems);
 
-  $("#itemsGrid").addEventListener("change", (e) => {
+  $("#itemsGrid").addEventListener("change", async (e) => {
     const inp = e.target.closest("input[data-toggle-item]");
     if (!inp) return;
     const item = menuData.items.find((x) => x.id === Number(inp.dataset.toggleItem));
     if (!item) return;
     item.available = inp.checked;
     renderItems();
-    saveAndSync(item.available ? `تم إظهار "${item.name}" ✅` : `تم إخفاء "${item.name}" 👁️‍🗨️`);
+    syncLocal();
+    const ok = await window.TazaCloud?.saveItem(item);
+    toast(ok
+      ? (item.available ? `تم إظهار "${item.name}" ✅` : `تم إخفاء "${item.name}" 👁️‍🗨️`)
+      : "فشل الحفظ السحابي!");
   });
 
-  $("#itemsGrid").addEventListener("click", (e) => {
+  $("#itemsGrid").addEventListener("click", async (e) => {
     const editBtn = e.target.closest("[data-edit-item]");
     if (editBtn) {
       const item = menuData.items.find((x) => x.id === Number(editBtn.dataset.editItem));
@@ -189,35 +182,28 @@
       if (item && confirm(`هل تريد حذف "${item.name}" نهائياً؟`)) {
         menuData.items = menuData.items.filter((x) => x.id !== id);
         fillCatSelects(); renderItems();
-        saveAndSync("تم حذف الطبق 🗑️");
+        syncLocal();
+        const ok = await window.TazaCloud?.deleteItem(id);
+        toast(ok ? "تم حذف الطبق سحابياً 🗑️" : "فشل الحذف من السحابة!");
       }
     }
   });
 
-  /* ---------- ضغط الصور ورفعها مباشرة إلى Firebase Storage ---------- */
+  /* ---------- ضغط الصور الذكي (حجم خفيف جداً ~35KB لكل طبق) ---------- */
   const imgDropZone = $("#imgDropZone");
   const imgFileInp = $("#itImgFile");
   const imgPreview = $("#imgPreview");
   const imgDropHint = $("#imgDropHint");
   const imgRemoveBtn = $("#imgRemoveBtn");
-  const saveItemBtn = $("#itemForm button[type='submit']");
 
-  function clearTempPreview() {
-    if (tempPreviewUrl) {
-      URL.revokeObjectURL(tempPreviewUrl);
-      tempPreviewUrl = "";
-    }
-  }
-
-  function setImgPreview(src, storedUrl = src) {
-    $("#itImg").value = storedUrl || "";
+  function setImgPreview(src) {
+    $("#itImg").value = src || "";
     if (src) {
       imgPreview.src = src;
       imgPreview.hidden = false;
       imgDropHint.hidden = true;
       imgRemoveBtn.hidden = false;
     } else {
-      clearTempPreview();
       imgPreview.removeAttribute("src");
       imgPreview.hidden = true;
       imgDropHint.hidden = false;
@@ -226,28 +212,16 @@
     }
   }
 
-  function setUploadBusy(busy) {
-    isUploadingImg = busy;
-    if (!saveItemBtn) return;
-    saveItemBtn.disabled = busy;
-    saveItemBtn.textContent = busy ? "⏳ جاري رفع الصورة..." : "💾 حفظ الطبق";
-  }
-
-  function compressAndUploadImage(file) {
+  function compressAndLoadImage(file) {
     if (!file || !file.type.startsWith("image/")) {
       toast("الرجاء اختيار ملف صورة صالح 📸");
       return;
     }
-    if (!window.TazaCloud?.uploadDishImage) {
-      toast("Firebase Storage غير جاهز بعد، حاول بعد لحظة");
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
-      img.onload = async () => {
-        const MAX_DIM = 720;
+      img.onload = () => {
+        const MAX_DIM = 520;
         let w = img.width, h = img.height;
         if (w > MAX_DIM || h > MAX_DIM) {
           if (w >= h) { h = Math.round((h * MAX_DIM) / w); w = MAX_DIM; }
@@ -256,38 +230,10 @@
         const c = document.createElement("canvas");
         c.width = w; c.height = h;
         c.getContext("2d").drawImage(img, 0, 0, w, h);
-
-        const toBlobAsync = (type, q) => new Promise((res) => c.toBlob(res, type, q));
-        let blob = await toBlobAsync("image/webp", 0.8);
-        let ext = "webp";
-        if (!blob || blob.type !== "image/webp") {
-          blob = await toBlobAsync("image/jpeg", 0.82);
-          ext = "jpg";
-        }
-        if (!blob) {
-          toast("تعذّر معالجة الصورة!");
-          return;
-        }
-
-        // معاينة فورية أثناء الرفع السحابي
-        clearTempPreview();
-        tempPreviewUrl = URL.createObjectURL(blob);
-        setImgPreview(tempPreviewUrl, $("#itImg").value);
-        setUploadBusy(true);
-        toast("جاري رفع الصورة للسحابة... ☁️");
-
-        try {
-          const downloadUrl = await window.TazaCloud.uploadDishImage(blob, ext);
-          setImgPreview(downloadUrl, downloadUrl);
-          clearTempPreview();
-          toast("تم رفع الصورة وحفظ رابطها بنجاح ☁️✨");
-        } catch (err) {
-          console.error("Storage upload error:", err);
-          setImgPreview("");
-          toast("فشل رفع الصورة! تأكد من تفعيل Firebase Storage وقواعد الحماية");
-        } finally {
-          setUploadBusy(false);
-        }
+        const webpUrl = c.toDataURL("image/webp", 0.72);
+        const finalUrl = webpUrl.startsWith("data:image/webp") ? webpUrl : c.toDataURL("image/jpeg", 0.72);
+        setImgPreview(finalUrl);
+        toast("تم ضغط وتجهيز الصورة بنجاح 📸✨");
       };
       img.src = reader.result;
     };
@@ -296,15 +242,15 @@
 
   if (imgDropZone && imgFileInp) {
     imgDropZone.addEventListener("click", (e) => {
-      if (e.target.closest("#imgRemoveBtn") || isUploadingImg) return;
+      if (e.target.closest("#imgRemoveBtn")) return;
       imgFileInp.click();
     });
     imgFileInp.addEventListener("change", () => {
-      if (imgFileInp.files[0]) compressAndUploadImage(imgFileInp.files[0]);
+      if (imgFileInp.files[0]) compressAndLoadImage(imgFileInp.files[0]);
     });
     imgRemoveBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (!isUploadingImg) setImgPreview("");
+      setImgPreview("");
     });
     ["dragenter", "dragover"].forEach((ev) =>
       imgDropZone.addEventListener(ev, (e) => { e.preventDefault(); imgDropZone.classList.add("is-drag"); })
@@ -314,14 +260,13 @@
     );
     imgDropZone.addEventListener("drop", (e) => {
       const f = e.dataTransfer?.files?.[0];
-      if (f && !isUploadingImg) compressAndUploadImage(f);
+      if (f) compressAndLoadImage(f);
     });
   }
 
   /* ---------- نافذة إضافة / تعديل طبق ---------- */
   const itemDlg = $("#itemDlg");
   function openItemDialog(item = null) {
-    setUploadBusy(false);
     $("#itemDlgTitle").textContent = item ? "تعديل الطبق" : "إضافة طبق جديد";
     $("#itId").value = item ? item.id : "";
     $("#itNameAr").value = item ? item.name : "";
@@ -343,15 +288,11 @@
   }
 
   $("#addItemBtn").addEventListener("click", () => openItemDialog(null));
-  $("#closeItemDlg").addEventListener("click", () => { if (!isUploadingImg) itemDlg.hidden = true; });
-  $("#cancelItemDlg").addEventListener("click", () => { if (!isUploadingImg) itemDlg.hidden = true; });
+  $("#closeItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
+  $("#cancelItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
 
-  $("#itemForm").addEventListener("submit", (e) => {
+  $("#itemForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (isUploadingImg) {
-      toast("انتظر انتهاء رفع الصورة أولاً ⏳");
-      return;
-    }
     const idVal = $("#itId").value;
     const tags = [];
     if ($("#itSpicy").checked) tags.push("spicy");
@@ -383,7 +324,11 @@
 
     itemDlg.hidden = true;
     fillCatSelects(); renderItems();
-    saveAndSync(idVal ? "تم تعديل الطبق ومزامنته ⚡" : "تمت إضافة الطبق الجديد ⚡");
+    syncLocal();
+    const ok = await window.TazaCloud?.saveItem(payload);
+    toast(ok
+      ? (idVal ? "تم تعديل الطبق ومزامنته ⚡" : "تمت إضافة الطبق الجديد ⚡")
+      : "فشل الحفظ السحابي! تحقق من قواعد Firestore");
   });
 
   /* ---------- 2) الأقسام (إظهار وإخفاء فقط) ---------- */
@@ -410,14 +355,18 @@
     }).join("");
   }
 
-  $("#catsGrid").addEventListener("change", (e) => {
+  $("#catsGrid").addEventListener("change", async (e) => {
     const inp = e.target.closest("input[data-toggle-cat]");
     if (!inp) return;
     const cat = menuData.categories.find((c) => c.id === inp.dataset.toggleCat);
     if (!cat) return;
     cat.visible = inp.checked;
     renderCats();
-    saveAndSync(cat.visible ? `تم إظهار قسم "${cat.name}" ✅` : `تم إخفاء قسم "${cat.name}" 👁️‍🗨️`);
+    syncLocal();
+    const ok = await window.TazaCloud?.saveCategory(cat);
+    toast(ok
+      ? (cat.visible ? `تم إظهار قسم "${cat.name}" ✅` : `تم إخفاء قسم "${cat.name}" 👁️‍🗨️`)
+      : "فشل الحفظ السحابي!");
   });
 
   /* ---------- 3) تقييمات الزبائن ---------- */
