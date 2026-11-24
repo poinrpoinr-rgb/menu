@@ -1,24 +1,26 @@
-/* ========== شاشة التحميل ========== */
+/* ========== شاشة التحميل السريعة ========== */
 const Loader = (() => {
-  const MIN_DURATION = 1300; // أقل مدة للتحميل (مللي ثانية)، لازم تطابق مدة أنيميشن الغطاء في CSS
-  const ZOOM_DURATION = 900; // مدة الزوم داخل الصحن
-  const OPEN_AT = 0.7;       // نسبة الزوم الي بعدها يبدأ الموقع يظهر
+  const MIN_DURATION = 950;   // مدة أنيميشن الغطاء
+  const MAX_WAIT = 2200;      // أقصى انتظار مهما كان النت بطيئاً!
+  const ZOOM_DURATION = 650;
+  const OPEN_AT = 0.65;
 
   const el = document.getElementById("loader");
   const fill = document.getElementById("loaderFill");
   const percent = document.getElementById("loaderPercent");
 
-  let pageLoaded = document.readyState === "complete";
+  let pageLoaded = document.readyState !== "loading";
+  document.addEventListener("DOMContentLoaded", () => (pageLoaded = true));
   window.addEventListener("load", () => (pageLoaded = true));
 
   const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+  let finished = false;
 
   function setProgress(p) {
     fill.style.transform = `scaleX(${p / 100})`;
     percent.textContent = `${Math.round(p)}%`;
   }
 
-  // الزوم: الصحن يكبر لين يملا الشاشة
   function zoomIntoPlate() {
     const svg = el.querySelector(".cloche");
     const plate = document.getElementById("plate");
@@ -28,7 +30,6 @@ const Loader = (() => {
     const cx = p.left + p.width / 2;
     const cy = p.top + p.height / 2;
 
-    // نحسب أقل تكبير يخلي بيضاوي الصحن يغطي الشاشة كلها (مع هامش أمان)
     const a = (p.width / 2) * 0.9;
     const b = (p.height / 2) * 0.9;
     const k =
@@ -38,9 +39,7 @@ const Loader = (() => {
     svg.animate(
       [
         { transform: "translate(0, 0) scale(1)" },
-        {
-          transform: `translate(${innerWidth / 2 - cx}px, ${innerHeight / 2 - cy}px) scale(${k})`,
-        },
+        { transform: `translate(${innerWidth / 2 - cx}px, ${innerHeight / 2 - cy}px) scale(${k})` },
       ],
       { duration: ZOOM_DURATION, easing: "cubic-bezier(0.65, 0, 0.35, 1)", fill: "forwards" }
     );
@@ -49,28 +48,31 @@ const Loader = (() => {
   function openSite() {
     el.classList.add("done");
     document.body.classList.replace("is-loading", "is-ready");
-    el.addEventListener(
-      "transitionend",
-      (e) => e.target === el && el.remove(),
-      { once: false }
-    );
-    setTimeout(() => el.isConnected && el.remove(), 1500); // احتياط
+    el.addEventListener("transitionend", (e) => e.target === el && el.remove(), { once: false });
+    setTimeout(() => el.isConnected && el.remove(), 1200);
   }
 
   function finish() {
+    if (finished) return;
+    finished = true;
+    setProgress(100);
     setTimeout(() => {
-      el.classList.add("leaving"); // الاسم والشريط يختفون
+      el.classList.add("leaving");
       zoomIntoPlate();
       setTimeout(openSite, ZOOM_DURATION * OPEN_AT);
-    }, 200);
+    }, 120);
   }
 
   function start() {
     const t0 = performance.now();
+    // صمام أمان: لو النت علق لأي سبب، يفتح الموقع غصباً عنه بعد MAX_WAIT
+    setTimeout(finish, MAX_WAIT);
 
     function tick(now) {
-      let p = easeOut(Math.min((now - t0) / MIN_DURATION, 1)) * 100;
-      if (!pageLoaded) p = Math.min(p, 90); // ما نوصل 100% إلا بعد تحميل الصفحة فعلياً
+      if (finished) return;
+      const elapsed = now - t0;
+      let p = easeOut(Math.min(elapsed / MIN_DURATION, 1)) * 100;
+      if (!pageLoaded && elapsed < MAX_WAIT) p = Math.min(p, 92);
       setProgress(p);
 
       if (p >= 100) return finish();
