@@ -459,12 +459,14 @@
         let ate = false;
         const hx = head.x * CELL + CELL / 2, hy = head.y * CELL + CELL / 2;
         if (S.food && head.x === S.food.x && head.y === S.food.y) {
-          S.score += 10; ate = true; beep(680, 0.06);
+          const prevBucket = Math.floor(S.score / 50);
+          const pts = S.food.snakePts || 10;
+          S.score += pts; ate = true; beep(680, 0.06);
           spawnParticles(hx, hy, "#ffbd3f", 12);
-          spawnFloatText(hx, hy - 8, "+10");
+          spawnFloatText(hx, hy - 8, `+${pts}`);
           const pick = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
           S.food = { ...snakeFreeCell(), ...pick };
-          if (!S.bonus && S.score > 0 && S.score % 50 === 0) { S.bonus = { ...snakeFreeCell(), emoji: "🌶️" }; S.bonusTimer = 42; }
+          if (!S.bonus && Math.floor(S.score / 50) > prevBucket) { S.bonus = { ...snakeFreeCell(), emoji: "🌶️" }; S.bonusTimer = 42; }
         } else if (S.bonus && head.x === S.bonus.x && head.y === S.bonus.y) {
           S.score += 30; ate = true; S.bonus = null; beep(880, 0.11); triggerShake();
           spawnParticles(hx, hy, "#ff4500", 18);
