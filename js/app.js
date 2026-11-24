@@ -89,6 +89,12 @@ if (sessionStorage.getItem("taza-seen-intro")) {
   if (el) el.remove();
   document.body.classList.replace("is-loading", "is-ready");
 } else {
+
+  if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
   sessionStorage.setItem("taza-seen-intro", "1");
   Loader.start();
 }
