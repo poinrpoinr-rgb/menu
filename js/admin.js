@@ -21,25 +21,52 @@
     return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
-  /* ---------- شاشة القفل (PIN: 0410) ---------- */
-  const lockScreen = $("#lockScreen");
-  if (sessionStorage.getItem("taza-admin-auth") === "1") lockScreen.hidden = true;
+  /* ---------- تسجيل الدخول بحساب Google (Firebase Auth) ---------- */
+  // ⚠️ حط إيميلك وإيميل صاحب المطعم هنا عشان ما يقدر أي أحد غريب يدخل! (لو خليتها فاضية [] يسمح لأي حساب Google للتجربة)
+  const ALLOWED_ADMINS = [
+    // "mpoinr12@gmail.com",
+  ];
 
-  $("#lockForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    if ($("#pinInput").value.trim() === ADMIN_PIN) {
-      sessionStorage.setItem("taza-admin-auth", "1");
-      lockScreen.hidden = true;
-    } else {
-      $("#pinErr").textContent = "الرمز غير صحيح! جرّب 0410";
-      $("#pinInput").value = "";
-      $("#pinInput").focus();
+  const lockScreen = $("#lockScreen");
+  const pinErr = $("#pinErr");
+
+  function handleAuthUser(user) {
+    if (!user) {
+      lockScreen.hidden = false;
+      return;
+    }
+    const email = (user.email || "").toLowerCase();
+    if (ALLOWED_ADMINS.length > 0 && !ALLOWED_ADMINS.map((e) => e.toLowerCase()).includes(email)) {
+      pinErr.textContent = `الحساب (${email}) غير مصرح له بالدخول!`;
+      window.TazaCloud?.logout();
+      lockScreen.hidden = false;
+      return;
+    }
+    pinErr.textContent = "";
+    lockScreen.hidden = true;
+    toast(`أهلاً بك يا ${user.displayName || email} 👋`);
+  }
+
+  window.addEventListener("taza-auth-change", (e) => handleAuthUser(e.detail));
+  if (window.TazaCloud?.currentUser) handleAuthUser(window.TazaCloud.currentUser);
+
+  $("#googleLoginBtn")?.addEventListener("click", async () => {
+    pinErr.textContent = "";
+    try {
+      if (!window.TazaCloud?.loginWithGoogle) {
+        pinErr.textContent = "جاري تحميل Firebase... حاول بعد ثانية";
+        return;
+      }
+      await window.TazaCloud.loginWithGoogle();
+    } catch (err) {
+      pinErr.textContent = "تعذّر تسجيل الدخول: " + (err.code || err.message);
     }
   });
 
-  $("#themeBtn").addEventListener("click", () => {
-    const d = document.documentElement;
-    d.dataset.theme = d.dataset.theme === "dark" ? "light" : "dark";
+  $("#logoutBtn")?.addEventListener("click", async () => {
+    await window.TazaCloud?.logout();
+    lockScreen.hidden = false;
+    toast("تم تسجيل الخروج 👋");
   });
 
   /* ---------- حفظ وبث التعديلات فوراً (محلي + Firebase Firestore) ---------- */
