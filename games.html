@@ -638,7 +638,7 @@
             // تحريك الوجبات الطائرة وفحص الأكل (العصفور يفتح فمه لما يقرب ويفرح لما ياكل!)
            for (let i = F.snacks.length - 1; i >= 0; i--) {
               const sn = F.snacks[i];
-              sn.x -= F.pipeSpeed * 0.65 * dtNorm;
+              sn.x -= F.pipeSpeed * dtNorm;
               const dist = Math.hypot(sn.x - birdX, sn.y - F.y);
               if (dist < 85 && sn.x > birdX - 10) nearSnack = true;
               if (dist < 30) {
