@@ -45,7 +45,6 @@
     { "id": "beef_burgers", "name": "برغر اللحم", "name_en": "Beef Burgers", "icon": "🍔", "visible": true },
     { "id": "sandwiches", "name": "السندويش", "name_en": "Sandwiches", "icon": "🥖", "visible": true },
     { "id": "western", "name": "القسم الغربي", "name_en": "Western Meals", "icon": "🍽️", "visible": true },
-    { "id": "rizo", "name": "قسم الريزو", "name_en": "Rizo", "icon": "🍚", "visible": true },
     { "id": "pasta", "name": "الباستا", "name_en": "Pasta", "icon": "🍝", "visible": true },
     { "id": "pizza", "name": "البيتزا", "name_en": "Pizza", "icon": "🍕", "visible": true },
     { "id": "starters", "name": "المقبلات", "name_en": "Starters", "icon": "🍟", "visible": true },
@@ -73,9 +72,8 @@
 
     { "id": 13, "category": "western", "name": "وجبة اسكالوب", "name_en": "Escalope Meal", "description": "شرائح دجاج بانيه مقرمشة، بطاطا مقلية، كول سلو، صوص خاص", "description_en": "Crispy breaded chicken escalope, fries, coleslaw, special sauce", "price": 540, "calories": 820, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["gluten", "eggs", "dairy"] },
     { "id": 14, "category": "western", "name": "كوردن بلو", "name_en": "Cordon Bleu", "description": "صدر دجاج محشي بالجبن والحبش المدخن مع صوص الكريمة والبطاطا", "description_en": "Chicken stuffed with cheese & smoked turkey, creamy sauce, fries", "price": 590, "calories": 890, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "eggs"] },
-
-    { "id": 15, "category": "rizo", "name": "ريزو كريسبي", "name_en": "Crispy Rizo", "description": "أرز متبل بالبهارات، قطع دجاج كريسبي، صوص شيدر وباربكيو", "description_en": "Seasoned rice, crispy chicken pieces, cheddar & BBQ sauce", "price": 360, "calories": 720, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "soy"] },
-    { "id": 16, "category": "rizo", "name": "ريزو شيش", "name_en": "Shish Rizo", "description": "أرز متبل، شيش طاووق مشوي، صوص ثوم وكاجو", "description_en": "Seasoned rice, grilled shish tawook, garlic sauce", "price": 350, "calories": 680, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["eggs", "nuts"] },
+    { "id": 15, "category": "western", "name": "ريزو كريسبي", "name_en": "Crispy Rizo", "description": "أرز متبل بالبهارات، قطع دجاج كريسبي، صوص شيدر وباربكيو", "description_en": "Seasoned rice, crispy chicken pieces, cheddar & BBQ sauce", "price": 360, "calories": 720, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy", "soy"] },
+    { "id": 16, "category": "western", "name": "ريزو شيش", "name_en": "Shish Rizo", "description": "أرز متبل، شيش طاووق مشوي، صوص ثوم وكاجو", "description_en": "Seasoned rice, grilled shish tawook, garlic sauce", "price": 350, "calories": 680, "image": "", "available": true, "featured": false, "tags": [], "allergens": ["eggs", "nuts"] },
 
     { "id": 17, "category": "pasta", "name": "باستا ألفريدو", "name_en": "Alfredo Pasta", "description": "باستا، دجاج مشوي، فطر فريش، كريمة طبخ، جبنة بارميزان", "description_en": "Pasta, grilled chicken, fresh mushroom, cream, parmesan", "price": 460, "calories": 760, "image": "", "available": true, "featured": true, "tags": [], "allergens": ["gluten", "dairy"] },
     { "id": 18, "category": "pasta", "name": "بيني أرابياتا", "name_en": "Penne Arrabbiata", "description": "بيني باستا مع صوص الطماطم الحار والأعشاب الإيطالية", "description_en": "Penne pasta with spicy tomato sauce and Italian herbs", "price": 390, "calories": 580, "image": "", "available": true, "featured": false, "tags": ["spicy", "vegetarian"], "allergens": ["gluten"] },
