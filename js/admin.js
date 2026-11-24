@@ -1,13 +1,14 @@
-/* ========== لوحة إدارة TAZA 041 (Firebase Firestore + رفع الصور بالسحب والإفلات + إظهار/إخفاء الأقسام) ========== */
+/* ========== لوحة إدارة TAZA 041 (Firebase Auth + Firestore + Storage) ========== */
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const STORAGE_KEY = "taza-menu-live";
   const FEEDBACK_KEY = "taza-feedbacks";
   const CYCLE_KEY = "taza-rev-cycle";
-  const ADMIN_PIN = "0410";
 
   const bc = "BroadcastChannel" in window ? new BroadcastChannel("taza-sync") : null;
   let menuData = null;
+  let isUploadingImg = false;
+  let tempPreviewUrl = "";
 
   function toast(msg) {
     const t = $("#adminToast");
@@ -21,10 +22,10 @@
     return String(v ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   }
 
-  /* ---------- تسجيل الدخول بحساب Google (Firebase Auth) ---------- */
-  // ⚠️ حط إيميلك وإيميل صاحب المطعم هنا عشان ما يقدر أي أحد غريب يدخل! (لو خليتها فاضية [] يسمح لأي حساب Google للتجربة)
+  /* ---------- تسجيل الدخول بحساب Google (مغلق افتراضياً) ---------- */
+  // ضع إيميلك وإيميل صاحب المطعم هنا فقط (يجب أن تطابق الإيميلات في قواعد Firebase)
   const ALLOWED_ADMINS = [
-    // "mpoinr12@gmail.com",
+    "mpoinr12@gmail.com"
   ];
 
   const lockScreen = $("#lockScreen");
@@ -35,8 +36,9 @@
       lockScreen.hidden = false;
       return;
     }
-    const email = (user.email || "").toLowerCase();
-    if (ALLOWED_ADMINS.length > 0 && !ALLOWED_ADMINS.map((e) => e.toLowerCase()).includes(email)) {
+    const email = (user.email || "").trim().toLowerCase();
+    const allowedSet = new Set(ALLOWED_ADMINS.map((e) => e.trim().toLowerCase()).filter(Boolean));
+    if (allowedSet.size === 0 || !allowedSet.has(email)) {
       pinErr.textContent = `الحساب (${email}) غير مصرح له بالدخول!`;
       window.TazaCloud?.logout();
       lockScreen.hidden = false;
@@ -78,7 +80,7 @@
     if (bc) bc.postMessage({ type: "menu-updated" });
     if (window.TazaCloud?.saveMenu) {
       const ok = await window.TazaCloud.saveMenu(menuData);
-      toast(ok ? msg : "حُفظ محلياً (تحقق من تفعيل Firestore)");
+      toast(ok ? msg : "فشل الحفظ السحابي! تحقق من صلاحيات الحساب وقواعد Firestore");
     } else {
       toast(msg);
     }
@@ -192,21 +194,30 @@
     }
   });
 
-  /* ---------- رفع الصور من المعرض أو بالسحب والإفلات + ضغط تلقائي ذكي ---------- */
+  /* ---------- ضغط الصور ورفعها مباشرة إلى Firebase Storage ---------- */
   const imgDropZone = $("#imgDropZone");
   const imgFileInp = $("#itImgFile");
   const imgPreview = $("#imgPreview");
   const imgDropHint = $("#imgDropHint");
   const imgRemoveBtn = $("#imgRemoveBtn");
+  const saveItemBtn = $("#itemForm button[type='submit']");
 
-  function setImgPreview(src) {
-    $("#itImg").value = src || "";
+  function clearTempPreview() {
+    if (tempPreviewUrl) {
+      URL.revokeObjectURL(tempPreviewUrl);
+      tempPreviewUrl = "";
+    }
+  }
+
+  function setImgPreview(src, storedUrl = src) {
+    $("#itImg").value = storedUrl || "";
     if (src) {
       imgPreview.src = src;
       imgPreview.hidden = false;
       imgDropHint.hidden = true;
       imgRemoveBtn.hidden = false;
     } else {
+      clearTempPreview();
       imgPreview.removeAttribute("src");
       imgPreview.hidden = true;
       imgDropHint.hidden = false;
@@ -215,16 +226,28 @@
     }
   }
 
-  function compressAndLoadImage(file) {
+  function setUploadBusy(busy) {
+    isUploadingImg = busy;
+    if (!saveItemBtn) return;
+    saveItemBtn.disabled = busy;
+    saveItemBtn.textContent = busy ? "⏳ جاري رفع الصورة..." : "💾 حفظ الطبق";
+  }
+
+  function compressAndUploadImage(file) {
     if (!file || !file.type.startsWith("image/")) {
       toast("الرجاء اختيار ملف صورة صالح 📸");
       return;
     }
+    if (!window.TazaCloud?.uploadDishImage) {
+      toast("Firebase Storage غير جاهز بعد، حاول بعد لحظة");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
-      img.onload = () => {
-        const MAX_DIM = 540;
+      img.onload = async () => {
+        const MAX_DIM = 720;
         let w = img.width, h = img.height;
         if (w > MAX_DIM || h > MAX_DIM) {
           if (w >= h) { h = Math.round((h * MAX_DIM) / w); w = MAX_DIM; }
@@ -233,9 +256,38 @@
         const c = document.createElement("canvas");
         c.width = w; c.height = h;
         c.getContext("2d").drawImage(img, 0, 0, w, h);
-        const dataUrl = c.toDataURL("image/webp", 0.78);
-        setImgPreview(dataUrl.startsWith("data:image/webp") ? dataUrl : c.toDataURL("image/jpeg", 0.78));
-        toast("تم تجهيز الصورة وضغطها بنجاح 📸✨");
+
+        const toBlobAsync = (type, q) => new Promise((res) => c.toBlob(res, type, q));
+        let blob = await toBlobAsync("image/webp", 0.8);
+        let ext = "webp";
+        if (!blob || blob.type !== "image/webp") {
+          blob = await toBlobAsync("image/jpeg", 0.82);
+          ext = "jpg";
+        }
+        if (!blob) {
+          toast("تعذّر معالجة الصورة!");
+          return;
+        }
+
+        // معاينة فورية أثناء الرفع السحابي
+        clearTempPreview();
+        tempPreviewUrl = URL.createObjectURL(blob);
+        setImgPreview(tempPreviewUrl, $("#itImg").value);
+        setUploadBusy(true);
+        toast("جاري رفع الصورة للسحابة... ☁️");
+
+        try {
+          const downloadUrl = await window.TazaCloud.uploadDishImage(blob, ext);
+          setImgPreview(downloadUrl, downloadUrl);
+          clearTempPreview();
+          toast("تم رفع الصورة وحفظ رابطها بنجاح ☁️✨");
+        } catch (err) {
+          console.error("Storage upload error:", err);
+          setImgPreview("");
+          toast("فشل رفع الصورة! تأكد من تفعيل Firebase Storage وقواعد الحماية");
+        } finally {
+          setUploadBusy(false);
+        }
       };
       img.src = reader.result;
     };
@@ -244,15 +296,15 @@
 
   if (imgDropZone && imgFileInp) {
     imgDropZone.addEventListener("click", (e) => {
-      if (e.target.closest("#imgRemoveBtn")) return;
+      if (e.target.closest("#imgRemoveBtn") || isUploadingImg) return;
       imgFileInp.click();
     });
     imgFileInp.addEventListener("change", () => {
-      if (imgFileInp.files[0]) compressAndLoadImage(imgFileInp.files[0]);
+      if (imgFileInp.files[0]) compressAndUploadImage(imgFileInp.files[0]);
     });
     imgRemoveBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      setImgPreview("");
+      if (!isUploadingImg) setImgPreview("");
     });
     ["dragenter", "dragover"].forEach((ev) =>
       imgDropZone.addEventListener(ev, (e) => { e.preventDefault(); imgDropZone.classList.add("is-drag"); })
@@ -262,13 +314,14 @@
     );
     imgDropZone.addEventListener("drop", (e) => {
       const f = e.dataTransfer?.files?.[0];
-      if (f) compressAndLoadImage(f);
+      if (f && !isUploadingImg) compressAndUploadImage(f);
     });
   }
 
   /* ---------- نافذة إضافة / تعديل طبق ---------- */
   const itemDlg = $("#itemDlg");
   function openItemDialog(item = null) {
+    setUploadBusy(false);
     $("#itemDlgTitle").textContent = item ? "تعديل الطبق" : "إضافة طبق جديد";
     $("#itId").value = item ? item.id : "";
     $("#itNameAr").value = item ? item.name : "";
@@ -290,11 +343,15 @@
   }
 
   $("#addItemBtn").addEventListener("click", () => openItemDialog(null));
-  $("#closeItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
-  $("#cancelItemDlg").addEventListener("click", () => (itemDlg.hidden = true));
+  $("#closeItemDlg").addEventListener("click", () => { if (!isUploadingImg) itemDlg.hidden = true; });
+  $("#cancelItemDlg").addEventListener("click", () => { if (!isUploadingImg) itemDlg.hidden = true; });
 
   $("#itemForm").addEventListener("submit", (e) => {
     e.preventDefault();
+    if (isUploadingImg) {
+      toast("انتظر انتهاء رفع الصورة أولاً ⏳");
+      return;
+    }
     const idVal = $("#itId").value;
     const tags = [];
     if ($("#itSpicy").checked) tags.push("spicy");
