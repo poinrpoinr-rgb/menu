@@ -67,7 +67,6 @@
     beef_burgers: "assets/images/game/burger.svg",
     sandwiches: "assets/images/game/sandwich.svg",
     western: "assets/images/game/western.svg",
-    rizo: "assets/images/game/rizo.svg",
     pasta: "assets/images/game/pasta.svg",
     pizza: "assets/images/game/pizza.svg",
     starters: "assets/images/game/fries.svg",
