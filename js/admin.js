@@ -68,6 +68,12 @@
     lockScreen.hidden = false;
     toast("تم تسجيل الخروج 👋");
   });
+  $("#themeBtn")?.addEventListener("click", () => {
+    const html = document.documentElement;
+    const next = html.dataset.theme === "dark" ? "light" : "dark";
+    html.dataset.theme = next;
+    try { localStorage.setItem("taza-theme", next); } catch (_) {}
+  });
 
   function syncLocal() {
     try {
