@@ -1,3 +1,11 @@
+// صمام أمان للمتصفحات الداخلية (إنستغرام / تيليغرام)
+setTimeout(() => {
+  const el = document.getElementById("loader");
+  if (el) el.remove();
+  document.body.classList.remove("is-loading");
+  document.body.classList.add("is-ready");
+}, 2500);
+
 /* ========== شاشة التحميل السريعة + تسجيل PWA (TAZA 041) ========== */
 const Loader = (() => {
   const MIN_DURATION = 950;
