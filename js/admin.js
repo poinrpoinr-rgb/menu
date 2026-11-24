@@ -116,7 +116,7 @@
   /* ---------- 1) عرض وإدارة الأطباق ---------- */
   function fillCatSelects() {
     const curFilter = $("#filterCat").value || "all";
-    $("#filterCat").innerHTML = `<option value="all">كل الأقسام (${menuData.items.length})</option>` +
+    $("#filterCat").innerHTML = `<option value="all">كل الأطباق (${menuData.items.length})</option>` +
       menuData.categories.map((c) => `<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</option>`).join("");
     $("#filterCat").value = menuData.categories.some((c) => c.id === curFilter) ? curFilter : "all";
 
