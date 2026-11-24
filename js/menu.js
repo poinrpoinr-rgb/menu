@@ -799,11 +799,28 @@
   });
 
   /* ---------- تحديث المنيو عند السحب بالجبن ---------- */
+  /* ---------- تحديث المنيو عند السحب بالجبن (من Firebase أولاً) ---------- */
   window.tazaRefresh = async () => {
     try {
-      const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) return false;
-      data = await res.json();
+      let freshData = null;
+
+      if (window.TazaCloud?.fetchMenu) {
+        const cloudRes = await window.TazaCloud.fetchMenu();
+        if (cloudRes.exists && cloudRes.data) {
+          freshData = cloudRes.data;
+        } else if (!cloudRes.exists) {
+          const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+          if (!res.ok) return false;
+          freshData = await res.json();
+        }
+      } else {
+        const res = await fetch("data/menu.json?v=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) return false;
+        freshData = await res.json();
+      }
+
+      if (!freshData) return false;
+      data = freshData;
       const keep = cats[active] && cats[active].id;
       renderMenu();
       buildNav(keep);
