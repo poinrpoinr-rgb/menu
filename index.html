@@ -167,6 +167,16 @@
 <script src="js/animations.js"></script>
 <script src="js/refresh.js"></script>
 <script src="js/extras.js"></script>
+  <script src="js/app.js?v=4"></script>
+  <script>
+    setTimeout(function () {
+      var l = document.getElementById("loader");
+      if (l) l.remove();
+      document.body.classList.remove("is-loading");
+      document.body.classList.add("is-ready");
+    }, 2800);
+  </script>
+</body>
 </body>
 </html>
 
