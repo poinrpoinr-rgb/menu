@@ -224,43 +224,58 @@ onAuthStateChanged(auth, (user) => {
   window.dispatchEvent(new CustomEvent("taza-auth-change", { detail: user || null }));
 });
 
-/* ---------- الاستماع اللحظي للمنيو من المجموعات المقسمة ---------- */
-onSnapshot(metaDocRef, (snap) => {
-  if (!snap.exists()) return;
-  cloudState.restaurant = snap.data().restaurant || null;
-  cloudState.hasMeta = true;
-  emitMenuIfReady();
-}, () => {});
-
-onSnapshot(catsColRef, (snap) => {
-  if (snap.empty) return;
-  cloudState.categories = snap.docs
-    .map((d) => d.data())
-    .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
-  cloudState.hasCats = true;
-  emitMenuIfReady();
-}, (err) => console.warn("Firestore cats listener:", err.message));
-
-onSnapshot(itemsColRef, (snap) => {
-  if (snap.empty) return;
-  cloudState.items = snap.docs
-    .map((d) => d.data())
-    .sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-  cloudState.hasItems = true;
-  emitMenuIfReady();
-}, (err) => console.warn("Firestore items listener:", err.message));
-
-/* ---------- الاستماع اللحظي لإعداد التجديد التلقائي والتقييمات ---------- */
-onSnapshot(settingsDocRef, (snap) => {
-  if (!snap.exists()) return;
-  const cycle = snap.data()?.revCycle || "forever";
-  try { localStorage.setItem("taza-rev-cycle", cycle); } catch (_) {}
-  window.dispatchEvent(new CustomEvent("taza-cloud-reviews"));
-}, () => {});
-
+/* ---------- المزامنة: لحظية للأدمن فقط، وجلب مرة واحدة خفيف لصفحة الزبون ---------- */
+const isAdminPage = /admin/i.test(location.pathname);
 const revQ = query(reviewsColRef, orderBy("createdAtMs", "desc"));
-onSnapshot(revQ, (snap) => {
-  const list = snap.docs.map((d) => ({ ...d.data(), docId: d.id, id: d.data().id || d.id }));
-  try { localStorage.setItem("taza-feedbacks", JSON.stringify(list)); } catch (_) {}
-  window.dispatchEvent(new CustomEvent("taza-cloud-reviews", { detail: list }));
-}, (err) => console.warn("Firestore reviews listener:", err.message));
+
+if (isAdminPage) {
+  // في لوحة الإدارة فقط: استماع لحظي مستمر
+  onSnapshot(metaDocRef, (snap) => {
+    if (!snap.exists()) return;
+    cloudState.restaurant = snap.data().restaurant || null;
+    cloudState.hasMeta = true;
+    emitMenuIfReady();
+  }, () => {});
+
+  onSnapshot(catsColRef, (snap) => {
+    if (snap.empty) return;
+    cloudState.categories = snap.docs
+      .map((d) => d.data())
+      .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    cloudState.hasCats = true;
+    emitMenuIfReady();
+  }, (err) => console.warn("Firestore cats listener:", err.message));
+
+  onSnapshot(itemsColRef, (snap) => {
+    if (snap.empty) return;
+    cloudState.items = snap.docs
+      .map((d) => d.data())
+      .sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+    cloudState.hasItems = true;
+    emitMenuIfReady();
+  }, (err) => console.warn("Firestore items listener:", err.message));
+
+  onSnapshot(settingsDocRef, (snap) => {
+    if (!snap.exists()) return;
+    const cycle = snap.data()?.revCycle || "forever";
+    try { localStorage.setItem("taza-rev-cycle", cycle); } catch (_) {}
+    window.dispatchEvent(new CustomEvent("taza-cloud-reviews"));
+  }, () => {});
+
+  onSnapshot(revQ, (snap) => {
+    const list = snap.docs.map((d) => ({ ...d.data(), docId: d.id, id: d.data().id || d.id }));
+    try { localStorage.setItem("taza-feedbacks", JSON.stringify(list)); } catch (_) {}
+    window.dispatchEvent(new CustomEvent("taza-cloud-reviews", { detail: list }));
+  }, (err) => console.warn("Firestore reviews listener:", err.message));
+} else {
+  // في صفحة الزبون: جلب مرة واحدة فقط بدون اتصالات مفتوحة في الخلفية (أخف بكثير على الرام)
+  window.TazaCloud.fetchMenu().then((res) => {
+    if (res.exists && res.data) {
+      window.dispatchEvent(new CustomEvent("taza-cloud-menu", { detail: res.data }));
+    }
+  });
+
+  getDoc(settingsDocRef).then((snap) => {
+    if (!snap.exists()) return;
+    const cycle = snap.data()?.revCycle || "forever";
+    try { localStorage.setItem("taza-rev-cycle", cycle); } catch (_)
