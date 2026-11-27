@@ -57,22 +57,25 @@ let cloudState = {
 
 function emitMenuIfReady() {
   if (!cloudState.hasCats && !cloudState.hasItems && !cloudState.hasMeta) return;
-  const cached = (() => {
-    try { return JSON.parse(localStorage.getItem("taza-menu-live") || "null"); }
-    catch (_) { return null; }
-  })();
+  clearTimeout(emitTimer);
+  emitTimer = setTimeout(() => {
+    const cached = (() => {
+      try { return JSON.parse(localStorage.getItem("taza-menu-live") || "null"); }
+      catch (_) { return null; }
+    })();
 
-  const payload = {
-    restaurant: cloudState.restaurant || cached?.restaurant || {},
-    categories: cloudState.categories.length ? cloudState.categories : (cached?.categories || []),
-    items: cloudState.items.length ? cloudState.items : (cached?.items || []),
-  };
+    const payload = {
+      restaurant: cloudState.restaurant || cached?.restaurant || {},
+      categories: cloudState.categories.length ? cloudState.categories : (cached?.categories || []),
+      items: cloudState.items.length ? cloudState.items : (cached?.items || []),
+    };
 
-  try {
-    localStorage.setItem("taza-menu-live", JSON.stringify(payload));
-  } catch (_) {}
-  window.dispatchEvent(new CustomEvent("taza-cloud-menu", { detail: payload }));
-  if (bc) bc.postMessage({ type: "menu-updated" });
+    try {
+      localStorage.setItem("taza-menu-live", JSON.stringify(payload));
+    } catch (_) {}
+    window.dispatchEvent(new CustomEvent("taza-cloud-menu", { detail: payload }));
+    if (bc) bc.postMessage({ type: "menu-updated" });
+  }, 250);
 }
 
 /* ---------- واجهة موحدة يستخدمها admin.js و menu.js و extras.js ---------- */
