@@ -1,4 +1,4 @@
-// صمام أمان للمتصفحات الداخلية (إنستغرام / تيليغرام)
+/* ========== صمام أمان + شاشة التحميل السريعة + PWA (TAZA 041) ========== */
 setTimeout(() => {
   const el = document.getElementById("loader");
   if (el) el.remove();
@@ -6,7 +6,6 @@ setTimeout(() => {
   document.body.classList.add("is-ready");
 }, 2500);
 
-/* ========== شاشة التحميل السريعة + تسجيل PWA (TAZA 041) ========== */
 const Loader = (() => {
   const MIN_DURATION = 950;
   const MAX_WAIT = 2000;
@@ -18,8 +17,8 @@ const Loader = (() => {
   const percent = document.getElementById("loaderPercent");
 
   let pageLoaded = document.readyState !== "loading";
-  document.addEventListener("DOMContentLoaded", () => (pageLoaded = true));
-  window.addEventListener("load", () => (pageLoaded = true));
+  document.addEventListener("DOMContentLoaded", () => { pageLoaded = true; });
+  window.addEventListener("load", () => { pageLoaded = true; });
 
   const easeOut = (t) => 1 - Math.pow(1 - t, 3);
   let finished = false;
@@ -32,14 +31,16 @@ const Loader = (() => {
   function openSite() {
     if (el) {
       el.classList.add("done");
-      el.addEventListener("transitionend", (e) => e.target === el && el.remove(), { once: false });
-      setTimeout(() => el.isConnected && el.remove(), 1200);
+      el.addEventListener("transitionend", (e) => {
+        if (e.target === el) el.remove();
+      }, { once: false });
+      setTimeout(() => { if (el.isConnected) el.remove(); }, 1200);
     }
     document.body.classList.remove("is-loading");
     document.body.classList.add("is-ready");
   }
 
- function zoomIntoPlate() {
+  function zoomIntoPlate() {
     const isLowEnd =
       (navigator.deviceMemory && navigator.deviceMemory <= 4) ||
       window.innerWidth <= 768;
@@ -59,8 +60,52 @@ const Loader = (() => {
       Math.sqrt(Math.pow(innerWidth / 2 / a, 2) + Math.pow(innerHeight / 2 / b, 2)) * 1.25;
 
     svg.style.transformOrigin = `${cx - s.left}px ${cy - s.top}px`;
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
-  });
-}
+    svg.animate(
+      [
+        { transform: "translate(0, 0) scale(1)" },
+        { transform: `translate(${innerWidth / 2 - cx}px, ${innerHeight / 2 - cy}px) scale(${k})` },
+      ],
+      { duration: ZOOM_DURATION, easing: "cubic-bezier(0.65, 0, 0.35, 1)", fill: "forwards" }
+    );
+    return true;
+  }
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    setProgress(100);
+    setTimeout(() => {
+      if (el) el.classList.add("leaving");
+      const didZoom = zoomIntoPlate();
+      if (didZoom) {
+        setTimeout(openSite, ZOOM_DURATION * OPEN_AT);
+      } else {
+        openSite();
+      }
+    }, 120);
+  }
+
+  function start() {
+    if (!el) return openSite();
+    const t0 = performance.now();
+    setTimeout(finish, MAX_WAIT);
+
+    function tick(now) {
+      if (finished) return;
+      const elapsed = now - t0;
+      let p = easeOut(Math.min(elapsed / MIN_DURATION, 1)) * 100;
+      if (!pageLoaded && elapsed < MAX_WAIT) p = Math.min(p, 92);
+      setProgress(p);
+
+      if (p >= 100) return finish();
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  return { start };
+})();
+
+try {
+  if (sessionStorage.getItem("taza-seen-intro")) {
+    const el = document.getElementById("loader");
