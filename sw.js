@@ -1,5 +1,5 @@
 /* ========== Service Worker لدعم العمل بدون إنترنت (TAZA 041 PWA) ========== */
-const CACHE_NAME = "taza-041-v4";
+const CACHE_NAME = "taza-041-v5";
 
 // الملفات الأساسية التي تُحفظ فور فتح الموقع
 const CORE_ASSETS = [
@@ -59,6 +59,10 @@ self.addEventListener("fetch", (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(req).then((cached) => cached || caches.match("./index.html")))
-  );
+  .catch(() =>
+        caches.match(req).then((cached) => {
+          if (cached) return cached;
+          if (req.mode === "navigate") return caches.match("./index.html");
+          return new Response("", { status: 503 });
+      );
 });
